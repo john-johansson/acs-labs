@@ -1,5 +1,5 @@
 * xref:index.adoc[ACS Hands-On Labs]
-.Policy engine and admission controller
+.Policy Engine
 * xref:policy-engine.adoc[Overview]
 * xref:01-prerequisites.adoc[Prerequisites]
 * xref:02-violations.adoc[Exercise 1: Violations]

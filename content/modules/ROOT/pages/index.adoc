@@ -5,13 +5,13 @@ Facilitator and attendee instructions for {rhacs-version} Red Hat(R) Advanced Cl
 
 This site uses the same Antora + Red Hat Demo Platform Showroom theme as other RHDP labs.
 
-== Current sessions
+== Topics
 
 [cols="2,1,1",options="header"]
 |===
-|Lab |Duration |ACS version
+|Topic |Duration |ACS version
 
-|xref:policy-engine.adoc[Policy engine and admission controller]
+|xref:policy-engine.adoc[Policy Engine]
 |55 min
 |{rhacs-version}
 |===
@@ -27,8 +27,8 @@ Clone https://github.com/john-johansson/acs-labs[this repository] onto the Showr
 
 IMPORTANT: Do not commit tokens, Showroom passwords, or kubeconfigs.
 
-== Adding a lab
+== Adding a topic
 
-. Create a new AsciiDoc page under `content/modules/ROOT/pages/`.
-. Add it to `content/modules/ROOT/nav.adoc`.
+. Create a topic overview page under `content/modules/ROOT/pages/`.
+. Group its exercises under a new section in `content/modules/ROOT/nav.adoc` (same pattern as *Policy Engine*).
 . Put reusable YAML in `content/modules/ROOT/examples/`.

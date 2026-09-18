@@ -1,4 +1,4 @@
-= Policy engine and admission controller
+= Policy Engine
 :navtitle: Overview
 
 A 55-minute hands-on lab for platform, infrastructure, and security engineering teams.
