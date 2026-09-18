@@ -1,9 +1,9 @@
 * xref:index.adoc[ACS Hands-On Labs]
-.Policy Engine
-* xref:policy-engine.adoc[Overview]
-* xref:01-prerequisites.adoc[Prerequisites]
-* xref:02-violations.adoc[Exercise 1: Violations]
-* xref:03-admission.adoc[Exercise 2: Admission control]
-* xref:04-policy-as-code.adoc[Exercise 3: Policy as code]
-* xref:05-guardrails.adoc[Exercise 4: Custom guardrails]
-* xref:06-roxctl.adoc[Exercise 5: Pipeline gates]
+* Policy Engine
+** xref:policy-engine.adoc[Overview]
+** xref:01-prerequisites.adoc[Prerequisites]
+** xref:02-violations.adoc[Exercise 1: Violations]
+** xref:03-admission.adoc[Exercise 2: Admission control]
+** xref:04-policy-as-code.adoc[Exercise 3: Policy as code]
+** xref:05-guardrails.adoc[Exercise 4: Custom guardrails]
+** xref:06-roxctl.adoc[Exercise 5: Pipeline gates]
