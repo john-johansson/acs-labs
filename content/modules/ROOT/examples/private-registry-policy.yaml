@@ -1,0 +1,27 @@
+apiVersion: config.stackrox.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: lab-enforce-private-registry
+  namespace: stackrox
+spec:
+  policyName: "Lab - Enforce Private Registry Only"
+  description: "Alert when images are not pulled from the authorized internal registry."
+  categories:
+    - "Supply Chain Security"
+  severity: "CRITICAL_SEVERITY"
+  rationale: "All container images must be pulled from the organization's authorized internal registry."
+  remediation: "Rebuild and push the image to registry.internal.example.com."
+  lifecycleStages:
+    - DEPLOY
+  eventSource: NOT_APPLICABLE
+  enforcementActions:
+    - FAIL_DEPLOYMENT_CREATE_ENFORCEMENT
+    - FAIL_DEPLOYMENT_UPDATE_ENFORCEMENT
+    - SCALE_TO_ZERO_ENFORCEMENT
+  policySections:
+    - policyGroups:
+        - fieldName: "Image Registry"
+          booleanOperator: OR
+          negate: true
+          values:
+            - value: "registry.internal.example.com"

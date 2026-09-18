@@ -1,0 +1,22 @@
+= Exercise 1: Violations and built-in policy inspection
+:navtitle: Exercise 1: Violations
+
+Estimated time: 10 minutes.
+
+== Task 1.1: Inspect active violations
+
+. Open the RHACS Console from the Showroom *Red Hat Advanced Cluster Security* tab.
+. From the left menu, open *Violations*.
+. Filter:
+** *Lifecycle Stage:* `Deploy`
+** *Severity:* `High`, `Critical`
+. Open an active violation (for example *Fixable Severity at least Important* or *Privileged Container*) and review deployment detail, policy definition, and remediation.
+
+== Task 1.2: Explore the policy library
+
+. Navigate to *Platform Configuration → Policy Management*.
+. Search for `Fixable`.
+. Open *Fixable Severity at least Important* (enabled by default) and optionally *Fixable CVSS >= 7* (disabled by default).
+. Note:
+** *Rationale:* prevent promotion of workloads with known important/critical fixable vulnerabilities.
+** *Response method:* most built-in policies start as *Inform only*. Confirm Deploy enforcement is off before Exercise 2.

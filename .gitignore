@@ -1,0 +1,16 @@
+.DS_Store
+.env
+.env.*
+*.pem
+*.key
+*.token
+.idea/
+.vscode/
+_site/
+.jekyll-cache/
+.jekyll-metadata
+vendor/bundle/
+www/
+.cache/
+node_modules/
+*.log

@@ -1,0 +1,52 @@
+= Policy engine and admission controller
+:navtitle: Overview
+
+A 55-minute hands-on lab for platform, infrastructure, and security engineering teams.
+
+[cols="1,3"]
+|===
+|Session date |September 23, 2026 (14:00 – 16:00 CEST)
+|Duration |55 minutes
+|Environment |Red Hat Showroom / RHACS {rhacs-version}
+|===
+
+== Lab objectives
+
+By completing this lab, participants will:
+
+. Navigate RHACS policy management across *Build*, *Deploy*, and *Runtime* lifecycle stages.
+. See the difference between *inform-only* deploy policies and *admission-controller rejection* of create requests.
+. Understand structural differences between policies created via the ACS GUI / API and Custom Resource Definitions (CRDs) synced as GitOps.
+. Build custom guardrails for private registry enforcement, Cosign image signature verification, and fixable CVE thresholds (>= 9.0).
+. Integrate `roxctl` CLI checks in pipeline workflows and confirm a non-zero exit code when a deploy policy is set to break the check.
+
+== Session flow
+
+[cols="1,2,1",options="header"]
+|===
+|Exercise |Focus |Time
+
+|xref:01-prerequisites.adoc[Prerequisites]
+|Bastion access, `roxctl whoami`, lab namespace
+|5 min
+
+|xref:02-violations.adoc[Exercise 1]
+|Violations page and built-in policy library
+|10 min
+
+|xref:03-admission.adoc[Exercise 2]
+|Inform-only vs admission webhook rejection
+|15 min
+
+|xref:04-policy-as-code.adoc[Exercise 3]
+|`SecurityPolicy` CRDs vs GUI
+|10 min
+
+|xref:05-guardrails.adoc[Exercise 4]
+|Cosign signatures and CVSS >= 9.0
+|10 min
+
+|xref:06-roxctl.adoc[Exercise 5]
+|`roxctl deployment check` exit codes
+|5 min
+|===

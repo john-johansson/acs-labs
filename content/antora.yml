@@ -1,0 +1,19 @@
+name: modules
+title: ACS Hands-On Labs
+version: master
+nav:
+  - modules/ROOT/nav.adoc
+
+asciidoc:
+  attributes:
+    experimental: true
+    lab_name: "ACS Hands-On Labs"
+    rhacs-version: "4.11.4"
+    page-pagination: true
+    page-links:
+      - url: https://github.com/john-johansson/acs-labs
+        text: GitHub
+      - url: https://www.redhat.com/en/technologies/cloud-computing/openshift/advanced-cluster-security-kubernetes
+        text: RHACS
+    bastion_ssh_user_name: "{bastion_ssh_user_name}"
+    bastion_public_hostname: "{bastion_public_hostname}"

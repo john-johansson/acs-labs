@@ -1,0 +1,14 @@
+---
+type: showroom
+
+default_width: 40
+persist_url_state: true
+
+tabs:
+  - name: OpenShift Console
+    url: "{openshift_console_url}"
+  - name: Red Hat Advanced Cluster Security
+    url: "{acs_route}"
+  - name: Bastion
+    path: /wetty
+    port: 443

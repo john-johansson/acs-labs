@@ -1,0 +1,29 @@
+= Exercise 3: Policy-as-code via GitOps
+:navtitle: Exercise 3: Policy as code
+
+Estimated time: 10 minutes.
+
+`SecurityPolicy` lives in `config.stackrox.io/v1alpha1` (not `platform.stackrox.io`).
+The config controller reconciles CRs in the `stackrox` namespace.
+
+Put `negate` on the *policy group*, not on the value.
+Put `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` on the CR if you want admission to deny creates.
+Add `SCALE_TO_ZERO_ENFORCEMENT` if you also want `roxctl deployment check` to fail the pipeline (Exercise 5).
+
+== Task 3.1: Review the private-registry policy
+
+[source,yaml]
+----
+include::example$private-registry-policy.yaml[]
+----
+
+== Task 3.2: Apply and confirm in the console
+
+[source,bash]
+----
+oc apply -f content/modules/ROOT/examples/private-registry-policy.yaml
+oc get securitypolicy lab-enforce-private-registry -n stackrox
+----
+
+. In *Platform Configuration → Policy Management*, open *Lab - Enforce Private Registry Only*.
+. Compare the GUI with the CR. Admission deny is `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` / `FAIL_DEPLOYMENT_UPDATE_ENFORCEMENT`. Scale-to-zero is `SCALE_TO_ZERO_ENFORCEMENT`.

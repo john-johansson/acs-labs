@@ -1,0 +1,34 @@
+= ACS Hands-On Labs
+:navtitle: ACS Hands-On Labs
+
+Facilitator and attendee instructions for {rhacs-version} Red Hat(R) Advanced Cluster Security for Kubernetes (RHACS) sessions.
+
+This site uses the same Antora + Red Hat Demo Platform Showroom theme as other RHDP labs.
+
+== Current sessions
+
+[cols="2,1,1",options="header"]
+|===
+|Lab |Duration |ACS version
+
+|xref:policy-engine.adoc[Policy engine and admission controller]
+|55 min
+|{rhacs-version}
+|===
+
+Working YAML for each session lives in the Antora `examples/` directory.
+Clone https://github.com/john-johansson/acs-labs[this repository] onto the Showroom bastion, then `oc apply -f` those files.
+
+== How to use this guide
+
+* **This page is home** — start here, then follow *Next* at the bottom of each page.
+* **Navigate with the table of contents** — modules are in the left sidebar.
+* **Use the bastion** — run `oc` and `roxctl` on the RHEL bastion.
+
+IMPORTANT: Do not commit tokens, Showroom passwords, or kubeconfigs.
+
+== Adding a lab
+
+. Create a new AsciiDoc page under `content/modules/ROOT/pages/`.
+. Add it to `content/modules/ROOT/nav.adoc`.
+. Put reusable YAML in `content/modules/ROOT/examples/`.

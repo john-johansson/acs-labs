@@ -1,0 +1,78 @@
+= Exercise 2: Inform-only vs admission rejection
+:navtitle: Exercise 2: Admission control
+
+Estimated time: 15 minutes.
+
+This exercise answers the usual platform-team question: why does the UI talk about "scale to 0 replicas" while a create request is rejected by the admission webhook?
+
+On this cluster the admission controller is already watching *CREATE* and *UPDATE* (`listenOnCreates: true`, webhook `policyeval.stackrox.io`).
+
+[cols="1,3",options="header"]
+|===
+|When the policy is…
+|What `oc apply` does
+
+|*Inform only*
+|The Deployment object is created. Violations appear in the console.
+
+|*Inform and enforce (Deploy)*
+|The API request is *denied*. The object never lands in etcd.
+|===
+
+*Scale-to-zero* (`SCALE_TO_ZERO_ENFORCEMENT`) is the Sensor fallback for workloads that already exist or that bypass admission.
+It is also the action `roxctl deployment check` treats as *BREAKS DEPLOY* (exit code 1).
+It is *not* the webhook that rejects creates.
+
+`FAIL_KUBE_REQUEST_ENFORCEMENT` is a different action: it applies to Kubernetes *events* such as `exec` / `port-forward` (webhook `k8sevents.stackrox.io`), not to Deployment CREATE.
+
+== Task 2.1: Inform-only — object is created
+
+. In *Platform Configuration → Policy Management*, open *Privileged Container*.
+. Confirm the response method is *Inform only* (no Deploy enforcement).
+. Deploy a privileged workload:
+
+[source,bash]
+----
+oc apply -n policy-lab -f content/modules/ROOT/examples/privileged-app.yaml
+----
+
+. Check the Deployment:
+
+[source,bash]
+----
+oc get deployment test-privileged-app -n policy-lab
+----
+
+The Deployment *is created* (`spec.replicas=2`).
+ACS records a Deploy violation; it does not block the API request.
+
+== Task 2.2: Inform and enforce — webhook rejects create
+
+. Edit *Privileged Container* → *Policy behavior → Actions*.
+. Set the response method to *Inform and enforce* and enable *Deploy* enforcement. Save.
+. Delete the previous Deployment:
+
+[source,bash]
+----
+oc delete deployment test-privileged-app -n policy-lab --ignore-not-found
+----
+
+. Recreate it with the same manifest as Task 2.1.
+
+Expected output (RHACS {rhacs-version}):
+
+[source,text]
+----
+Error from server (Failed currently enforced policies from RHACS): admission webhook "policyeval.stackrox.io" denied the request:
+The attempted operation violated one or more enforced policies, described below:
+
+Policy: Privileged Container
+- Violations:
+    - Container 'nginx' is privileged
+
+In case of emergency, add the annotation {"admission.stackrox.io/break-glass": "ticket-1234"} to your deployment
+----
+
+NOTE: With the admission controller listening on creates, Deploy enforcement rejects the request in the API server *before* the object is stored. Scale-to-zero never runs for that create path.
+
+IMPORTANT: After the demo, set *Privileged Container* back to *Inform only* so later exercises and other Showroom modules are not blocked.

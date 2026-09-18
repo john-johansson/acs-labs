@@ -1,0 +1,43 @@
+= Exercise 5: Pipeline integration (`roxctl`) and exit codes
+:navtitle: Exercise 5: Pipeline gates
+
+Estimated time: 5 minutes.
+
+`roxctl deployment check` exits `1` only when a violated policy has a *breaking* deploy action.
+In {rhacs-version}, `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` alone does *not* set BREAKS DEPLOY.
+`SCALE_TO_ZERO_ENFORCEMENT` does — that is why the registry policy includes it.
+
+== Task 5.1: Check an unauthorized manifest
+
+[source,bash]
+----
+roxctl deployment check \
+  --endpoint "$ROX_CENTRAL_ADDRESS" \
+  --cluster production \
+  --namespace policy-lab \
+  -f content/modules/ROOT/examples/unapproved-external-app.yaml
+----
+
+== Task 5.2: Verify pipeline exit status
+
+[source,bash]
+----
+echo "Roxctl Exit Code: $?"
+----
+
+The table lists *Lab - Enforce Private Registry Only* with *BREAKS DEPLOY*, and:
+
+[source,text]
+----
+ERROR:	checking deployment failed: breaking policies found
+Roxctl Exit Code: 1
+----
+
+NOTE: Exit code `1` is what GitLab CI, Azure DevOps, or Tekton should use as the pipeline gate, before the manifest ever reaches the cluster.
+
+== Lab wrap-up
+
+* *Admission vs scale-to-zero:* `policyeval.stackrox.io` rejects creates when Deploy enforcement is on and the admission controller is listening. Scale-to-zero is Sensor's fallback for existing workloads, and the action that makes `roxctl deployment check` fail.
+* *`FAIL_KUBE_REQUEST_ENFORCEMENT`:* Kubernetes event admission (`exec`, `port-forward`), not Deployment CREATE.
+* *GitOps:* `SecurityPolicy` CRs (`config.stackrox.io/v1alpha1`, namespace `stackrox`) are the policy-as-code path next to application manifests.
+* *Pipelines:* `roxctl` uses `ROX_API_TOKEN` from the environment; pass `--endpoint`, not `--token`.

@@ -1,0 +1,45 @@
+= Prerequisites and environment verification
+:navtitle: Prerequisites
+
+Estimated time: 5 minutes.
+
+== Access the RHEL bastion host
+
+SSH into the lab bastion host provided in your Showroom dashboard:
+
+[source,bash]
+----
+ssh {bastion_ssh_user_name}@{bastion_public_hostname}
+----
+
+== Verify RHACS CLI access
+
+`ROX_CENTRAL_ADDRESS` and `ROX_API_TOKEN` are already set on the bastion.
+`roxctl` reads the token from the environment — do not pass `--token`.
+
+[source,bash]
+----
+echo "$ROX_CENTRAL_ADDRESS"
+roxctl central whoami --endpoint "$ROX_CENTRAL_ADDRESS"
+----
+
+Expected output (abbreviated):
+
+[source,text]
+----
+User name:
+	anonymous bearer token "..." with roles [Admin]
+Roles:
+	- Admin
+----
+
+== Create the lab namespace
+
+[source,bash]
+----
+oc new-project policy-lab --skip-config-write || oc create namespace policy-lab
+# Privileged pods need this SCC; otherwise OpenShift rejects the pod even if ACS allows the Deployment.
+oc adm policy add-scc-to-user privileged -z default -n policy-lab
+----
+
+TIP: Clone https://github.com/john-johansson/acs-labs[the lab repository] on the bastion so later exercises can `oc apply -f content/modules/ROOT/examples/...`.

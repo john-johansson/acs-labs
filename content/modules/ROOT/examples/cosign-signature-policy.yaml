@@ -1,0 +1,26 @@
+apiVersion: config.stackrox.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: lab-require-cosign-signature
+  namespace: stackrox
+spec:
+  policyName: "Lab - Require Cosign Image Signature"
+  description: "Require images to be verified by the organization Cosign release key."
+  categories:
+    - "Supply Chain Security"
+  severity: "HIGH_SEVERITY"
+  rationale: "Workloads on OpenShift must be cryptographically signed by the release pipeline."
+  remediation: "Sign the image with Cosign / RHTAS before pushing to the registry."
+  lifecycleStages:
+    - BUILD
+    - DEPLOY
+  eventSource: NOT_APPLICABLE
+  enforcementActions:
+    - FAIL_DEPLOYMENT_CREATE_ENFORCEMENT
+    - FAIL_DEPLOYMENT_UPDATE_ENFORCEMENT
+  policySections:
+    - policyGroups:
+        - fieldName: "Image Signature Verified By"
+          booleanOperator: OR
+          values:
+            - value: "REPLACE_WITH_SIGNATURE_INTEGRATION_ID"
