@@ -1,0 +1,26 @@
+= Exercise 2: The built-in policy library
+:navtitle: Exercise 2: Policy library
+
+Estimated time: 5 minutes.
+
+RHACS ships with a library of policies built from Red Hat's security expertise, industry best practices, and mappings to common compliance standards.
+Every policy includes *Rationale* and *Guidance* written for developers, not just security reviewers.
+
+== Task 2.1: Open a package-manager policy
+
+. From the left menu, navigate to *Platform Configuration → Policy Management*.
+. Locate and open *Alpine Linux Package Manager (apk) in Image*.
+. Read the *Rationale* section aloud (or to yourself).
+. Point to the *Guidance* section: it tells the developer which Dockerfile command removes the package manager — a one-line fix that permanently reduces attack surface in the next image build.
+
+== Task 2.2: Lifecycle stages in the library
+
+. Navigate back to the policy list.
+. Highlight the lifecycle column — each policy shows which stage(s) it applies to at a glance.
+. Note that you can write a single policy that combines criteria across stages — for example, flagging a critical CVE specifically in deployments that are also privileged.
+
+== Key takeaways
+
+* Every policy includes Rationale and Guidance written for developers, not just security reviewers.
+* The lifecycle tags show which stage each policy applies to at a glance.
+* Cross-lifecycle policy criteria eliminate the need to coordinate between separate tooling.

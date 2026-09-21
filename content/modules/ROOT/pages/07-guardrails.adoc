@@ -1,9 +1,9 @@
-= Exercise 4: Custom guardrails and image signatures
-:navtitle: Exercise 4: Custom guardrails
+= Exercise 6: Custom guardrails and image signatures
+:navtitle: Exercise 6: Custom guardrails
 
 Estimated time: 10 minutes.
 
-== Task 4.1: Cosign image signature verification
+== Task 6.1: Cosign image signature verification
 
 This Showroom already has a Cosign signature integration named *Red Hat*.
 Use that ID as a stand-in for an organization release key.
@@ -24,7 +24,7 @@ Do *not* set `negate: true` on that field, or the policy would alert on signed i
 
 TIP: Compare with the built-in (disabled) policy *Red Hat images must be signed by a Red Hat release key* — same criterion, production-shaped example.
 
-== Task 4.2: Critical fixable CVE threshold (>= 9.0)
+== Task 6.2: Critical fixable CVE threshold (>= 9.0)
 
 CVSS comparison is encoded *in the value string*.
 Do not use a `comparisonOperator` field.

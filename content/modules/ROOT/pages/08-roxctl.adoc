@@ -1,5 +1,5 @@
-= Exercise 5: Pipeline integration (`roxctl`) and exit codes
-:navtitle: Exercise 5: Pipeline gates
+= Exercise 7: Pipeline integration (`roxctl`) and exit codes
+:navtitle: Exercise 7: Pipeline gates
 
 Estimated time: 5 minutes.
 
@@ -7,7 +7,7 @@ Estimated time: 5 minutes.
 In {rhacs-version}, `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` alone does *not* set BREAKS DEPLOY.
 `SCALE_TO_ZERO_ENFORCEMENT` does — that is why the registry policy includes it.
 
-== Task 5.1: Check an unauthorized manifest
+== Task 7.1: Check an unauthorized manifest
 
 [source,bash]
 ----
@@ -18,7 +18,7 @@ roxctl deployment check \
   -f content/modules/ROOT/examples/unapproved-external-app.yaml
 ----
 
-== Task 5.2: Verify pipeline exit status
+== Task 7.2: Verify pipeline exit status
 
 [source,bash]
 ----
