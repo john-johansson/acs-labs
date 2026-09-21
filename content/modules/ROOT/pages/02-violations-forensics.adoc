@@ -1,0 +1,40 @@
+= Exercise 1: Violations and forensic data
+:navtitle: Exercise 1: Violations and forensics
+
+Estimated time: 5 minutes.
+
+A violation in RHACS is a record of a specific moment when a policy criterion was met by an object in your cluster — an image, a deployment configuration, or a runtime process.
+The Violations page is the event stream for *deploy-time* and *runtime* findings.
+Build-time failures surface in your CI pipeline instead — they never land here.
+
+== Task 1.1: Inspect a deploy-time violation
+
+. Open the RHACS Console from the Showroom *Red Hat Advanced Cluster Security* tab.
+. From the left menu, navigate to *Violations*.
+. Locate a violation for the *Fixable Severity at Least Important* policy.
+. Look at the different columns available, then click any violation.
+. Review the information inside it (deployment detail, policy definition, and remediation).
+. When finished, navigate back to the *Violations* list.
+
+== Task 1.2: Inspect a runtime violation
+
+. In the *Policy* filter bar, type `Ubuntu` and select *Ubuntu Package Manager Execution*.
+. Notice that this is a *runtime* violation.
+. Open the violation and check the forensic details available:
+** Process name
+** Arguments passed to it
+** UID it ran under
+** Container ID
+** Exact timestamp
+. Open the policy that triggered this violation.
+. Note the *Guidance* section — it tells the development team exactly what to remove from the Containerfile to prevent this from happening again.
+
+A package manager has no legitimate purpose in a container that ships with all its dependencies.
+Removing it from the image eliminates an entire class of attacker capability in the next build.
+
+== Key takeaways
+
+* Policies span four lifecycle stages — build, deploy, build and deploy, and runtime — but the Violations page stores deploy-time and runtime events.
+* Build-time enforcement stops bad images in CI before they are promoted; deploy-time and runtime enforcement catch what reaches the cluster.
+* Runtime violations include process-level detail that maps directly to incident response workflows.
+* The Guidance section converts a runtime alert into a specific, actionable Containerfile improvement.

@@ -1,12 +1,12 @@
 = Policy Engine
 :navtitle: Overview
 
-A 55-minute hands-on lab for platform, infrastructure, and security engineering teams.
+A 60-minute hands-on lab for platform, infrastructure, and security engineering teams.
 
 [cols="1,3"]
 |===
 |Session date |September 23, 2026 (14:00 – 16:00 CEST)
-|Duration |55 minutes
+|Duration |60 minutes
 |Environment |Red Hat Showroom / RHACS {rhacs-version}
 |===
 
@@ -15,6 +15,8 @@ A 55-minute hands-on lab for platform, infrastructure, and security engineering 
 By completing this lab, participants will:
 
 . Navigate RHACS policy management across *Build*, *Deploy*, and *Runtime* lifecycle stages.
+. Inspect deploy-time and runtime violations, including forensic process detail.
+. Explore the built-in policy library and enable deploy/build enforcement in the console.
 . See the difference between *inform-only* deploy policies and *admission-controller rejection* of create requests.
 . Understand structural differences between policies created via the ACS GUI / API and Custom Resource Definitions (CRDs) synced as GitOps.
 . Build custom guardrails for private registry enforcement, Cosign image signature verification, and fixable CVE thresholds (>= 9.0).
@@ -30,23 +32,31 @@ By completing this lab, participants will:
 |Bastion access, `roxctl whoami`, lab namespace
 |5 min
 
-|xref:02-violations.adoc[Exercise 1]
-|Violations page and built-in policy library
-|10 min
+|xref:02-violations-forensics.adoc[Exercise 1]
+|Violations page and runtime forensic data
+|5 min
 
-|xref:03-admission.adoc[Exercise 2]
+|xref:03-policy-library.adoc[Exercise 2]
+|Built-in policy library, Rationale, and Guidance
+|5 min
+
+|xref:04-enforcement-intro.adoc[Exercise 3]
+|Inform vs Inform and enforce in the console
+|5 min
+
+|xref:05-admission.adoc[Exercise 4]
 |Inform-only vs admission webhook rejection
 |15 min
 
-|xref:04-policy-as-code.adoc[Exercise 3]
+|xref:06-policy-as-code.adoc[Exercise 5]
 |`SecurityPolicy` CRDs vs GUI
 |10 min
 
-|xref:05-guardrails.adoc[Exercise 4]
+|xref:07-guardrails.adoc[Exercise 6]
 |Cosign signatures and CVSS >= 9.0
 |10 min
 
-|xref:06-roxctl.adoc[Exercise 5]
+|xref:08-roxctl.adoc[Exercise 7]
 |`roxctl deployment check` exit codes
 |5 min
 |===

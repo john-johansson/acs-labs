@@ -1,5 +1,5 @@
-= Exercise 3: Policy-as-code via GitOps
-:navtitle: Exercise 3: Policy as code
+= Exercise 5: Policy-as-code via GitOps
+:navtitle: Exercise 5: Policy as code
 
 Estimated time: 10 minutes.
 
@@ -8,16 +8,16 @@ The config controller reconciles CRs in the `stackrox` namespace.
 
 Put `negate` on the *policy group*, not on the value.
 Put `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` on the CR if you want admission to deny creates.
-Add `SCALE_TO_ZERO_ENFORCEMENT` if you also want `roxctl deployment check` to fail the pipeline (Exercise 5).
+Add `SCALE_TO_ZERO_ENFORCEMENT` if you also want `roxctl deployment check` to fail the pipeline (Exercise 7).
 
-== Task 3.1: Review the private-registry policy
+== Task 5.1: Review the private-registry policy
 
 [source,yaml]
 ----
 include::example$private-registry-policy.yaml[]
 ----
 
-== Task 3.2: Apply and confirm in the console
+== Task 5.2: Apply and confirm in the console
 
 [source,bash]
 ----

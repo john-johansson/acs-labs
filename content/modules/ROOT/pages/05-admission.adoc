@@ -1,9 +1,10 @@
-= Exercise 2: Inform-only vs admission rejection
-:navtitle: Exercise 2: Admission control
+= Exercise 4: Inform-only vs admission rejection
+:navtitle: Exercise 4: Admission control
 
 Estimated time: 15 minutes.
 
-This exercise answers the usual platform-team question: why does the UI talk about "scale to 0 replicas" while a create request is rejected by the admission webhook?
+You configured enforcement in the UI in Exercise 3.
+This exercise proves create rejection with a live `oc apply`, and answers the usual platform-team question: why does the UI talk about "scale to 0 replicas" while a create request is rejected by the admission webhook?
 
 On this cluster the admission controller is already watching *CREATE* and *UPDATE* (`listenOnCreates: true`, webhook `policyeval.stackrox.io`).
 
@@ -25,7 +26,7 @@ It is *not* the webhook that rejects creates.
 
 `FAIL_KUBE_REQUEST_ENFORCEMENT` is a different action: it applies to Kubernetes *events* such as `exec` / `port-forward` (webhook `k8sevents.stackrox.io`), not to Deployment CREATE.
 
-== Task 2.1: Inform-only — object is created
+== Task 4.1: Inform-only — object is created
 
 . In *Platform Configuration → Policy Management*, open *Privileged Container*.
 . Confirm the response method is *Inform only* (no Deploy enforcement).
@@ -46,7 +47,7 @@ oc get deployment test-privileged-app -n policy-lab
 The Deployment *is created* (`spec.replicas=2`).
 ACS records a Deploy violation; it does not block the API request.
 
-== Task 2.2: Inform and enforce — webhook rejects create
+== Task 4.2: Inform and enforce — webhook rejects create
 
 . Edit *Privileged Container* → *Policy behavior → Actions*.
 . Set the response method to *Inform and enforce* and enable *Deploy* enforcement. Save.
@@ -57,7 +58,7 @@ ACS records a Deploy violation; it does not block the API request.
 oc delete deployment test-privileged-app -n policy-lab --ignore-not-found
 ----
 
-. Recreate it with the same manifest as Task 2.1.
+. Recreate it with the same manifest as Task 4.1.
 
 Expected output (RHACS {rhacs-version}):
 

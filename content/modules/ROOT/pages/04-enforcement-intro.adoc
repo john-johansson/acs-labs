@@ -1,0 +1,30 @@
+= Exercise 3: Policy enforcement and the admission controller
+:navtitle: Exercise 3: Enforcement intro
+
+Estimated time: 5 minutes.
+
+Informing teams about policy violations is the starting point.
+For high-risk criteria, security teams need a guarantee that non-compliant workloads cannot be deployed — not just notified.
+When a policy is set to enforce at deploy time, RHACS programs the Kubernetes Admission Controller to evaluate incoming deployment requests against the policy.
+
+== Task 3.1: Enable Inform and enforce
+
+. From the *Policy Management* list, locate the *Fixable CVSS >= 7* policy.
+. Click *Actions → Edit* in the upper right of the policy.
+. In the left-hand navigation of the edit flow, click *Policy behavior → Actions*.
+. By default, most policies are set to *Inform* — they generate a violation record and optionally send a notification, but do not block the workload.
+. Point to the *Response method* options: switching to *Inform and enforce* activates the Admission Controller integration.
+. Point to the *Configure Enforcement Behavior* switches for *Build* and *Deploy*.
+. Click *Inform and enforce*, then toggle *Build* and *Deploy* enforcement on.
+. Click *Review policy* from the left-hand navigation, then click *Save*.
+
+A deployment that violates an enforced policy is rejected by the OpenShift API with a clear error message that includes the policy name and remediation guidance.
+There is no proprietary sidecar — enforcement flows through the same Admission Controller that OpenShift already uses.
+
+NOTE: Exercise 4 proves create denial with a live `oc apply` against a different policy (*Privileged Container*).
+
+== Key takeaways
+
+* Enforcement flows through the Kubernetes Admission Controller — no proprietary infrastructure required.
+* Developers receive actionable error messages, not opaque rejections.
+* Build and deploy enforcement together create a two-stage gate that catches violations early and prevents bypass.
