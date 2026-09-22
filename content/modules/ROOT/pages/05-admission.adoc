@@ -3,8 +3,8 @@
 
 Estimated time: 15 minutes.
 
-You configured enforcement in the UI in Exercise 3.
-This exercise proves create rejection with a live `oc apply`, and answers the usual platform-team question: why does the UI talk about "scale to 0 replicas" while a create request is rejected by the admission webhook?
+Exercise 3 turned on Deploy enforcement and left the running Deployment in place.
+This exercise proves the other path: a new `oc apply` is rejected by the admission webhook, and the object never lands in etcd.
 
 On this cluster the admission controller is already watching *CREATE* and *UPDATE* (`listenOnCreates: true`, webhook `policyeval.stackrox.io`).
 
@@ -74,6 +74,40 @@ Policy: Privileged Container
 In case of emergency, add the annotation {"admission.stackrox.io/break-glass": "ticket-1234"} to your deployment
 ----
 
-NOTE: With the admission controller listening on creates, Deploy enforcement rejects the request in the API server *before* the object is stored. Scale-to-zero never runs for that create path.
+== Task 4.3: Find the denied create on the Violations page
+
+. Return to the RHACS console and open *Violations*.
+. Set the status filter to *Attempted*.
+. Open the violation for *Privileged Container*.
+. The detail shows the blocked create: container `nginx` is privileged. There is no Deployment behind it because the API server rejected the request.
+
+== Task 4.4: Break the glass
+
+The admission error includes the annotation `admission.stackrox.io/break-glass`.
+The annotation must be on the manifest before the `CREATE` request reaches the API server. `oc annotate` on an existing object sends a `PATCH`, which is not intercepted by the webhook.
+
+[source,bash]
+----
+oc apply -n policy-lab -f content/modules/ROOT/examples/privileged-app-break-glass.yaml
+----
+
+The Deployment is created.
+In *Violations*, a Deploy violation is recorded and the *Emergency Deployment Annotation* policy fires.
+That annotation is the documented escape hatch when enforcement must be bypassed.
+
+Clean up:
+
+[source,bash]
+----
+oc delete deployment test-privileged-app -n policy-lab --ignore-not-found
+----
 
 IMPORTANT: After the demo, set *Privileged Container* back to *Inform only* so later exercises and other Showroom modules are not blocked.
+
+== Key takeaways
+
+* *Inform only* creates the object and records a violation. *Inform and enforce* with *Deploy* on rejects the API request before the object is stored.
+* The admission webhook `policyeval.stackrox.io` handles `CREATE`, `UPDATE`, and `SCALE`. It does not act on a Deployment that is already running (Exercise 3).
+* Denied creates appear on the *Violations* page under the *Attempted* status filter.
+* In a CRD, this behavior is `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` and `FAIL_DEPLOYMENT_UPDATE_ENFORCEMENT` (Exercise 5). The GUI Deploy switch stores `SCALE_TO_ZERO_ENFORCEMENT`, which is Sensor's fallback.
+* The `admission.stackrox.io/break-glass` annotation bypasses the webhook. The *Emergency Deployment Annotation* policy alerts on its use.

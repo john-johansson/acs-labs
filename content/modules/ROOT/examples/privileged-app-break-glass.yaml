@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-privileged-app
+  namespace: policy-lab
+  annotations:
+    admission.stackrox.io/break-glass: "lab-exercise-4"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: test-privileged
+  template:
+    metadata:
+      labels:
+        app: test-privileged
+    spec:
+      containers:
+      - name: nginx
+        image: docker.io/library/nginx:1.27
+        securityContext:
+          privileged: true
