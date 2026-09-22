@@ -34,7 +34,7 @@ Removing it from the image eliminates an entire class of attacker capability in 
 
 == Key takeaways
 
-* Policies span four lifecycle stages — build, deploy, build and deploy, and runtime — but the Violations page stores deploy-time and runtime events.
+* Policies span three lifecycle stages — build, deploy, and runtime — but the Violations page stores deploy-time and runtime events.
 * Build-time enforcement stops bad images in CI before they are promoted; deploy-time and runtime enforcement catch what reaches the cluster.
 * Runtime violations include process-level detail that maps directly to incident response workflows.
 * The Guidance section converts a runtime alert into a specific, actionable Containerfile improvement.
