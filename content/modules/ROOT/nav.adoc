@@ -8,5 +8,4 @@
 ** xref:05-admission.adoc[Exercise 4: Admission control]
 ** xref:05b-runtime.adoc[Exercise 5: Runtime enforcement]
 ** xref:06-policy-as-code.adoc[Exercise 6: Policy as code]
-** xref:07-guardrails.adoc[Exercise 7: Custom guardrails]
-** xref:08-roxctl.adoc[Exercise 8: Pipeline gates]
+** xref:08-roxctl.adoc[Exercise 7: Pipeline gates]

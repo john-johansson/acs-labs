@@ -1,7 +1,7 @@
 = Exercise 6: Policy-as-code via GitOps
 :navtitle: Exercise 6: Policy as code
 
-Estimated time: 10 minutes.
+Estimated time: 15 minutes.
 
 Exercises 3 and 4 used the GUI. The GUI Deploy switch stores `SCALE_TO_ZERO_ENFORCEMENT` and the admission controller decides whether to reject the request. A CRD lets you name each enforcement action explicitly, and it lives in Git alongside your application manifests.
 
@@ -10,7 +10,7 @@ The config controller reconciles CRs in the `stackrox` namespace.
 
 Put `negate` on the *policy group*, not on the value.
 Put `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` on the CR if you want admission to deny creates.
-Add `SCALE_TO_ZERO_ENFORCEMENT` if you also want `roxctl deployment check` to fail the pipeline (Exercise 8).
+Add `SCALE_TO_ZERO_ENFORCEMENT` if you also want `roxctl deployment check` to fail the pipeline (Exercise 7).
 
 == Task 6.1: List the enforcement actions the CR accepts
 
@@ -23,7 +23,7 @@ oc explain securitypolicy.spec.enforcementActions --api-version=config.stackrox.
 
 `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` and `FAIL_DEPLOYMENT_UPDATE_ENFORCEMENT` are the admission webhook actions that rejected the create in Exercise 4.
 `SCALE_TO_ZERO_ENFORCEMENT` is the Deploy switch from Exercise 3.
-`FAIL_BUILD_ENFORCEMENT` makes `roxctl image check` return non-zero, which fails a CI/CD pipeline (Exercise 8).
+`FAIL_BUILD_ENFORCEMENT` makes `roxctl image check` return non-zero, which fails a CI/CD pipeline (Exercise 7).
 `FAIL_KUBE_REQUEST_ENFORCEMENT` applies to `exec` and port-forward (`k8sevents.stackrox.io`), not to a Deployment create.
 
 == Task 6.2: Review the private-registry policy
@@ -47,7 +47,7 @@ The GUI can export any custom policy as a `SecurityPolicy` CR.
 
 . In *Policy Management*, open the *Lab - Latest tag in policy-lab* clone from Exercise 3.
 . Click *Actions → Save as Custom Resource*.
-. Open the downloaded YAML and check `spec.enforcementActions`. The GUI stored `SCALE_TO_ZERO_ENFORCEMENT` — the same action you saw in Task 5.1.
+. Open the downloaded YAML and check `spec.enforcementActions`. The GUI stored `SCALE_TO_ZERO_ENFORCEMENT` — the same action you saw in Task 6.1.
 
 This is the starting point for managing a policy as code. In a real environment you would commit this YAML to a Git repository and let Argo CD or a CI/CD pipeline apply it to the `stackrox` namespace. We don't have a Git server or Argo CD instance in this lab, so in the next task we will apply the resource directly with `oc apply`.
 
@@ -116,12 +116,53 @@ Policy: Lab - Enforce Private Registry Only
     - Image is from disallowed registry 'docker.io'
 ----
 
-Clean up the `SecurityPolicy` if you do not want it to block later exercises:
+Leave the private-registry policy in place — Exercise 7 uses it.
+
+== Task 6.7: Apply a Cosign image signature policy
+
+This Showroom already has a Cosign signature integration named *Red Hat*.
+In production you would add your pipeline's Cosign public key under *Platform Configuration → Integrations*.
 
 [source,bash]
 ----
-oc delete securitypolicy lab-enforce-private-registry -n stackrox
+export SIG_ID=$(curl -sk -H "Authorization: Bearer $ROX_API_TOKEN" \
+  "$ROX_CENTRAL_ADDRESS/v1/signatureintegrations" \
+  | python3 -c 'import sys,json; d=json.load(sys.stdin); print(next(i["id"] for i in d.get("integrations",[]) if i.get("name")=="Red Hat"))')
+echo "$SIG_ID"
+sed "s|REPLACE_WITH_SIGNATURE_INTEGRATION_ID|${SIG_ID}|" \
+  content/modules/ROOT/examples/cosign-signature-policy.yaml | oc apply -f -
 ----
+
+`Image Signature Verified By` matches images that are *not* verified by the selected integration.
+Do *not* set `negate: true` on that field, or the policy would alert on signed images.
+
+TIP: Compare with the built-in (disabled) policy *Red Hat images must be signed by a Red Hat release key* — same criterion, production-shaped example.
+
+== Task 6.8: Apply a fixable CVE threshold policy
+
+CVSS comparison is encoded *in the value string* (`">= 9.000000"`).
+Do not use a `comparisonOperator` field — the CRD does not have one.
+
+[source,yaml]
+----
+include::example$fixable-cve-policy.yaml[]
+----
+
+[source,bash]
+----
+oc apply -f content/modules/ROOT/examples/fixable-cve-policy.yaml
+----
+
+The policy is scoped to `policy-lab` so it does not alert on the rest of the cluster.
+
+Verify all three policies are in place:
+
+[source,bash]
+----
+oc get securitypolicy -n stackrox
+----
+
+You should see `lab-enforce-private-registry`, `lab-require-cosign-signature`, and `lab-block-critical-fixable-cves`. Exercise 7 runs `roxctl` against all of them.
 
 == Key takeaways
 
@@ -129,3 +170,4 @@ oc delete securitypolicy lab-enforce-private-registry -n stackrox
 * A CRD can set `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` directly. The GUI Deploy switch does not expose that action — it stores `SCALE_TO_ZERO_ENFORCEMENT`.
 * `negate` belongs on the policy group, not the value. Setting it on the value is silently ignored.
 * `oc explain securitypolicy.spec --api-version=config.stackrox.io/v1alpha1` documents every field and enum the CR accepts.
+* Cosign signature verification, private registry enforcement, and fixable CVE thresholds are three common production patterns — all expressible as `SecurityPolicy` CRs managed via GitOps.
