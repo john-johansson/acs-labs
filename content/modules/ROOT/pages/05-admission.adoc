@@ -92,8 +92,13 @@ oc apply -n policy-lab -f content/modules/ROOT/examples/privileged-app-break-gla
 ----
 
 The Deployment is created.
-In *Violations*, a Deploy violation is recorded and the *Emergency Deployment Annotation* policy fires.
+
+. Open *Violations* and filter on *Emergency Deployment Annotation*.
+. Open the violation for `test-privileged-app`.
+. The annotation value `lab-exercise-4` is recorded in the deployment details.
+
 That annotation is the documented escape hatch when enforcement must be bypassed.
+RHACS always fires the *Emergency Deployment Annotation* policy so the bypass is auditable.
 
 Clean up:
 
