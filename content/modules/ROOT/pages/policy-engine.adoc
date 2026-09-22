@@ -41,7 +41,7 @@ By completing this lab, participants will:
 |5 min
 
 |xref:04-enforcement-intro.adoc[Exercise 3]
-|Inform vs Inform and enforce in the console
+|Clone Latest tag, then deny a `:latest` deploy
 |5 min
 
 |xref:05-admission.adoc[Exercise 4]

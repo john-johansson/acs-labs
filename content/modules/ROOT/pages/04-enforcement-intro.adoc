@@ -7,24 +7,63 @@ Informing teams about policy violations is the starting point.
 For high-risk criteria, security teams need a guarantee that non-compliant workloads cannot be deployed — not just notified.
 When a policy is set to enforce at deploy time, RHACS programs the Kubernetes Admission Controller to evaluate incoming deployment requests against the policy.
 
-== Task 3.1: Enable Inform and enforce
+You can turn enforcement on for a system policy.
+That is a bad fit here: *Latest tag* would then block every `:latest` image in the Showroom.
+Clone it instead, and leave the original enabled.
+The system policy keeps informing on every namespace.
+The copy enforces only in `policy-lab`.
+Criteria on a system policy still cannot be edited, and the policy cannot be deleted.
 
-. From the *Policy Management* list, locate the *Fixable CVSS >= 7* policy.
-. Click *Actions → Edit* in the upper right of the policy.
-. In the left-hand navigation of the edit flow, click *Policy behavior → Actions*.
-. By default, most policies are set to *Inform* — they generate a violation record and optionally send a notification, but do not block the workload.
-. Point to the *Response method* options: switching to *Inform and enforce* activates the Admission Controller integration.
-. Point to the *Configure Enforcement Behavior* switches for *Build* and *Deploy*.
-. Click *Inform and enforce*, then toggle *Build* and *Deploy* enforcement on.
-. Click *Review policy* from the left-hand navigation, then click *Save*.
+== Task 3.1: Clone Latest tag
 
-A deployment that violates an enforced policy is rejected by the OpenShift API with a clear error message that includes the policy name and remediation guidance.
-There is no proprietary sidecar — enforcement flows through the same Admission Controller that OpenShift already uses.
+*Latest tag* is enabled, severity *Low*, and *Inform* only.
+It already applies at build and deploy, across the whole cluster.
 
-NOTE: Exercise 4 proves create denial with a live `oc apply` against a different policy (*Privileged Container*).
+. From the *Policy Management* list, open *Latest tag*.
+. Click *Actions → Clone policy*.
+. On *Policy details*, set the name to `Lab - Latest tag in policy-lab` and the severity to *High*.
+. Leave the image-tag criterion as `latest`.
+. On *Policy resources*, include only the namespace `policy-lab`.
+. On *Policy behavior → Actions*, select *Inform and enforce* and turn *Deploy* enforcement on. Leave *Build* enforcement off.
+. Open *Review policy*, confirm the preview is limited to `policy-lab`, and click *Save*.
+
+The system policy keeps reporting `:latest` images everywhere.
+The lab copy rejects creates only in `policy-lab`.
+
+== Task 3.2: Deploy an image tagged latest
+
+[source,bash]
+----
+oc apply -n policy-lab -f content/modules/ROOT/examples/latest-tag-app.yaml
+----
+
+Expected output (RHACS {rhacs-version}):
+
+[source,text]
+----
+Error from server (Failed currently enforced policies from RHACS): admission webhook "policyeval.stackrox.io" denied the request:
+The attempted operation violated one or more enforced policies, described below:
+
+Policy: Lab - Latest tag in policy-lab
+- Violations:
+    - Container 'nginx' has image with tag 'latest'
+
+In case of emergency, add the annotation {"admission.stackrox.io/break-glass": "ticket-1234"} to your deployment
+----
+
+The Deployment is not created. Confirm that:
+
+[source,bash]
+----
+oc get deployment test-latest-tag -n policy-lab
+----
+
+NOTE: Exercise 4 repeats this proof with *Privileged Container*, including the inform-only path where the object is created.
+
+IMPORTANT: Before Exercise 7, disable `Lab - Latest tag in policy-lab`. Leave the system policy *Latest tag* enabled. Exercise 7 checks `ubuntu:latest` in `policy-lab`.
 
 == Key takeaways
 
-* Enforcement flows through the Kubernetes Admission Controller — no proprietary infrastructure required.
-* Developers receive actionable error messages, not opaque rejections.
-* Build and deploy enforcement together create a two-stage gate that catches violations early and prevents bypass.
+* You can enforce a system policy, but a cluster-wide *Latest tag* block is the wrong scope. Clone it so the original keeps informing everywhere.
+* A narrower scope is a different purpose. Keep the built-in policy so the rest of the cluster is still informed.
+* Scope the enforced copy to `policy-lab`. A `:latest` image in that namespace is rejected by the admission controller, and the Deployment is not created.
