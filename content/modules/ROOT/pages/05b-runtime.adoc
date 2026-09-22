@@ -1,0 +1,122 @@
+= Exercise 5: Runtime enforcement
+:navtitle: Exercise 5: Runtime enforcement
+
+Estimated time: 15 minutes.
+
+Exercises 3 and 4 covered *deploy-time* enforcement — the admission webhook blocks a bad create, or Sensor scales an existing workload to zero.
+Runtime enforcement is different: RHACS watches *what processes run inside a container* and can kill the pod or block future `exec` / `port-forward` requests.
+
+Runtime policies use the `RUNTIME` lifecycle stage.
+Two enforcement actions apply at runtime:
+
+* `KILL_POD_ENFORCEMENT` — Sensor kills the pod when the violating process is detected.
+* `FAIL_KUBE_REQUEST_ENFORCEMENT` — the `k8sevents.stackrox.io` webhook blocks `exec` and `port-forward` to pods that have an active runtime violation from the policy.
+
+== Task 5.1: Deploy a test workload
+
+[source,bash]
+----
+oc apply -f content/modules/ROOT/examples/runtime-test.yaml
+oc rollout status deployment/runtime-test -n policy-lab --timeout=120s
+----
+
+The image `ubuntu:22.04` (not `:latest`) avoids the *Lab - Latest tag* clone from Exercise 3.
+
+== Task 5.2: Trigger a runtime violation
+
+The system policy *Ubuntu Package Manager Execution* is enabled by default at *Inform only*.
+Exec into the pod and run `apt-get`:
+
+[source,bash]
+----
+POD=$(oc get pod -n policy-lab -l app=runtime-test -o jsonpath='{.items[0].metadata.name}')
+oc exec -n policy-lab "$POD" -- apt-get update
+----
+
+The command runs to completion because the policy is inform-only — no enforcement is active yet.
+
+== Task 5.3: Inspect the runtime violation
+
+. In the RHACS console, open *Violations*.
+. Filter on policy *Ubuntu Package Manager Execution*.
+. Open the violation for `runtime-test`.
+. Expand the process details and note:
+** *Process name*: `apt-get`
+** *Arguments*: `update`
+** *UID*: the user ID the process ran under
+** *Container ID* and *timestamp*
+
+This forensic data is unique to runtime violations. Deploy-time violations only show the workload spec.
+
+== Task 5.4: Enable KILL_POD_ENFORCEMENT
+
+. In *Platform Configuration → Policy Management*, open *Ubuntu Package Manager Execution*.
+. Click *Actions → Edit policy*.
+. On *Policy behavior → Actions*, select *Inform and enforce* and turn *Runtime* enforcement on.
+. Save the policy.
+
+Under the hood this adds `KILL_POD_ENFORCEMENT` to the policy. The next time the violating process runs inside a container, Sensor kills the pod.
+
+== Task 5.5: Re-exec and observe the pod kill
+
+[source,bash]
+----
+POD=$(oc get pod -n policy-lab -l app=runtime-test -o jsonpath='{.items[0].metadata.name}')
+oc exec -n policy-lab "$POD" -- apt-get update
+----
+
+This time the pod is killed. Verify:
+
+[source,bash]
+----
+oc get pods -n policy-lab -l app=runtime-test
+----
+
+The Deployment controller creates a replacement pod (the replica count is still 1).
+Every time someone execs in and runs `apt-get`, the new pod will be killed again.
+
+== Task 5.6: Block exec with FAIL_KUBE_REQUEST_ENFORCEMENT
+
+`KILL_POD_ENFORCEMENT` lets the process start and then kills the pod.
+`FAIL_KUBE_REQUEST_ENFORCEMENT` takes a different approach: the `k8sevents.stackrox.io` webhook intercepts the `exec` request itself and rejects it before the process ever runs.
+
+This requires `listenOnEvents: true` on the `SecuredCluster` CR (already set on this cluster).
+
+. Return to *Ubuntu Package Manager Execution* in *Policy Management*.
+. Click *Actions → Edit policy*.
+. On *Policy behavior*, confirm *Runtime* enforcement is still on.
+
+With an active runtime violation on the `runtime-test` deployment, the `k8sevents` webhook blocks further `exec` requests:
+
+[source,bash]
+----
+POD=$(oc get pod -n policy-lab -l app=runtime-test -o jsonpath='{.items[0].metadata.name}')
+oc exec -n policy-lab "$POD" -- apt-get update
+----
+
+Expected output:
+
+[source,text]
+----
+Error from server: admission webhook "k8sevents.stackrox.io" denied the request
+----
+
+The exec never reaches the container. Compare this to Task 5.5 where the process ran and then the pod was killed.
+
+TIP: Try `oc port-forward` to the same pod — it is also blocked by `k8sevents.stackrox.io` when the deployment has an active runtime violation.
+
+== Cleanup
+
+IMPORTANT: Set *Ubuntu Package Manager Execution* back to *Inform only* so later exercises are not affected.
+
+[source,bash]
+----
+oc delete deployment runtime-test -n policy-lab --ignore-not-found
+----
+
+== Key takeaways
+
+* Runtime policies watch *observed behavior* (processes, network connections), not the workload spec or image contents.
+* `KILL_POD_ENFORCEMENT` kills the pod after the violating process is detected. The Deployment controller restarts it, but the violation repeats on the next attempt.
+* `FAIL_KUBE_REQUEST_ENFORCEMENT` blocks `exec` and `port-forward` at the API server level via the `k8sevents.stackrox.io` webhook. The process never starts.
+* Runtime forensic data (process name, arguments, UID, container ID, timestamp) is not available for deploy-time violations — only runtime violations capture what actually ran.

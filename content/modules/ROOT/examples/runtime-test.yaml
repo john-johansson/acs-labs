@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: runtime-test
+  namespace: policy-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: runtime-test
+  template:
+    metadata:
+      labels:
+        app: runtime-test
+    spec:
+      containers:
+      - name: ubuntu
+        image: docker.io/library/ubuntu:22.04
+        command: ["sleep", "infinity"]

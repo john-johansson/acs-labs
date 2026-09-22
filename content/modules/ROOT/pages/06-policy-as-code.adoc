@@ -1,23 +1,57 @@
-= Exercise 5: Policy-as-code via GitOps
-:navtitle: Exercise 5: Policy as code
+= Exercise 6: Policy-as-code via GitOps
+:navtitle: Exercise 6: Policy as code
 
 Estimated time: 10 minutes.
+
+Exercises 3 and 4 used the GUI. The GUI Deploy switch stores `SCALE_TO_ZERO_ENFORCEMENT` and the admission controller decides whether to reject the request. A CRD lets you name each enforcement action explicitly, and it lives in Git alongside your application manifests.
 
 `SecurityPolicy` lives in `config.stackrox.io/v1alpha1` (not `platform.stackrox.io`).
 The config controller reconciles CRs in the `stackrox` namespace.
 
 Put `negate` on the *policy group*, not on the value.
 Put `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` on the CR if you want admission to deny creates.
-Add `SCALE_TO_ZERO_ENFORCEMENT` if you also want `roxctl deployment check` to fail the pipeline (Exercise 7).
+Add `SCALE_TO_ZERO_ENFORCEMENT` if you also want `roxctl deployment check` to fail the pipeline (Exercise 8).
 
-== Task 5.1: Review the private-registry policy
+== Task 6.1: List the enforcement actions the CR accepts
+
+The CRD schema is the list of legal values. It is not what a particular policy has saved.
+
+[source,bash]
+----
+oc explain securitypolicy.spec.enforcementActions --api-version=config.stackrox.io/v1alpha1
+----
+
+`FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` and `FAIL_DEPLOYMENT_UPDATE_ENFORCEMENT` are the admission webhook actions that rejected the create in Exercise 4.
+`SCALE_TO_ZERO_ENFORCEMENT` is the Deploy switch from Exercise 3.
+`FAIL_BUILD_ENFORCEMENT` makes `roxctl image check` return non-zero, which fails a CI/CD pipeline (Exercise 8).
+`FAIL_KUBE_REQUEST_ENFORCEMENT` applies to `exec` and port-forward (`k8sevents.stackrox.io`), not to a Deployment create.
+
+== Task 6.2: Review the private-registry policy
+
+Walk through the CR before applying it.
 
 [source,yaml]
 ----
 include::example$private-registry-policy.yaml[]
 ----
 
-== Task 5.2: Apply and confirm in the console
+Key fields to point out:
+
+* `metadata.namespace: stackrox` — the config controller only watches the `stackrox` namespace.
+* `negate: true` on the policy group, not on the value. This inverts the match: alert when the image registry is *not* `registry.internal.example.com`.
+* Three enforcement actions: `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` rejects a new `oc apply`. `FAIL_DEPLOYMENT_UPDATE_ENFORCEMENT` rejects an update. `SCALE_TO_ZERO_ENFORCEMENT` is Sensor's fallback for workloads that bypassed admission.
+
+== Task 6.3: Download the Latest tag clone as a CR
+
+The GUI can export any custom policy as a `SecurityPolicy` CR.
+
+. In *Policy Management*, open the *Lab - Latest tag in policy-lab* clone from Exercise 3.
+. Click *Actions → Save as Custom Resource*.
+. Open the downloaded YAML and check `spec.enforcementActions`. The GUI stored `SCALE_TO_ZERO_ENFORCEMENT` — the same action you saw in Task 5.1.
+
+This is the starting point for managing a policy as code. In a real environment you would commit this YAML to a Git repository and let Argo CD or a CI/CD pipeline apply it to the `stackrox` namespace. We don't have a Git server or Argo CD instance in this lab, so in the next task we will apply the resource directly with `oc apply`.
+
+== Task 6.4: Apply the private-registry policy
 
 [source,bash]
 ----
@@ -26,4 +60,72 @@ oc get securitypolicy lab-enforce-private-registry -n stackrox
 ----
 
 . In *Platform Configuration → Policy Management*, open *Lab - Enforce Private Registry Only*.
-. Compare the GUI with the CR. Admission deny is `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` / `FAIL_DEPLOYMENT_UPDATE_ENFORCEMENT`. Scale-to-zero is `SCALE_TO_ZERO_ENFORCEMENT`.
+. Compare the GUI view with the CR you just applied.
+. The GUI shows *Inform and enforce* with *Deploy* on. It does not show the individual `FAIL_DEPLOYMENT_*` actions — those are only visible in the CR or the API.
+. Notice the policy is tagged *Externally managed*. Any edits you make in the GUI will be overwritten the next time the CR is reconciled — this is by design so that Git stays the single source of truth.
+
+== Task 6.5: Dry-run a policy via the API
+
+The API accepts a policy JSON for validation without saving it. Use this to catch errors before a commit.
+
+First, find the policy ID of the *Lab - Latest tag in policy-lab* clone and export it as JSON via the API:
+
+[source,bash]
+----
+POLICY_ID=$(curl -sk -H "Authorization: Bearer $ROX_API_TOKEN" \
+  "${ROX_CENTRAL_ADDRESS}/v1/policies" | \
+  jq -r '.policies[] | select(.name | test("Lab - Latest tag")) | .id')
+
+curl -sk -H "Authorization: Bearer $ROX_API_TOKEN" \
+  "${ROX_CENTRAL_ADDRESS}/v1/policies/${POLICY_ID}" | \
+  jq '.' > dryrun-policy.json
+----
+
+Now pass it to the dry-run endpoint:
+
+[source,bash]
+----
+curl -sk -X POST \
+  -H "Authorization: Bearer $ROX_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d @dryrun-policy.json \
+  "${ROX_CENTRAL_ADDRESS}/v1/policies/dryrun"
+----
+
+An empty `{"alerts":[]}` means the definition is valid. A non-empty list shows which existing deployments would violate it.
+
+== Task 6.6: Test the policy
+
+Deploy a workload from an external registry.
+The admission webhook should reject it because `docker.io` is not `registry.internal.example.com`.
+
+[source,bash]
+----
+oc apply -n policy-lab -f content/modules/ROOT/examples/unapproved-external-app.yaml
+----
+
+Expected output:
+
+[source,text]
+----
+Error from server (Failed currently enforced policies from RHACS): admission webhook "policyeval.stackrox.io" denied the request:
+The attempted operation violated one or more enforced policies, described below:
+
+Policy: Lab - Enforce Private Registry Only
+- Violations:
+    - Image is from disallowed registry 'docker.io'
+----
+
+Clean up the `SecurityPolicy` if you do not want it to block later exercises:
+
+[source,bash]
+----
+oc delete securitypolicy lab-enforce-private-registry -n stackrox
+----
+
+== Key takeaways
+
+* `SecurityPolicy` CRs live in `config.stackrox.io/v1alpha1`, namespace `stackrox`. The config controller reconciles them into Central.
+* A CRD can set `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` directly. The GUI Deploy switch does not expose that action — it stores `SCALE_TO_ZERO_ENFORCEMENT`.
+* `negate` belongs on the policy group, not the value. Setting it on the value is silently ignored.
+* `oc explain securitypolicy.spec --api-version=config.stackrox.io/v1alpha1` documents every field and enum the CR accepts.

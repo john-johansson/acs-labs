@@ -1,7 +1,7 @@
 = Policy Engine
 :navtitle: Overview
 
-A 60-minute hands-on lab for platform, infrastructure, and security engineering teams.
+A 75-minute hands-on lab for platform, infrastructure, and security engineering teams.
 
 [cols="1,3"]
 |===
@@ -48,15 +48,19 @@ By completing this lab, participants will:
 |Inform-only vs admission webhook rejection
 |15 min
 
-|xref:06-policy-as-code.adoc[Exercise 5]
+|xref:05b-runtime.adoc[Exercise 5]
+|Runtime enforcement: `KILL_POD` and `FAIL_KUBE_REQUEST`
+|15 min
+
+|xref:06-policy-as-code.adoc[Exercise 6]
 |`SecurityPolicy` CRDs vs GUI
 |10 min
 
-|xref:07-guardrails.adoc[Exercise 6]
+|xref:07-guardrails.adoc[Exercise 7]
 |Cosign signatures and CVSS >= 9.0
 |10 min
 
-|xref:08-roxctl.adoc[Exercise 7]
+|xref:08-roxctl.adoc[Exercise 8]
 |`roxctl deployment check` exit codes
 |5 min
 |===
