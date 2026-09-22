@@ -1,13 +1,50 @@
 = Exercise 7: Pipeline integration (`roxctl`) and exit codes
 :navtitle: Exercise 7: Pipeline gates
 
-Estimated time: 5 minutes.
+Estimated time: 10 minutes.
 
-`roxctl deployment check` exits `1` only when a violated policy has a *breaking* deploy action.
-In {rhacs-version}, `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` alone does *not* set BREAKS DEPLOY.
-`SCALE_TO_ZERO_ENFORCEMENT` does — that is why the registry policy includes it.
+`roxctl` provides two pipeline commands that serve different purposes:
 
-== Task 7.1: Check an unauthorized manifest
+[cols="1,1,2",options="header"]
+|===
+|Command |Input |What it evaluates
+
+|`image check`
+|A container image reference
+|BUILD and DEPLOY policies that match image contents (CVEs, packages, Dockerfile instructions, signatures). Does *not* see the deployment spec.
+
+|`deployment check`
+|A Kubernetes manifest (YAML)
+|DEPLOY policies that match the deployment spec *and* the image. Sees privileged mode, resource limits, service accounts, registries, etc.
+|===
+
+A pipeline typically runs *both*: `image check` right after the image is built, `deployment check` before `oc apply`.
+
+== Task 7.1: Image check
+
+`image check` evaluates an image reference against all BUILD and DEPLOY policies.
+
+[source,bash]
+----
+roxctl image check \
+  --endpoint "$ROX_CENTRAL_ADDRESS" \
+  -i docker.io/library/ubuntu:latest
+----
+
+[source,bash]
+----
+echo "Roxctl Exit Code: $?"
+----
+
+Policies with `FAIL_BUILD_ENFORCEMENT` show *BREAKS BUILD* in the output and cause exit code `1`.
+The CVE threshold policy from Exercise 6 has this action — check whether it appears in the table.
+
+Notice what is *not* in the output: registry enforcement, privileged mode, resource limits.
+`image check` cannot see those because it has no deployment manifest — only the image.
+
+== Task 7.2: Deployment check
+
+`deployment check` evaluates a Kubernetes manifest. It sees both the deployment spec and the image.
 
 [source,bash]
 ----
@@ -18,25 +55,50 @@ roxctl deployment check \
   -f content/modules/ROOT/examples/unapproved-external-app.yaml
 ----
 
-== Task 7.2: Verify pipeline exit status
-
 [source,bash]
 ----
 echo "Roxctl Exit Code: $?"
 ----
 
-The table lists *Lab - Enforce Private Registry Only* with *BREAKS DEPLOY*, and:
+Policies with `SCALE_TO_ZERO_ENFORCEMENT` show *BREAKS DEPLOY* and cause exit code `1`.
+In {rhacs-version}, `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` alone does *not* set BREAKS DEPLOY — `SCALE_TO_ZERO_ENFORCEMENT` does. That is why the registry policy includes it.
 
-[source,text]
-----
-ERROR:	checking deployment failed: breaking policies found
-Roxctl Exit Code: 1
-----
+Compare the output to Task 7.1: the private-registry policy and deployment-spec policies (resource limits, service account token, privilege escalation) now appear because `deployment check` has the full manifest.
 
-NOTE: Exit code `1` is what GitLab CI, Azure DevOps, or Tekton should use as the pipeline gate, before the manifest ever reaches the cluster.
+== Task 7.3: Compare the two
+
+[cols="1,1,1",options="header"]
+|===
+|Policy |`image check` |`deployment check`
+
+|Lab - Enforce Private Registry Only
+|—
+|✓ BREAKS DEPLOY
+
+|Lab - Block Fixable CVEs >= 9.0
+|✓ BREAKS BUILD
+|✓ BREAKS BUILD
+
+|Lab - Require Cosign Image Signature
+|✓
+|✓
+
+|No CPU request or memory limit specified
+|—
+|✓
+
+|Privileged / privilege escalation
+|—
+|✓
+|===
+
+The registry policy only fires on `deployment check` because the registry is a deployment-level attribute — `image check` receives an image reference, not a registry enforcement rule.
+
+NOTE: Exit code `1` from either command is what GitLab CI, Azure DevOps, or Tekton should use as the pipeline gate, before the manifest ever reaches the cluster.
 
 == Lab wrap-up
 
+* *`image check` vs `deployment check`:* `image check` evaluates the image alone (BUILD + DEPLOY image policies). `deployment check` evaluates the full manifest (DEPLOY policies including spec-level criteria). A pipeline should run both.
 * *Admission vs scale-to-zero:* `policyeval.stackrox.io` rejects creates when Deploy enforcement is on and the admission controller is listening. Scale-to-zero is Sensor's fallback for existing workloads, and the action that makes `roxctl deployment check` fail.
 * *`FAIL_KUBE_REQUEST_ENFORCEMENT`:* Kubernetes event admission (`exec`, `port-forward`), not Deployment CREATE.
 * *GitOps:* `SecurityPolicy` CRs (`config.stackrox.io/v1alpha1`, namespace `stackrox`) are the policy-as-code path next to application manifests.
