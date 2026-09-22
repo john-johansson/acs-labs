@@ -78,36 +78,45 @@ Every time someone execs in and runs `apt-get`, the new pod will be killed again
 == Task 5.6: Block exec with FAIL_KUBE_REQUEST_ENFORCEMENT
 
 `KILL_POD_ENFORCEMENT` lets the process start and then kills the pod.
-`FAIL_KUBE_REQUEST_ENFORCEMENT` takes a different approach: the `k8sevents.stackrox.io` webhook intercepts the `exec` request itself and rejects it before the process ever runs.
+`FAIL_KUBE_REQUEST_ENFORCEMENT` takes a different approach: the `k8sevents.stackrox.io` webhook intercepts the `exec` request itself and rejects it before any command runs.
+
+This enforcement action works with policies that watch *Kubernetes API events*, not process execution.
+The system policy *Kubernetes Actions: Exec into Pod* (field `Kubernetes Resource: PODS_EXEC`) is built for this.
 
 This requires `listenOnEvents: true` on the `SecuredCluster` CR (already set on this cluster).
 
-. Return to *Ubuntu Package Manager Execution* in *Policy Management*.
+. In *Platform Configuration → Policy Management*, open *Kubernetes Actions: Exec into Pod*.
 . Click *Actions → Edit policy*.
-. On *Policy behavior*, confirm *Runtime* enforcement is still on.
+. On *Policy behavior → Actions*, select *Inform and enforce* and turn *Runtime* enforcement on.
+. Save the policy.
 
-With an active runtime violation on the `runtime-test` deployment, the `k8sevents` webhook blocks further `exec` requests:
+Now try to exec into the pod:
 
 [source,bash]
 ----
 POD=$(oc get pod -n policy-lab -l app=runtime-test -o jsonpath='{.items[0].metadata.name}')
-oc exec -n policy-lab "$POD" -- apt-get update
+oc exec -n policy-lab "$POD" -- whoami
 ----
 
 Expected output:
 
 [source,text]
 ----
-Error from server: admission webhook "k8sevents.stackrox.io" denied the request
+Error from server (Failed currently enforced policies from RHACS): admission webhook "k8sevents.stackrox.io" denied the request:
+The attempted operation violated one or more enforced policies, described below:
+
+Policy: Kubernetes Actions: Exec into Pod
+- Violations:
+    - Kubernetes API received exec 'whoami' request into pod '...' container 'ubuntu'
 ----
 
 The exec never reaches the container. Compare this to Task 5.5 where the process ran and then the pod was killed.
 
-TIP: Try `oc port-forward` to the same pod — it is also blocked by `k8sevents.stackrox.io` when the deployment has an active runtime violation.
+NOTE: This blocks *all* `exec` requests to *any* pod, not just `runtime-test`. A scoped clone of this policy (like the Latest tag clone in Exercise 3) would be safer for production use.
 
 == Cleanup
 
-IMPORTANT: Set *Ubuntu Package Manager Execution* back to *Inform only* so later exercises are not affected.
+IMPORTANT: Set both *Ubuntu Package Manager Execution* and *Kubernetes Actions: Exec into Pod* back to *Inform only* so later exercises are not affected.
 
 [source,bash]
 ----
@@ -118,5 +127,5 @@ oc delete deployment runtime-test -n policy-lab --ignore-not-found
 
 * Runtime policies watch *observed behavior* (processes, network connections), not the workload spec or image contents.
 * `KILL_POD_ENFORCEMENT` kills the pod after the violating process is detected. The Deployment controller restarts it, but the violation repeats on the next attempt.
-* `FAIL_KUBE_REQUEST_ENFORCEMENT` blocks `exec` and `port-forward` at the API server level via the `k8sevents.stackrox.io` webhook. The process never starts.
+* `FAIL_KUBE_REQUEST_ENFORCEMENT` blocks `exec` and `port-forward` at the API server level via the `k8sevents.stackrox.io` webhook. It works with policies that match *Kubernetes API events* (like *Kubernetes Actions: Exec into Pod*), not with process-execution policies.
 * Runtime forensic data (process name, arguments, UID, container ID, timestamp) is not available for deploy-time violations — only runtime violations capture what actually ran.
