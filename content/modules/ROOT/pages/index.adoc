@@ -12,7 +12,7 @@ This site uses the same Antora + Red Hat Demo Platform Showroom theme as other R
 |Topic |Duration |ACS version
 
 |xref:policy-engine.adoc[Policy Engine]
-|55 min
+|75 min
 |{rhacs-version}
 |===
 

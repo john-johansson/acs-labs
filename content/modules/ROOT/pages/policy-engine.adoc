@@ -29,7 +29,7 @@ By completing this lab, participants will:
 |Exercise |Focus |Time
 
 |xref:01-prerequisites.adoc[Prerequisites]
-|Bastion access, `roxctl whoami`, lab namespace
+|Bastion access, `roxctl whoami`
 |5 min
 
 |xref:02-violations-forensics.adoc[Exercise 1]

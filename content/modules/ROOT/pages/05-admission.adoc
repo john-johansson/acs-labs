@@ -102,14 +102,14 @@ The Deployment is created.
 That annotation is the documented escape hatch when enforcement must be bypassed.
 RHACS always fires the *Emergency Deployment Annotation* policy so the bypass is auditable.
 
-Clean up:
+== Cleanup
+
+Set *Privileged Container* back to *Inform only* so later exercises and other Showroom modules are not blocked.
 
 [source,bash]
 ----
 oc delete deployment test-privileged-app -n policy-lab --ignore-not-found
 ----
-
-IMPORTANT: After the demo, set *Privileged Container* back to *Inform only* so later exercises and other Showroom modules are not blocked.
 
 == Key takeaways
 
