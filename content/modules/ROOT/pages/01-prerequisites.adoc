@@ -33,13 +33,4 @@ Roles:
 	- Admin
 ----
 
-== Create the lab namespace
-
-[source,bash]
-----
-oc new-project policy-lab --skip-config-write || oc create namespace policy-lab
-# Privileged pods need this SCC; otherwise OpenShift rejects the pod even if ACS allows the Deployment.
-oc adm policy add-scc-to-user privileged -z default -n policy-lab
-----
-
-TIP: Clone https://github.com/john-johansson/acs-labs[the lab repository] on the bastion so later exercises can `oc apply -f content/modules/ROOT/examples/...`.
+TIP: Clone https://github.com/john-johansson/acs-labs[the lab repository] on the bastion so later exercises can `oc apply -f content/modules/ROOT/examples/...`. Exercise 3 creates the `policy-lab` project.

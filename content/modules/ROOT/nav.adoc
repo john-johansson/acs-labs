@@ -4,7 +4,7 @@
 ** xref:01-prerequisites.adoc[Prerequisites]
 ** xref:02-violations-forensics.adoc[Exercise 1: Violations and forensics]
 ** xref:03-policy-library.adoc[Exercise 2: Policy library]
-** xref:04-enforcement-intro.adoc[Exercise 3: Enforcement intro]
+** xref:04-enforcement-intro.adoc[Exercise 3: Deploy enforcement]
 ** xref:05-admission.adoc[Exercise 4: Admission control]
 ** xref:06-policy-as-code.adoc[Exercise 5: Policy as code]
 ** xref:07-guardrails.adoc[Exercise 6: Custom guardrails]

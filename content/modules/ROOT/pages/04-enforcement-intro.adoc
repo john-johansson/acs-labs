@@ -1,11 +1,14 @@
-= Exercise 3: Policy enforcement and the admission controller
-:navtitle: Exercise 3: Enforcement intro
+= Exercise 3: GUI deploy enforcement
+:navtitle: Exercise 3: Deploy enforcement
 
 Estimated time: 5 minutes.
 
-Informing teams about policy violations is the starting point.
-For high-risk criteria, security teams need a guarantee that non-compliant workloads cannot be deployed — not just notified.
-When a policy is set to enforce at deploy time, RHACS programs the Kubernetes Admission Controller to evaluate incoming deployment requests against the policy.
+There is no separate "scale to zero" button.
+When you select *Inform and enforce* and turn *Deploy* on, RHACS stores that choice as `SCALE_TO_ZERO_ENFORCEMENT`.
+That means Sensor may set `replicas` to `0`.
+It does not do that to a Deployment that is already running when you click *Save*.
+Saving the policy records the violation and leaves the replica count alone.
+Exercise 4 shows the other path: a new create is rejected by the admission controller.
 
 You can turn enforcement on for a system policy.
 That is a bad fit here: *Latest tag* would then block every `:latest` image in the Showroom.
@@ -14,10 +17,24 @@ The system policy keeps informing on every namespace.
 The copy enforces only in `policy-lab`.
 Criteria on a system policy still cannot be edited, and the policy cannot be deleted.
 
-== Task 3.1: Clone Latest tag
+== Task 3.1: Deploy an image tagged latest
 
-*Latest tag* is enabled, severity *Low*, and *Inform* only.
-It already applies at build and deploy, across the whole cluster.
+*Latest tag* is still *Inform* only, so this create is allowed.
+
+Create the project yourself. The `privileged` SCC is for the privileged workload in Exercise 4.
+
+[source,bash]
+----
+oc new-project policy-lab
+oc adm policy add-scc-to-user privileged -z default -n policy-lab
+oc create deployment test-latest-tag --image=image-registry.openshift-image-registry.svc:5000/openshift/httpd:latest
+oc get deploy test-latest-tag -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'
+----
+
+Wait until the Deployment is `1/1` before you clone the policy.
+The system policy reports the `:latest` tag. It does not stop the workload.
+
+== Task 3.2: Clone Latest tag and enforce it in policy-lab
 
 . From the *Policy Management* list, open *Latest tag*.
 . Click *Actions → Clone policy*.
@@ -27,43 +44,35 @@ It already applies at build and deploy, across the whole cluster.
 . On *Policy behavior → Actions*, select *Inform and enforce* and turn *Deploy* enforcement on. Leave *Build* enforcement off.
 . Open *Review policy*, confirm the preview is limited to `policy-lab`, and click *Save*.
 
-The system policy keeps reporting `:latest` images everywhere.
-The lab copy rejects creates only in `policy-lab`.
+The system policy keeps informing on every namespace.
+The copy enforces only in `policy-lab`.
 
-== Task 3.2: Deploy an image tagged latest
+== Task 3.3: The running Deployment is unchanged
 
-[source,bash]
-----
-oc apply -n policy-lab -f content/modules/ROOT/examples/latest-tag-app.yaml
-----
-
-Expected output (RHACS {rhacs-version}):
-
-[source,text]
-----
-Error from server (Failed currently enforced policies from RHACS): admission webhook "policyeval.stackrox.io" denied the request:
-The attempted operation violated one or more enforced policies, described below:
-
-Policy: Lab - Latest tag in policy-lab
-- Violations:
-    - Container 'nginx' has image with tag 'latest'
-
-In case of emergency, add the annotation {"admission.stackrox.io/break-glass": "ticket-1234"} to your deployment
-----
-
-The Deployment is not created. Confirm that:
+. Return to the RHACS console and open *Violations*.
+. Open the violation for deployment `test-latest-tag` and policy *Lab - Latest tag in policy-lab*.
+. The *Deploy* switch you turned on is stored as `SCALE_TO_ZERO_ENFORCEMENT`. That is Sensor setting `replicas` to `0`, not a second control in the wizard.
 
 [source,bash]
 ----
 oc get deployment test-latest-tag -n policy-lab
 ----
 
-NOTE: Exercise 4 repeats this proof with *Privileged Container*, including the inform-only path where the object is created.
+`READY` is still `1/1`.
+Sensor does not scale a Deployment that was already admitted when you clicked *Save*.
+A later manual scale-up is not pulled back down. Sensor applies scale-to-zero once.
 
-IMPORTANT: Before Exercise 7, disable `Lab - Latest tag in policy-lab`. Leave the system policy *Latest tag* enabled. Exercise 7 checks `ubuntu:latest` in `policy-lab`.
+NOTE: Exercise 4 uses *Privileged Container* to show what a *new* `oc apply` does after Deploy enforcement is on. The admission webhook rejects that create.
+
+IMPORTANT: Before Exercise 7, disable `Lab - Latest tag in policy-lab` and delete this Deployment. Leave the system policy *Latest tag* enabled. Exercise 7 checks `ubuntu:latest` in `policy-lab`.
+
+[source,bash]
+----
+oc delete deployment test-latest-tag -n policy-lab --ignore-not-found
+----
 
 == Key takeaways
 
 * You can enforce a system policy, but a cluster-wide *Latest tag* block is the wrong scope. Clone it so the original keeps informing everywhere.
 * A narrower scope is a different purpose. Keep the built-in policy so the rest of the cluster is still informed.
-* Scope the enforced copy to `policy-lab`. A `:latest` image in that namespace is rejected by the admission controller, and the Deployment is not created.
+* *Inform and enforce* with *Deploy* on is stored as `SCALE_TO_ZERO_ENFORCEMENT`. It records the violation and leaves an already-running Deployment at 1 replica. A new create is rejected by the admission controller, which Exercise 4 demonstrates.
