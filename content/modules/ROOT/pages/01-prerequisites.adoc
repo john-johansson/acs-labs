@@ -3,13 +3,26 @@
 
 Estimated time: 5 minutes.
 
+== Web consoles
+
+[cols="1,2",options="header"]
+|===
+|Console |URL
+
+|OpenShift
+|https://console-openshift-console.apps.cluster-nlnwr.dyn.redhatworkshops.io
+
+|RHACS
+|https://central-stackrox.apps.cluster-nlnwr.dyn.redhatworkshops.io
+|===
+
 == Access the RHEL bastion host
 
 SSH into the lab bastion host provided in your Showroom dashboard:
 
 [source,bash]
 ----
-ssh {bastion_ssh_user_name}@{bastion_public_hostname}
+ssh lab-user@ssh.ocpv02.rhdp.net -p 30906
 ----
 
 == Verify RHACS CLI access
