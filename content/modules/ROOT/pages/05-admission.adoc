@@ -30,16 +30,12 @@ It is *not* the webhook that rejects creates.
 
 == Task 4.1: Inform-only — object is created
 
-. In *Platform Configuration → Policy Management*, open *Privileged Container*.
-. Confirm the response method is *Inform only* (no Deploy enforcement).
-. Deploy a privileged workload:
+Deploy a privileged workload while the system policy *Privileged Container* is still set to *Inform only*:
 
 [source,bash]
 ----
 oc apply -n policy-lab -f content/modules/ROOT/examples/privileged-app.yaml
 ----
-
-. Check the Deployment:
 
 [source,bash]
 ----
@@ -47,43 +43,57 @@ oc get deployment test-privileged-app -n policy-lab
 ----
 
 The Deployment *is created* (`spec.replicas=2`).
-ACS records a Deploy violation; it does not block the API request.
+ACS records a Deploy violation, but does not block the API request — the policy is inform-only.
 
-== Task 4.2: Inform and enforce — webhook rejects create
+== Task 4.2: Clone Privileged Container and enforce it
 
-. Edit *Privileged Container* → *Policy behavior → Actions*.
-. Set the response method to *Inform and enforce* and enable *Deploy* enforcement. Save.
-. Delete the previous Deployment:
+Just like Exercise 3, do not enforce the system policy directly — that would block privileged workloads across the entire cluster.
+Clone it and scope enforcement to `policy-lab`.
+
+. In *Platform Configuration → Policy Management*, open *Privileged Container*.
+. Click *Actions → Clone policy*.
+. On *Details*, set the name to `Lab - Privileged Container in policy-lab`. Click *Next*.
+. On *Rules*, leave the privileged container criterion as-is. Click *Next*.
+. On *Resources*, include only the namespace `policy-lab`. Click *Next*.
+. On *Behavior → Actions*, select *Inform and enforce* and turn *Deploy* enforcement on. Click *Next*.
+. On *Review policy*, verify the preview shows only `test-privileged-app`. Click *Save*.
+
+== Task 4.3: Webhook rejects a new create
+
+Delete the existing Deployment and try to recreate it:
 
 [source,bash]
 ----
 oc delete deployment test-privileged-app -n policy-lab --ignore-not-found
 ----
 
-. Recreate it with the same manifest as Task 4.1.
+[source,bash]
+----
+oc apply -n policy-lab -f content/modules/ROOT/examples/privileged-app.yaml
+----
 
-Expected output (RHACS {rhacs-version}):
+Expected output:
 
 [source,text]
 ----
 Error from server (Failed currently enforced policies from RHACS): admission webhook "policyeval.stackrox.io" denied the request:
 The attempted operation violated one or more enforced policies, described below:
 
-Policy: Privileged Container
+Policy: Lab - Privileged Container in policy-lab
 - Violations:
     - Container 'nginx' is privileged
 
 In case of emergency, add the annotation {"admission.stackrox.io/break-glass": "ticket-1234"} to your deployment
 ----
 
-== Task 4.3: Find the denied create on the Violations page
+== Task 4.4: Find the denied create on the Violations page
 
 . Return to the RHACS console and open *Violations*.
 . Set the status filter to *Attempted*.
-. Open the violation for *Privileged Container*.
+. Open the violation for *Lab - Privileged Container in policy-lab*.
 . The detail shows the blocked create: container `nginx` is privileged. There is no Deployment behind it because the API server rejected the request.
 
-== Task 4.4: Break the glass
+== Task 4.5: Break the glass
 
 The admission error includes the annotation `admission.stackrox.io/break-glass`.
 The annotation must be on the manifest before the `CREATE` request reaches the API server. `oc annotate` on an existing object sends a `PATCH`, which is not intercepted by the webhook.
@@ -104,7 +114,10 @@ RHACS always fires the *Emergency Deployment Annotation* policy so the bypass is
 
 == Cleanup
 
-Set *Privileged Container* back to *Inform only* so later exercises and other Showroom modules are not blocked.
+Delete the clone and the test deployment so later exercises are not blocked.
+The system policy *Privileged Container* was never modified — it stays at *Inform only*.
+
+. In *Policy Management*, delete *Lab - Privileged Container in policy-lab*.
 
 [source,bash]
 ----
