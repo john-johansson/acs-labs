@@ -21,9 +21,7 @@ Criteria on a system policy still cannot be edited, and the policy cannot be del
 
 == Task 3.1: Deploy an image tagged latest
 
-*Latest tag* is still *Inform* only, so this create is allowed.
-
-Create the project yourself. The `privileged` SCC is for the privileged workload in Exercise 4.
+Create a lab namespace and deploy a workload with the `:latest` tag. The `privileged` SCC is for the privileged workload in Exercise 4.
 
 [source,bash]
 ----
@@ -33,21 +31,23 @@ oc create deployment test-latest-tag --image=image-registry.openshift-image-regi
 oc get deploy test-latest-tag -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'
 ----
 
-Wait until the Deployment is `1/1` before you clone the policy.
-The system policy reports the `:latest` tag. It does not stop the workload.
+Wait until the Deployment is `1/1`.
+
+The system policy *Latest tag* matches this Deployment and records a violation, but the Deployment is created and running.
+That is because the policy is still set to *Inform only* — it observes and reports, but does not block or scale anything.
 
 == Task 3.2: Clone Latest tag and enforce it in policy-lab
 
 . From the *Policy Management* list, open *Latest tag*.
 . Click *Actions → Clone policy*.
-. On *Policy details*, set the name to `Lab - Latest tag in policy-lab` and the severity to *High*.
-. Leave the image-tag criterion as `latest`.
-. On *Policy resources*, include only the namespace `policy-lab`.
-. On *Policy behavior → Actions*, select *Inform and enforce* and turn *Deploy* enforcement on. Leave *Build* enforcement off.
-. Open *Review policy*, confirm the preview is limited to `policy-lab`, and click *Save*.
+. On *Details*, set the name to `Lab - Latest tag in policy-lab` and the severity to *High*. Click *Next*.
+. On *Rules*, leave the image-tag rule as `latest`. Click *Next*.
+. On *Resources*, include only the namespace `policy-lab`. Click *Next*.
+. On *Behavior → Actions*, select *Inform and enforce* and turn *Deploy* enforcement on. Leave *Build* enforcement off. Click *Next*.
+. On *Review policy*, verify the preview shows only matched deployments from `policy-lab` (the namespace name is not displayed in the results — confirm you see `test-latest-tag` and no workloads from other namespaces). Click *Save*.
 
 The system policy keeps informing on every namespace.
-The copy enforces only in `policy-lab`.
+The clone enforces only in `policy-lab`.
 
 == Task 3.3: The running Deployment is unchanged
 
