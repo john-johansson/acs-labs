@@ -68,8 +68,11 @@ NOTE: Exercise 4 uses *Privileged Container* to show what a *new* `oc apply` doe
 
 == Cleanup
 
-Before Exercise 7, disable `Lab - Latest tag in policy-lab` and delete this Deployment. Leave the system policy *Latest tag* enabled.
+Before Exercise 4, disable the clone and delete the test Deployment. Leave the system policy *Latest tag* enabled.
 
+. In *Policy Management*, set *Lab - Latest tag in policy-lab* back to *Inform only*.
+. Delete the test deployment:
++
 [source,bash]
 ----
 oc delete deployment test-latest-tag -n policy-lab --ignore-not-found

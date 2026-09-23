@@ -94,6 +94,8 @@ NOTE: Exit code `1` from either command is what GitLab CI, Azure DevOps, or Tekt
 
 == Cleanup
 
+. Remove all lab policies and the lab namespace:
++
 [source,bash]
 ----
 oc delete securitypolicy --all -n stackrox

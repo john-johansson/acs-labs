@@ -116,8 +116,9 @@ NOTE: This blocks *all* `exec` requests to *any* pod, not just `runtime-test`. A
 
 == Cleanup
 
-IMPORTANT: Set both *Ubuntu Package Manager Execution* and *Kubernetes Actions: Exec into Pod* back to *Inform only* so later exercises are not affected.
-
+. Set both *Ubuntu Package Manager Execution* and *Kubernetes Actions: Exec into Pod* back to *Inform only* so later exercises are not affected.
+. Delete the test deployment:
++
 [source,bash]
 ----
 oc delete deployment runtime-test -n policy-lab --ignore-not-found

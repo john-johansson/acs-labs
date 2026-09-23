@@ -121,7 +121,8 @@ Delete the clone and the test deployment so later exercises are not blocked.
 The system policy *Privileged Container* was never modified — it stays at *Inform only*.
 
 . In *Policy Management*, delete *Lab - Privileged Container in policy-lab*.
-
+. Delete the test deployment:
++
 [source,bash]
 ----
 oc delete deployment test-privileged-app -n policy-lab --ignore-not-found
