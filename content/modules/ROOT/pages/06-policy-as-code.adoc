@@ -3,14 +3,10 @@
 
 Estimated time: 15 minutes.
 
-Exercises 3 and 4 used the GUI. The GUI Deploy switch stores `SCALE_TO_ZERO_ENFORCEMENT` and the admission controller decides whether to reject the request. A CRD lets you name each enforcement action explicitly, and it lives in Git alongside your application manifests.
+Exercises 3 and 4 used the GUI to toggle enforcement. A `SecurityPolicy` custom resource (CR) lets you define the same policies as YAML — each enforcement action is explicit, and the file lives in Git alongside your application manifests.
 
 `SecurityPolicy` lives in `config.stackrox.io/v1alpha1` (not `platform.stackrox.io`).
 The config controller reconciles CRs in the `stackrox` namespace.
-
-Put `negate` on the *policy group*, not on the value.
-Put `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` on the CR if you want admission to deny creates.
-Add `SCALE_TO_ZERO_ENFORCEMENT` if you also want `roxctl deployment check` to fail the pipeline (Exercise 7).
 
 == Task 6.1: List the enforcement actions the CR accepts
 
@@ -30,27 +26,43 @@ oc explain securitypolicy.spec.enforcementActions --api-version=config.stackrox.
 
 == Task 6.2: Review the private-registry policy
 
-Walk through the CR before applying it.
+You will apply this CR in the next task. Read through it first to understand the key fields.
 
+. Review the CR:
++
 [source,yaml]
 ----
 include::example$private-registry-policy.yaml[]
 ----
 
-Key fields to point out:
+Pay attention to these fields:
 
 * `metadata.namespace: stackrox` — the config controller only watches the `stackrox` namespace.
-* `negate: true` on the policy group, not on the value. This inverts the match: alert when the image registry is *not* `registry.internal.example.com`.
-* Three enforcement actions: `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` rejects a new `oc apply`. `FAIL_DEPLOYMENT_UPDATE_ENFORCEMENT` rejects an update. `SCALE_TO_ZERO_ENFORCEMENT` is Sensor's fallback for workloads that bypassed admission.
+* `negate: true` on the *policy group*, not on the value. This inverts the match: alert when the image registry is *not* `registry.internal.example.com`. Setting `negate` on the value instead of the group is silently ignored — a common mistake when writing CRs by hand.
+* `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` — tells the admission webhook to reject a new `oc apply`. This action is not exposed by the GUI Deploy switch (which stores `SCALE_TO_ZERO_ENFORCEMENT` instead).
+* `FAIL_DEPLOYMENT_UPDATE_ENFORCEMENT` — rejects updates to an existing Deployment.
+* `SCALE_TO_ZERO_ENFORCEMENT` — Sensor's fallback for workloads that bypassed admission. Also makes `roxctl deployment check` return exit code `1` (Exercise 7).
 
-== Task 6.3: Download the Latest tag clone as a CR
+== Task 6.3: Export the Latest tag clone as a CR
 
 The GUI can export any custom policy as a `SecurityPolicy` CR.
 
 . In *Policy Management*, find *Lab - Latest tag in policy-lab* in the list and click the three-dot menu (⋮) → *Save as Custom Resource*.
-. Open the downloaded YAML and check `spec.enforcementActions`. The GUI stored `SCALE_TO_ZERO_ENFORCEMENT` — the same action you saw in Task 6.1.
++
+NOTE: The file downloads to your *local machine* (browser download), not to the bastion where you run `oc`.
+. Open the downloaded YAML on your laptop and check `spec.enforcementActions`. The GUI stored `SCALE_TO_ZERO_ENFORCEMENT` — the same action you saw in Task 6.1.
+. Copy the YAML content and create a file on the bastion:
++
+[source,bash]
+----
+vi latest-tag-policy.yaml
+----
++
+Paste the content and save the file. You now have the exported CR on the bastion, ready for `oc apply` or to commit to a Git repository.
 
-This is the starting point for managing a policy as code. In a real environment you would commit this YAML to a Git repository and let Argo CD or a CI/CD pipeline apply it to the `stackrox` namespace. We don't have a Git server or Argo CD instance in this lab, so in the next task we will apply the resource directly with `oc apply`.
+In a real environment you would commit this YAML to Git and let Argo CD or a CI/CD pipeline apply it to the `stackrox` namespace. We don't have a Git server or Argo CD instance in this lab, so in the next task we will apply a policy resource directly with `oc apply`.
+
+TIP: If the download does not work, a copy of the policy is available in the cloned repository under `content/modules/ROOT/examples/`.
 
 == Task 6.4: Apply the private-registry policy
 
@@ -68,9 +80,13 @@ oc get securitypolicy lab-enforce-private-registry -n stackrox
 
 == Task 6.5: Dry-run a policy via the API
 
-The API accepts a policy JSON for validation without saving it. Use this to catch errors before a commit.
+The private-registry policy is now applied. Before creating more policies, try the dry-run API — it validates a policy definition without saving it, so you can catch errors before committing to Git.
 
-First, find the policy ID of the *Lab - Latest tag in policy-lab* clone and export it as JSON via the API:
+You will use the *Lab - Latest tag in policy-lab* clone (from Exercise 3) as the test subject.
+
+NOTE: The GUI can also export a policy as JSON (three-dot menu → *Save as JSON*), just like the CR download in Task 6.3. Here we use `curl` so the file is created directly on the bastion.
+
+Export it as JSON via the API:
 
 . Export the policy as JSON:
 +
@@ -154,6 +170,5 @@ You should see `lab-enforce-private-registry` and `lab-block-critical-fixable-cv
 
 * `SecurityPolicy` CRs live in `config.stackrox.io/v1alpha1`, namespace `stackrox`. The config controller reconciles them into Central.
 * A CRD can set `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` directly. The GUI Deploy switch does not expose that action — it stores `SCALE_TO_ZERO_ENFORCEMENT`.
-* `negate` belongs on the policy group, not the value. Setting it on the value is silently ignored.
 * `oc explain securitypolicy.spec --api-version=config.stackrox.io/v1alpha1` documents every field and enum the CR accepts.
 * Private registry enforcement and fixable CVE thresholds are common production patterns — both expressible as `SecurityPolicy` CRs managed via GitOps.
