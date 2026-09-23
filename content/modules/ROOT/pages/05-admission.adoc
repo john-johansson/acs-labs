@@ -95,15 +95,19 @@ In case of emergency, add the annotation {"admission.stackrox.io/break-glass": "
 
 == Task 4.5: Break the glass
 
-The admission error includes the annotation `admission.stackrox.io/break-glass`.
-The annotation must be on the manifest before the `CREATE` request reaches the API server. `oc annotate` on an existing object sends a `PATCH`, which is not intercepted by the webhook.
+Sometimes enforcement must be bypassed — a critical hotfix, a debugging session, or a workload that legitimately needs privileged access.
+RHACS provides a controlled escape hatch: the `admission.stackrox.io/break-glass` annotation.
+Adding it to the manifest tells the admission webhook to allow the request through despite the policy violation.
+
+The annotation must be on the manifest *before* the `CREATE` request reaches the API server.
+Using `oc annotate` on an existing object sends a `PATCH`, which is not intercepted by the webhook — so it must be in the YAML itself.
 
 [source,bash]
 ----
 oc apply -n policy-lab -f content/modules/ROOT/examples/privileged-app-break-glass.yaml
 ----
 
-The Deployment is created.
+The Deployment is created despite the enforcing policy.
 
 . Open *Violations* and filter on *Emergency Deployment Annotation*.
 . Open the violation for `test-privileged-app`.
