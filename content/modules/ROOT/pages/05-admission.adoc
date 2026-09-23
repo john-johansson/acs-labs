@@ -102,13 +102,14 @@ Adding it to the manifest tells the admission webhook to allow the request throu
 The annotation must be on the manifest *before* the `CREATE` request reaches the API server.
 Using `oc annotate` on an existing object sends a `PATCH`, which is not intercepted by the webhook — so it must be in the YAML itself.
 
+. Apply the break-glass manifest:
++
 [source,bash]
 ----
 oc apply -n policy-lab -f content/modules/ROOT/examples/privileged-app-break-glass.yaml
 ----
-
++
 The Deployment is created despite the enforcing policy.
-
 . Open *Violations* and filter on *Emergency Deployment Annotation*.
 . Open the violation for `test-privileged-app`.
 . The annotation value `lab-exercise-4` is recorded in the deployment details.
