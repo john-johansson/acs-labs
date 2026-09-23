@@ -89,7 +89,7 @@ In case of emergency, add the annotation {"admission.stackrox.io/break-glass": "
 == Task 4.4: Find the denied create on the Violations page
 
 . Return to the RHACS console and open *Violations*.
-. Set the status filter to *Attempted*.
+. Switch to the *Attempted* tab. This tab lists requests that the admission webhook denied.
 . Open the violation for *Lab - Privileged Container in policy-lab*.
 . The detail shows the blocked create: container `nginx` is privileged. There is no Deployment behind it because the API server rejected the request.
 
@@ -113,8 +113,7 @@ The Deployment is created despite the enforcing policy.
 . Open the violation for `test-privileged-app`.
 . The annotation value `lab-exercise-4` is recorded in the deployment details.
 
-That annotation is the documented escape hatch when enforcement must be bypassed.
-RHACS always fires the *Emergency Deployment Annotation* policy so the bypass is auditable.
+RHACS always fires the *Emergency Deployment Annotation* policy when this annotation is present, so every bypass is auditable.
 
 == Cleanup
 
@@ -132,7 +131,7 @@ oc delete deployment test-privileged-app -n policy-lab --ignore-not-found
 
 * *Inform only* creates the object and records a violation. *Inform and enforce* with *Deploy* on rejects the API request before the object is stored.
 * The admission webhook `policyeval.stackrox.io` handles `CREATE`, `UPDATE`, and `SCALE`. It does not act on a Deployment that is already running (Exercise 3).
-* Denied creates appear on the *Violations* page under the *Attempted* status filter.
+* Denied creates appear on the *Violations* page under the *Attempted* tab.
 * In a CRD, this behavior is `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` and `FAIL_DEPLOYMENT_UPDATE_ENFORCEMENT` (Exercise 6). The GUI Deploy switch stores `SCALE_TO_ZERO_ENFORCEMENT`, which is Sensor's fallback.
 * The `admission.stackrox.io/break-glass` annotation bypasses the webhook. The *Emergency Deployment Annotation* policy alerts on its use.
 * The `contactImageScanners` setting on the `SecuredCluster` CR controls whether the admission controller can evaluate *image-based* policy criteria (CVEs, packages, registries). The default is `DoNotScanInline` — the webhook cannot check image contents, so it fails open and Sensor does soft enforcement instead. Set it to `ScanIfMissing` if you need the webhook to hard-block on image criteria. Be aware that scanning adds latency; if the `timeoutSeconds` value (default 10) is too low, the webhook may still time out and fail open.
