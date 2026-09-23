@@ -12,6 +12,19 @@ Two enforcement actions apply at runtime:
 * `KILL_POD_ENFORCEMENT` — Sensor kills the pod when the violating process is detected.
 * `FAIL_KUBE_REQUEST_ENFORCEMENT` — the `k8sevents.stackrox.io` webhook blocks `exec` and `port-forward` to pods that have an active runtime violation from the policy.
 
+== Before you begin
+
+This exercise modifies system policies to demonstrate runtime enforcement.
+The Showroom environment may include pre-provisioned SecurityPolicy CRDs that enforce package manager execution cluster-wide. These would interfere with Task 5.2 where you need `apt-get` to run successfully under inform-only.
+
+. Remove any pre-existing enforcement CRDs:
++
+[source,bash]
+----
+oc delete securitypolicy package-manager-execution-enforce-all -n stackrox --ignore-not-found
+----
+. Verify that *Ubuntu Package Manager Execution* is set to *Inform only* in *Policy Management*. If it shows *Inform and enforce*, edit it back to *Inform only* before proceeding.
+
 == Task 5.1: Deploy a test workload
 
 . Deploy the runtime test workload:
