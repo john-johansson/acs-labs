@@ -17,10 +17,10 @@ Every policy includes *Rationale* and *Guidance* written for developers, not jus
 
 . Navigate back to the policy list.
 . Highlight the lifecycle column — each policy shows which stage(s) it applies to at a glance.
-. Note that you can write a single policy that combines criteria across stages — for example, flagging a critical CVE specifically in deployments that are also privileged.
+. At DEPLOY time, a single policy can combine image criteria (CVEs, packages) with deployment-spec criteria (privileged, resource limits). For example, you could flag a critical CVE only when the container is also privileged. This combination is not available at BUILD time because there is no deployment spec.
 
 == Key takeaways
 
 * Every policy includes Rationale and Guidance written for developers, not just security reviewers.
 * The lifecycle tags show which stage each policy applies to at a glance.
-* Cross-lifecycle policy criteria eliminate the need to coordinate between separate tooling.
+* At DEPLOY time, a single policy can combine image and deployment-spec criteria for more targeted rules than either alone.
