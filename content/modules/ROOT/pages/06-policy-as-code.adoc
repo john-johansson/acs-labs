@@ -156,7 +156,7 @@ include::example$fixable-cve-policy.yaml[]
 oc apply -f content/modules/ROOT/examples/fixable-cve-policy.yaml
 ----
 +
-The policy is scoped to `policy-lab` so it does not alert on the rest of the cluster.
+The policy has no namespace scope — it applies cluster-wide. Build-time policies are evaluated in CI before deployment, so scoping them to a namespace does not make sense.
 . Verify both policies are in place:
 +
 [source,bash]
