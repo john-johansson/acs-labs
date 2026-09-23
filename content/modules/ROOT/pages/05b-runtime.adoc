@@ -15,16 +15,18 @@ Two enforcement actions apply at runtime:
 == Before you begin
 
 This exercise modifies system policies to demonstrate runtime enforcement.
-The Showroom environment includes a CRD-managed policy *Package Manager Execution - Runtime Enforcement* that enforces package manager execution cluster-wide. It is managed by ArgoCD, so deleting it will not stick — ArgoCD recreates it on the next sync. Instead, patch it to remove enforcement:
+The Showroom environment includes a CRD-managed policy *Package Manager Execution - Runtime Enforcement* that enforces package manager execution cluster-wide. It is managed by ArgoCD, so you must first suspend the sync, then patch the policy to remove enforcement:
 
-. Disable enforcement on the pre-provisioned policy:
+. Suspend ArgoCD auto-sync and disable enforcement:
 +
 [source,bash]
 ----
+oc patch applications.argoproj.io rhacs-pac-custom-policies -n openshift-gitops \
+  --type=merge -p '{"spec":{"syncPolicy":null}}'
 oc patch securitypolicy package-manager-execution-enforce-all -n stackrox \
-  --type=merge -p '{"spec":{"enforcementActions":[]}}' --ignore-not-found
+  --type=merge -p '{"spec":{"enforcementActions":[]}}'
 ----
-. In *Policy Management*, verify that *Package Manager Execution - Runtime Enforcement* now shows *Inform only* (not *Inform and enforce*).
+. In *Policy Management*, verify that *Package Manager Execution - Runtime Enforcement* now shows *Inform only*.
 . Verify that *Ubuntu Package Manager Execution* is also set to *Inform only*.
 
 == Task 5.1: Deploy a test workload
