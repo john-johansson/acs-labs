@@ -47,8 +47,7 @@ Key fields to point out:
 
 The GUI can export any custom policy as a `SecurityPolicy` CR.
 
-. In *Policy Management*, open the *Lab - Latest tag in policy-lab* clone from Exercise 3.
-. Click *Actions → Save as Custom Resource*.
+. In *Policy Management*, find *Lab - Latest tag in policy-lab* in the list and click the three-dot menu (⋮) → *Save as Custom Resource*.
 . Open the downloaded YAML and check `spec.enforcementActions`. The GUI stored `SCALE_TO_ZERO_ENFORCEMENT` — the same action you saw in Task 6.1.
 
 This is the starting point for managing a policy as code. In a real environment you would commit this YAML to a Git repository and let Argo CD or a CI/CD pipeline apply it to the `stackrox` namespace. We don't have a Git server or Argo CD instance in this lab, so in the next task we will apply the resource directly with `oc apply`.
