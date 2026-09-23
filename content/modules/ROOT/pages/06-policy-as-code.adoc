@@ -141,7 +141,7 @@ Leave the private-registry policy in place — Exercise 7 uses it.
 
 == Task 6.7: Apply a fixable CVE threshold policy
 
-CVSS comparison is encoded *in the value string* (`">= 9.000000"`).
+CVSS comparison is encoded *in the value string* (`">= 7.000000"`).
 Do not use a `comparisonOperator` field — the CRD does not have one.
 
 [source,yaml]
@@ -164,7 +164,7 @@ The policy has no namespace scope — it applies cluster-wide. Build-time polici
 oc get securitypolicy -n stackrox
 ----
 
-You should see `lab-enforce-private-registry` and `lab-block-critical-fixable-cves`. Exercise 7 runs `roxctl` against them.
+You should see `lab-enforce-private-registry` and `lab-block-fixable-cves`. Exercise 7 runs `roxctl` against them.
 
 == Key takeaways
 

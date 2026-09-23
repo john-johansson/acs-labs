@@ -30,7 +30,7 @@ A pipeline typically runs *both*: `image check` right after the image is built, 
 ----
 roxctl image check \
   --endpoint "$ROX_CENTRAL_ADDRESS" \
-  -i docker.io/library/ubuntu:latest
+  -i docker.io/library/ubuntu:20.04
 ----
 . Check the exit code:
 +
@@ -81,7 +81,7 @@ Compare the output to Task 7.1: the private-registry policy and deployment-spec 
 |—
 |✓ BREAKS DEPLOY
 
-|Lab - Block Fixable CVEs >= 9.0
+|Lab - Block Fixable CVEs >= 7.0
 |✓ BREAKS BUILD
 |✓ BREAKS BUILD
 
