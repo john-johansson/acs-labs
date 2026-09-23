@@ -98,25 +98,9 @@ The registry policy only fires on `deployment check` because the registry is a d
 
 NOTE: Exit code `1` from either command is what GitLab CI, Azure DevOps, or Tekton should use as the pipeline gate, before the manifest ever reaches the cluster.
 
-== Cleanup
-
-. Remove all lab policies and the lab namespace:
-+
-[source,bash]
-----
-oc delete securitypolicy --all -n stackrox
-oc delete project policy-lab
-----
-
 == Key takeaways
 
 * `image check` evaluates the image alone (BUILD + DEPLOY image policies). `deployment check` evaluates the full manifest (DEPLOY policies including spec-level criteria). A pipeline should run both.
 * `FAIL_BUILD_ENFORCEMENT` drives exit code `1` for `image check`. `SCALE_TO_ZERO_ENFORCEMENT` drives exit code `1` for `deployment check`.
 * `roxctl` uses `ROX_API_TOKEN` from the environment; pass `--endpoint`, not `--token`.
 
-== Lab summary
-
-* *Deploy enforcement:* the GUI Deploy switch stores `SCALE_TO_ZERO_ENFORCEMENT`. The admission webhook (`policyeval.stackrox.io`) rejects creates; Sensor scales existing workloads to zero as a fallback.
-* *Runtime enforcement:* `KILL_POD_ENFORCEMENT` kills the pod after the process runs. `FAIL_KUBE_REQUEST_ENFORCEMENT` blocks `exec` and `port-forward` via the `k8sevents.stackrox.io` webhook — but only on policies that match Kubernetes API events.
-* *Policy as code:* `SecurityPolicy` CRs (`config.stackrox.io/v1alpha1`, namespace `stackrox`) are the GitOps path. Policies applied as CRs are tagged *Externally managed* in the GUI.
-* *Pipeline gates:* `roxctl image check` and `roxctl deployment check` catch different policy violations. Use both in CI/CD.

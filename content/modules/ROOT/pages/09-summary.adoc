@@ -1,0 +1,11 @@
+= Lab summary
+:navtitle: Lab summary
+
+This lab walked through the RHACS policy engine from observation to enforcement to automation.
+
+* *Navigating the RHACS console:* the *Dashboard*, *Violations*, and *Policy Management* pages are the starting point for understanding what RHACS sees across the cluster. The *Violations* page shows both active and attempted (blocked) violations. *Policy Management* lists every system and custom policy with its current enforcement state.
+* *Policy library:* system policies cover common security baselines out of the box. Clone them to create scoped copies with enforcement — never modify a system policy directly in production.
+* *Deploy enforcement:* the GUI Deploy switch stores `SCALE_TO_ZERO_ENFORCEMENT`. The admission webhook (`policyeval.stackrox.io`) rejects creates; Sensor scales existing workloads to zero as a fallback.
+* *Runtime enforcement:* `KILL_POD_ENFORCEMENT` kills the pod after the process runs. `FAIL_KUBE_REQUEST_ENFORCEMENT` blocks `exec` and `port-forward` via the `k8sevents.stackrox.io` webhook — but only on policies that match Kubernetes API events.
+* *Policy as code:* `SecurityPolicy` CRs (`config.stackrox.io/v1alpha1`, namespace `stackrox`) are the GitOps path. Policies applied as CRs are tagged *Externally managed* in the GUI.
+* *Pipeline gates:* `roxctl image check` and `roxctl deployment check` catch different policy violations. Use both in CI/CD.

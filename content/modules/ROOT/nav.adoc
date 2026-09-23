@@ -9,3 +9,4 @@
 ** xref:05b-runtime.adoc[Exercise 5: Runtime enforcement]
 ** xref:06-policy-as-code.adoc[Exercise 6: Policy as code]
 ** xref:08-roxctl.adoc[Exercise 7: Pipeline gates]
+** xref:09-summary.adoc[Lab summary]
