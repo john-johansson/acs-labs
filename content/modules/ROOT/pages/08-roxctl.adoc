@@ -22,9 +22,10 @@ A pipeline typically runs *both*: `image check` right after the image is built, 
 
 == Task 7.1: Image check
 
-`image check` evaluates an image reference against all BUILD and DEPLOY policies.
+`image check` evaluates an image reference against all BUILD and DEPLOY policies that match *image contents* — CVEs, packages, Dockerfile instructions.
+Policies with `FAIL_BUILD_ENFORCEMENT` are marked *BREAKS BUILD* and cause exit code `1`.
 
-. Run an image check:
+. Run an image check against an older Ubuntu image:
 +
 [source,bash]
 ----
@@ -38,12 +39,12 @@ roxctl image check \
 ----
 echo "Roxctl Exit Code: $?"
 ----
-+
-Policies with `FAIL_BUILD_ENFORCEMENT` show *BREAKS BUILD* in the output and cause exit code `1`.
-The CVE threshold policy from Exercise 6 has this action — check whether it appears in the table.
 
-Notice what is *not* in the output: registry enforcement, privileged mode, resource limits.
-`image check` cannot see those because it has no deployment manifest — only the image.
+What to observe in the output:
+
+* *Lab - Block Fixable CVEs >= 7.0* shows *BREAKS BUILD* — that is the policy you applied in Exercise 6.
+* Other system policies (e.g., *Fixable Severity at least Important*) may also show *BREAKS BUILD* if they have `FAIL_BUILD_ENFORCEMENT` enabled.
+* The private-registry policy from Exercise 6 does *not* appear — `image check` only sees image contents, not which registry the image was pulled from or how it is deployed. Task 7.2 picks that up.
 
 == Task 7.2: Deployment check
 
