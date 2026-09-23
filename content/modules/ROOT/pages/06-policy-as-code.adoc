@@ -118,27 +118,7 @@ Policy: Lab - Enforce Private Registry Only
 
 Leave the private-registry policy in place — Exercise 7 uses it.
 
-== Task 6.7: Apply a Cosign image signature policy
-
-This Showroom already has a Cosign signature integration named *Red Hat*.
-In production you would add your pipeline's Cosign public key under *Platform Configuration → Integrations*.
-
-[source,bash]
-----
-export SIG_ID=$(curl -sk -H "Authorization: Bearer $ROX_API_TOKEN" \
-  "$ROX_CENTRAL_ADDRESS/v1/signatureintegrations" \
-  | python3 -c 'import sys,json; d=json.load(sys.stdin); print(next(i["id"] for i in d.get("integrations",[]) if i.get("name")=="Red Hat"))')
-echo "$SIG_ID"
-sed "s|REPLACE_WITH_SIGNATURE_INTEGRATION_ID|${SIG_ID}|" \
-  content/modules/ROOT/examples/cosign-signature-policy.yaml | oc apply -f -
-----
-
-`Image Signature Verified By` matches images that are *not* verified by the selected integration.
-Do *not* set `negate: true` on that field, or the policy would alert on signed images.
-
-TIP: Compare with the built-in (disabled) policy *Red Hat images must be signed by a Red Hat release key* — same criterion, production-shaped example.
-
-== Task 6.8: Apply a fixable CVE threshold policy
+== Task 6.7: Apply a fixable CVE threshold policy
 
 CVSS comparison is encoded *in the value string* (`">= 9.000000"`).
 Do not use a `comparisonOperator` field — the CRD does not have one.
@@ -155,14 +135,14 @@ oc apply -f content/modules/ROOT/examples/fixable-cve-policy.yaml
 
 The policy is scoped to `policy-lab` so it does not alert on the rest of the cluster.
 
-Verify all three policies are in place:
+Verify both policies are in place:
 
 [source,bash]
 ----
 oc get securitypolicy -n stackrox
 ----
 
-You should see `lab-enforce-private-registry`, `lab-require-cosign-signature`, and `lab-block-critical-fixable-cves`. Exercise 7 runs `roxctl` against all of them.
+You should see `lab-enforce-private-registry` and `lab-block-critical-fixable-cves`. Exercise 7 runs `roxctl` against them.
 
 == Key takeaways
 
@@ -170,4 +150,4 @@ You should see `lab-enforce-private-registry`, `lab-require-cosign-signature`, a
 * A CRD can set `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` directly. The GUI Deploy switch does not expose that action — it stores `SCALE_TO_ZERO_ENFORCEMENT`.
 * `negate` belongs on the policy group, not the value. Setting it on the value is silently ignored.
 * `oc explain securitypolicy.spec --api-version=config.stackrox.io/v1alpha1` documents every field and enum the CR accepts.
-* Cosign signature verification, private registry enforcement, and fixable CVE thresholds are three common production patterns — all expressible as `SecurityPolicy` CRs managed via GitOps.
+* Private registry enforcement and fixable CVE thresholds are common production patterns — both expressible as `SecurityPolicy` CRs managed via GitOps.

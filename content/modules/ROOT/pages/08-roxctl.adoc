@@ -79,10 +79,6 @@ Compare the output to Task 7.1: the private-registry policy and deployment-spec 
 |✓ BREAKS BUILD
 |✓ BREAKS BUILD
 
-|Lab - Require Cosign Image Signature
-|✓
-|✓
-
 |No CPU request or memory limit specified
 |—
 |✓
