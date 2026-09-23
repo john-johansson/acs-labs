@@ -23,7 +23,10 @@ The Showroom environment may include pre-provisioned SecurityPolicy CRDs that en
 ----
 oc delete securitypolicy package-manager-execution-enforce-all -n stackrox --ignore-not-found
 ----
-. Verify that *Ubuntu Package Manager Execution* is set to *Inform only* in *Policy Management*. If it shows *Inform and enforce*, edit it back to *Inform only* before proceeding.
++
+This deletes the CRD-managed policy *Package Manager Execution - Runtime Enforcement*, which enforces package manager execution cluster-wide.
+. In *Policy Management*, verify that *Package Manager Execution - Runtime Enforcement* no longer appears in the list. If it is still there, wait a few seconds and refresh — the config controller removes it after the CRD is deleted.
+. Verify that *Ubuntu Package Manager Execution* is set to *Inform only*. If it shows *Inform and enforce*, edit it back to *Inform only* before proceeding.
 
 == Task 5.1: Deploy a test workload
 
