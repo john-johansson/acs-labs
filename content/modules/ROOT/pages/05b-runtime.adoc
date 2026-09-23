@@ -15,18 +15,17 @@ Two enforcement actions apply at runtime:
 == Before you begin
 
 This exercise modifies system policies to demonstrate runtime enforcement.
-The Showroom environment may include pre-provisioned SecurityPolicy CRDs that enforce package manager execution cluster-wide. These would interfere with Task 5.2 where you need `apt-get` to run successfully under inform-only.
+The Showroom environment includes a CRD-managed policy *Package Manager Execution - Runtime Enforcement* that enforces package manager execution cluster-wide. It is managed by ArgoCD, so deleting it will not stick — ArgoCD recreates it on the next sync. Instead, patch it to remove enforcement:
 
-. Remove any pre-existing enforcement CRDs:
+. Disable enforcement on the pre-provisioned policy:
 +
 [source,bash]
 ----
-oc delete securitypolicy package-manager-execution-enforce-all -n stackrox --ignore-not-found
+oc patch securitypolicy package-manager-execution-enforce-all -n stackrox \
+  --type=merge -p '{"spec":{"enforcementActions":[]}}' --ignore-not-found
 ----
-+
-This deletes the CRD-managed policy *Package Manager Execution - Runtime Enforcement*, which enforces package manager execution cluster-wide.
-. In *Policy Management*, verify that *Package Manager Execution - Runtime Enforcement* no longer appears in the list. If it is still there, wait a few seconds and refresh — the config controller removes it after the CRD is deleted.
-. Verify that *Ubuntu Package Manager Execution* is set to *Inform only*. If it shows *Inform and enforce*, edit it back to *Inform only* before proceeding.
+. In *Policy Management*, verify that *Package Manager Execution - Runtime Enforcement* now shows *Inform only* (not *Inform and enforce*).
+. Verify that *Ubuntu Package Manager Execution* is also set to *Inform only*.
 
 == Task 5.1: Deploy a test workload
 
