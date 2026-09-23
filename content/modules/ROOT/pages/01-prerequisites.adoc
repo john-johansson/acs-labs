@@ -46,4 +46,12 @@ Roles:
 	- Admin
 ----
 
-TIP: Clone https://github.com/john-johansson/acs-labs[the lab repository] on the bastion so later exercises can `oc apply -f content/modules/ROOT/examples/...`. Exercise 3 creates the `policy-lab` project.
+== Clone the lab repository
+
+Later exercises use `oc apply -f` on YAML files from this repository. Clone it on the bastion and `cd` into it:
+
+[source,bash]
+----
+git clone https://github.com/john-johansson/acs-labs.git
+cd acs-labs
+----
