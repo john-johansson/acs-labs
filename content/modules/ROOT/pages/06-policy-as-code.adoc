@@ -92,7 +92,7 @@ curl -sk -X POST \
   -H "Authorization: Bearer $ROX_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d @dryrun-policy.json \
-  "${ROX_CENTRAL_ADDRESS}/v1/policies/dryrun"
+  "${ROX_CENTRAL_ADDRESS}/v1/policies/dryrun" | jq .
 ----
 +
 An empty `{"alerts":[]}` means the definition is valid. A non-empty list shows which existing deployments would violate it.
