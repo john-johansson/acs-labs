@@ -20,6 +20,8 @@ Estimated time: 5 minutes.
 
 SSH into the lab bastion host provided in your Showroom dashboard:
 
+. Connect to the bastion:
++
 [source,bash]
 ----
 ssh lab-user@ssh.ocpv02.rhdp.net -p 30906
@@ -30,6 +32,8 @@ ssh lab-user@ssh.ocpv02.rhdp.net -p 30906
 `ROX_CENTRAL_ADDRESS` and `ROX_API_TOKEN` are already set on the bastion.
 `roxctl` reads the token from the environment — do not pass `--token`.
 
+. Verify the environment variables and CLI access:
++
 [source,bash]
 ----
 echo "$ROX_CENTRAL_ADDRESS"
@@ -50,6 +54,8 @@ Roles:
 
 Later exercises use `oc apply -f` on YAML files from this repository. Clone it on the bastion and `cd` into it:
 
+. Clone the repository and change into the directory:
++
 [source,bash]
 ----
 git clone https://github.com/john-johansson/acs-labs.git

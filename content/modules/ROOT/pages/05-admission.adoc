@@ -32,16 +32,19 @@ It is *not* the webhook that rejects creates.
 
 Deploy a privileged workload while the system policy *Privileged Container* is still set to *Inform only*:
 
+. Deploy the privileged workload:
++
 [source,bash]
 ----
 oc apply -n policy-lab -f content/modules/ROOT/examples/privileged-app.yaml
 ----
-
+. Verify the Deployment exists:
++
 [source,bash]
 ----
 oc get deployment test-privileged-app -n policy-lab
 ----
-
++
 The Deployment *is created* (`spec.replicas=2`).
 ACS records a Deploy violation, but does not block the API request — the policy is inform-only.
 
@@ -62,16 +65,19 @@ Clone it and scope enforcement to `policy-lab`.
 
 Delete the existing Deployment and try to recreate it:
 
+. Delete the existing Deployment:
++
 [source,bash]
 ----
 oc delete deployment test-privileged-app -n policy-lab --ignore-not-found
 ----
-
+. Try to recreate it:
++
 [source,bash]
 ----
 oc apply -n policy-lab -f content/modules/ROOT/examples/privileged-app.yaml
 ----
-
++
 Expected output:
 
 [source,text]

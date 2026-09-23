@@ -24,18 +24,21 @@ A pipeline typically runs *both*: `image check` right after the image is built, 
 
 `image check` evaluates an image reference against all BUILD and DEPLOY policies.
 
+. Run an image check:
++
 [source,bash]
 ----
 roxctl image check \
   --endpoint "$ROX_CENTRAL_ADDRESS" \
   -i docker.io/library/ubuntu:latest
 ----
-
+. Check the exit code:
++
 [source,bash]
 ----
 echo "Roxctl Exit Code: $?"
 ----
-
++
 Policies with `FAIL_BUILD_ENFORCEMENT` show *BREAKS BUILD* in the output and cause exit code `1`.
 The CVE threshold policy from Exercise 6 has this action — check whether it appears in the table.
 
@@ -46,6 +49,8 @@ Notice what is *not* in the output: registry enforcement, privileged mode, resou
 
 `deployment check` evaluates a Kubernetes manifest. It sees both the deployment spec and the image.
 
+. Run a deployment check:
++
 [source,bash]
 ----
 roxctl deployment check \
@@ -54,12 +59,13 @@ roxctl deployment check \
   --namespace policy-lab \
   -f content/modules/ROOT/examples/unapproved-external-app.yaml
 ----
-
+. Check the exit code:
++
 [source,bash]
 ----
 echo "Roxctl Exit Code: $?"
 ----
-
++
 Policies with `SCALE_TO_ZERO_ENFORCEMENT` show *BREAKS DEPLOY* and cause exit code `1`.
 In {rhacs-version}, `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` alone does *not* set BREAKS DEPLOY — `SCALE_TO_ZERO_ENFORCEMENT` does. That is why the registry policy includes it.
 

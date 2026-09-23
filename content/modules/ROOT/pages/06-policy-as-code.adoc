@@ -16,6 +16,8 @@ Add `SCALE_TO_ZERO_ENFORCEMENT` if you also want `roxctl deployment check` to fa
 
 The CRD schema is the list of legal values. It is not what a particular policy has saved.
 
+. List the allowed enforcement actions:
++
 [source,bash]
 ----
 oc explain securitypolicy.spec.enforcementActions --api-version=config.stackrox.io/v1alpha1
@@ -53,12 +55,13 @@ This is the starting point for managing a policy as code. In a real environment 
 
 == Task 6.4: Apply the private-registry policy
 
+. Apply the CR and verify it exists:
++
 [source,bash]
 ----
 oc apply -f content/modules/ROOT/examples/private-registry-policy.yaml
 oc get securitypolicy lab-enforce-private-registry -n stackrox
 ----
-
 . In *Platform Configuration → Policy Management*, open *Lab - Enforce Private Registry Only*.
 . Compare the GUI view with the CR you just applied.
 . The GUI shows *Inform and enforce* with *Deploy* on. It does not show the individual `FAIL_DEPLOYMENT_*` actions — those are only visible in the CR or the API.
@@ -70,6 +73,8 @@ The API accepts a policy JSON for validation without saving it. Use this to catc
 
 First, find the policy ID of the *Lab - Latest tag in policy-lab* clone and export it as JSON via the API:
 
+. Export the policy as JSON:
++
 [source,bash]
 ----
 POLICY_ID=$(curl -sk -H "Authorization: Bearer $ROX_API_TOKEN" \
@@ -80,9 +85,8 @@ curl -sk -H "Authorization: Bearer $ROX_API_TOKEN" \
   "${ROX_CENTRAL_ADDRESS}/v1/policies/${POLICY_ID}" | \
   jq '.' > dryrun-policy.json
 ----
-
-Now pass it to the dry-run endpoint:
-
+. Pass it to the dry-run endpoint:
++
 [source,bash]
 ----
 curl -sk -X POST \
@@ -91,7 +95,7 @@ curl -sk -X POST \
   -d @dryrun-policy.json \
   "${ROX_CENTRAL_ADDRESS}/v1/policies/dryrun"
 ----
-
++
 An empty `{"alerts":[]}` means the definition is valid. A non-empty list shows which existing deployments would violate it.
 
 == Task 6.6: Test the policy
@@ -99,11 +103,13 @@ An empty `{"alerts":[]}` means the definition is valid. A non-empty list shows w
 Deploy a workload from an external registry.
 The admission webhook should reject it because `docker.io` is not `registry.internal.example.com`.
 
+. Deploy from an external registry:
++
 [source,bash]
 ----
 oc apply -n policy-lab -f content/modules/ROOT/examples/unapproved-external-app.yaml
 ----
-
++
 Expected output:
 
 [source,text]
@@ -128,15 +134,16 @@ Do not use a `comparisonOperator` field — the CRD does not have one.
 include::example$fixable-cve-policy.yaml[]
 ----
 
+. Apply the CVE threshold policy:
++
 [source,bash]
 ----
 oc apply -f content/modules/ROOT/examples/fixable-cve-policy.yaml
 ----
-
++
 The policy is scoped to `policy-lab` so it does not alert on the rest of the cluster.
-
-Verify both policies are in place:
-
+. Verify both policies are in place:
++
 [source,bash]
 ----
 oc get securitypolicy -n stackrox

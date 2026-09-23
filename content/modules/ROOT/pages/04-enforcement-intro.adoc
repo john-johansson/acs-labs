@@ -23,6 +23,8 @@ Criteria on a system policy still cannot be edited, and the policy cannot be del
 
 Create a lab namespace and deploy a workload with the `:latest` tag. The `privileged` SCC is for the privileged workload in Exercise 4.
 
+. Create the namespace and deploy the workload:
++
 [source,bash]
 ----
 oc new-project policy-lab
@@ -30,7 +32,7 @@ oc adm policy add-scc-to-user privileged -z default -n policy-lab
 oc create deployment test-latest-tag --image=image-registry.openshift-image-registry.svc:5000/openshift/httpd:latest
 oc get deploy test-latest-tag -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'
 ----
-
++
 Wait until the Deployment is `1/1`.
 
 The system policy *Latest tag* matches this Deployment and records a violation, but the Deployment is created and running.
@@ -54,12 +56,13 @@ The clone enforces only in `policy-lab`.
 . Return to the RHACS console and open *Violations*.
 . Open the violation for deployment `test-latest-tag` and policy *Lab - Latest tag in policy-lab*.
 . The *Deploy* switch you turned on is stored as `SCALE_TO_ZERO_ENFORCEMENT`. That is Sensor setting `replicas` to `0`, not a second control in the wizard.
-
+. Confirm the Deployment is still running:
++
 [source,bash]
 ----
 oc get deployment test-latest-tag -n policy-lab
 ----
-
++
 `READY` is still `1/1`.
 Sensor does not scale a Deployment that was already admitted when you clicked *Save*.
 A later manual scale-up is not pulled back down. Sensor applies scale-to-zero once.

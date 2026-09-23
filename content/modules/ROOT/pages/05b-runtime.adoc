@@ -14,12 +14,14 @@ Two enforcement actions apply at runtime:
 
 == Task 5.1: Deploy a test workload
 
+. Deploy the runtime test workload:
++
 [source,bash]
 ----
 oc apply -f content/modules/ROOT/examples/runtime-test.yaml
 oc rollout status deployment/runtime-test -n policy-lab --timeout=120s
 ----
-
++
 The image `ubuntu:22.04` (not `:latest`) avoids the *Lab - Latest tag* clone from Exercise 3.
 
 == Task 5.2: Trigger a runtime violation
@@ -27,12 +29,14 @@ The image `ubuntu:22.04` (not `:latest`) avoids the *Lab - Latest tag* clone fro
 The system policy *Ubuntu Package Manager Execution* is enabled by default at *Inform only*.
 Exec into the pod and run `apt-get`:
 
+. Exec into the pod and trigger the violation:
++
 [source,bash]
 ----
 POD=$(oc get pod -n policy-lab -l app=runtime-test -o jsonpath='{.items[0].metadata.name}')
 oc exec -n policy-lab "$POD" -- apt-get update
 ----
-
++
 The command runs to completion because the policy is inform-only — no enforcement is active yet.
 
 == Task 5.3: Inspect the runtime violation
@@ -59,19 +63,22 @@ Under the hood this adds `KILL_POD_ENFORCEMENT` to the policy. The next time the
 
 == Task 5.5: Re-exec and observe the pod kill
 
+. Exec into the pod again:
++
 [source,bash]
 ----
 POD=$(oc get pod -n policy-lab -l app=runtime-test -o jsonpath='{.items[0].metadata.name}')
 oc exec -n policy-lab "$POD" -- apt-get update
 ----
-
-This time the pod is killed. Verify:
-
++
+This time the pod is killed.
+. Verify the pod was terminated:
++
 [source,bash]
 ----
 oc get pods -n policy-lab -l app=runtime-test
 ----
-
++
 The Deployment controller creates a replacement pod (the replica count is still 1).
 Every time someone execs in and runs `apt-get`, the new pod will be killed again.
 
@@ -92,12 +99,14 @@ This requires `listenOnEvents: true` on the `SecuredCluster` CR (already set on 
 
 Now try to exec into the pod:
 
+. Attempt to exec into the pod:
++
 [source,bash]
 ----
 POD=$(oc get pod -n policy-lab -l app=runtime-test -o jsonpath='{.items[0].metadata.name}')
 oc exec -n policy-lab "$POD" -- whoami
 ----
-
++
 Expected output:
 
 [source,text]
