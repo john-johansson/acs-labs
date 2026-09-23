@@ -3,18 +3,20 @@
 
 Estimated time: 5 minutes.
 
-There is no separate "scale to zero" button.
-When you select *Inform and enforce* and turn *Deploy* on, RHACS stores that choice as `SCALE_TO_ZERO_ENFORCEMENT`.
-That means Sensor may set `replicas` to `0`.
-It does not do that to a Deployment that is already running when you click *Save*.
-Saving the policy records the violation and leaves the replica count alone.
-Exercise 4 shows the other path: a new create is rejected by the admission controller.
+So far every policy has been *inform only* — RHACS records a violation, but nothing stops the workload from running.
+This exercise flips the switch to *enforce*.
+You will deploy a workload that violates a policy, enable enforcement, and observe what happens — and what does *not* happen — to a Deployment that is already running.
 
-You can turn enforcement on for a system policy.
-That is a bad fit here: *Latest tag* would then block every `:latest` image in the Showroom.
-Clone it instead, and leave the original enabled.
-The system policy keeps informing on every namespace.
-The copy enforces only in `policy-lab`.
+When you select *Inform and enforce* and turn *Deploy* on in the GUI, RHACS stores the choice as `SCALE_TO_ZERO_ENFORCEMENT`.
+There is no separate "scale to zero" button — the Deploy toggle is that action.
+Sensor may set `replicas` to `0` on new workloads that violate the policy, but it does not retroactively scale down a Deployment that was already running when you clicked *Save*.
+
+NOTE: Exercise 4 shows the other enforcement path: a new `oc apply` is rejected outright by the admission webhook.
+
+=== Why clone instead of enforce the system policy?
+
+You can turn enforcement on for any system policy, but a cluster-wide *Latest tag* block would affect every `:latest` image in the Showroom — including infrastructure workloads.
+Clone the policy instead: the original keeps informing on every namespace, while the copy enforces only in `policy-lab`.
 Criteria on a system policy still cannot be edited, and the policy cannot be deleted.
 
 == Task 3.1: Deploy an image tagged latest
