@@ -1,0 +1,26 @@
+++++
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Nested lab pages: ".../m1/m1.2.html" → "m1/m1.2"
+  // Flat Antora pages: ".../modules/s2-02-vuln-dashboard.html" → "s2-02-vuln-dashboard"
+  function derivePageKey(pathname) {
+    var nested = pathname.match(/\/([^\/]+)\/([^\/]+?)(?:\.html)?$/);
+    if (nested && nested[1] !== 'modules') {
+      return nested[1] + '/' + nested[2];
+    }
+    var flat = pathname.match(/\/([^\/]+?)(?:\.html)?$/);
+    return flat ? flat[1] : null;
+  }
+  var pageKey = derivePageKey(window.location.pathname);
+  if (!pageKey) return;
+  localStorage.setItem('visited:' + pageKey, 'true');
+  // Save last visited URL per module for resume
+  var prefixMatch = pageKey.match(/([^\/]*\/)/);
+  if (prefixMatch) {
+    localStorage.setItem('resume:' + prefixMatch[1], window.location.pathname);
+  } else {
+    localStorage.setItem('resume:' + pageKey, window.location.pathname);
+  }
+});
+</script>
+++++

@@ -18,8 +18,19 @@ ui:
     snapshot: true
   supplemental_files:
     - path: .nojekyll
+    - path: operations-day2.html
+      contents: |
+        <!DOCTYPE html>
+        <meta charset="utf-8">
+        <link rel="canonical" href="./modules/operations-day2.html">
+        <script>location="modules/operations-day2.html"</script>
+        <meta http-equiv="refresh" content="0; url=modules/operations-day2.html">
+        <meta name="robots" content="noindex">
+        <title>Redirect Notice</title>
+        <h1>Redirect Notice</h1>
+        <p>The page you requested has been relocated to <a href="modules/operations-day2.html">Operations &amp; Day-2</a>.</p>
     - path: ui.yml
-      contents: "static_files: [ .nojekyll ]"
+      contents: "static_files: [ .nojekyll, operations-day2.html ]"
 
 asciidoc:
   attributes:

@@ -1,0 +1,77 @@
+= Exercise 4: Risk profiling and CVE deferral
+:navtitle: Exercise 4: Risk and CVE deferral
+
+include::partial$session2-ui.adoc[]
+
+Estimated time: 15 minutes.
+
+ACS computes a *Risk Priority* for each deployment from policy violations, vulnerabilities, configuration, and related signals.
+SST and DSI teams use that ranking to decide what to fix first, and use *vulnerability exceptions* (deferral or false positive) when a CVE cannot be fixed immediately but needs an auditable record.
+
+== Task 4.1: Analyze deployment risk factors
+
+. In the RHACS Console, open *Risk* in the left navigation.
+. Sort or scan the list for a high-priority application workload.
++
+On this Showroom, `juice-shop` in namespace `juice-shop` is a reliable high-priority example. `log4shell` and workloads in `payments` are also good candidates.
+. Click the deployment name.
+. Review the risk breakdown panels:
+** Policy violations (for example privileged settings or dangerous capabilities)
+** Vulnerable images and CVE severity
+** Configuration and exposure signals shown for that deployment
+. Note one factor that would matter to platform operations and one that would matter to application owners.
+
+== Task 4.2: Add a policy scope exclusion
+
+Excluding non-production or sandbox workloads from a noisy policy recalibrates what appears as risk without disabling the policy globally.
+
+. Navigate to *Platform Configuration* > *Policy Management*.
+. Open *Fixable Severity at least Important* (enabled by default on this cluster).
+. Click *Actions* > *Edit policy*.
+. Open the *Policy scope* step.
+. Add an exclusion for a namespace you are willing to carve out of this policy for the demo.
++
+Example: exclude namespace `frontend` (or another non-critical app namespace in your environment).
+. Save the policy.
+. Return to *Risk* and refresh the view.
+. Confirm that the excluded namespace's deployments are no longer driven by that policy's findings the same way (violations for that policy should stop accumulating there).
+
+IMPORTANT: After the exercise, remove the exclusion (or set the policy back to its previous scope) so later labs and other students are not affected.
+
+== Task 4.3: Review vulnerability exceptions (deferral and false positive)
+
+Creating a brand-new deferral request can fail on some Showroom builds even for Admin.
+This task focuses on the auditable exception record that SST and DSI rely on.
+
+. Navigate to *Vulnerability Management*.
+. Open *Exception configuration* or *Vulnerability exceptions* (wording varies by UI build), or open an image CVE detail page and look for exception or request history.
+. Find an existing exception on this cluster. Sample records often include:
+** A *Deferred* exception for `CVE-2021-44228` (Log4Shell)
+** A *False positive* exception for another CVE
+. For one exception, note:
+** Target state (`Deferred` or `False positive`)
+** Status (`Approved`)
+** Scope (image registry, remote, and tag pattern)
+** Approver or requester identity if shown
+. Discuss with the group: what rationale would you require before approving a 30-day deferral in production?
+
+OPTIONAL: If your UI offers *Defer* or *Request deferral* on a CVE and the request succeeds, complete it with a 30-day duration and rationale
+`Lab deferral: vendor fix under evaluation; compensating controls documented for DSI review.`
+If the request fails or never creates a record, continue with the existing Approved exceptions above. That still meets the learning goal for this lab.
+
+== Key takeaways
+
+* Risk priority aggregates multiple signals so teams do not triage from a flat CVE list alone.
+* Policy scope exclusions keep production gates strict while reducing noise from sandboxes.
+* Approved deferral and false-positive exceptions are the auditable SST or DSI record when a CVE is not fixed immediately.
+
+[.verification]
+****
+Did you open a high-priority deployment on *Risk* (for example `juice-shop`) and review an existing *Approved* vulnerability exception (Deferred or False positive) with its scope and status?
+
+[.success]
+You can use Risk priority for triage and treat Approved exceptions as the auditable SST or DSI record. Continue to Exercise 5.
+
+[.fail]
+Open *Risk*, select `juice-shop` (or another high-priority workload), then under *Vulnerability Management* find *Exception configuration* / *Vulnerability exceptions* and open an Approved Deferred or False positive record.
+****

@@ -1,121 +1,129 @@
 = Exercise 6: Splunk integration
 :navtitle: Exercise 6: Splunk integration
 
+include::partial$session2-ui.adoc[]
+
 Estimated time: 15 minutes.
 
-RHACS integrates with Splunk in two ways:
+RHACS integrates with Splunk in two ways on this Showroom:
 
-* **RHACS Technology Add-on (TA-stackrox)**: a Splunk app that _pulls_ violations, vulnerability management data, and compliance results from the RHACS API on a schedule. This is already pre-installed in your environment.
-* **Native Splunk notifier**: a _push-based_ integration where RHACS sends alerts to Splunk via the HTTP Event Collector (HEC) whenever a policy is violated. You will configure this in this exercise.
+* *RHACS Technology Add-on (TA-stackrox)*: Splunk pulls violations and related data from the RHACS API on a schedule.
+* *Native Splunk notifier*: RHACS pushes alerts to Splunk HEC when a policy fires.
 
-== Task 6.1: Explore the Splunk console
+You will inspect the add-on, configure (or reuse) the HEC notifier, trigger a violation, and search for the event.
 
-. On the bastion, get the Splunk web console URL:
+== Task 6.1: Open the Splunk console
+
+. On the bastion:
 +
 [source,bash]
 ----
-oc get route splunk-web -n splunk -o jsonpath='https://{.spec.host}'
+oc get route splunk-web -n splunk -o jsonpath='https://{.spec.host}{"\n"}'
 ----
-+
-. Open the URL in a browser and log in:
-** *Username:* `admin`
-** *Password:* `RhacsSplunkDemo123!`
-. Navigate to *Settings* > *Apps* > *Manage Apps*.
-. Confirm that *Red Hat Advanced Cluster Security* (package `TA-stackrox`) is installed and enabled.
+. Log in with user `admin` and password `RhacsSplunkDemo123!`.
+. Go to *Apps* > *Manage Apps* and confirm *Red Hat Advanced Cluster Security* (`TA-stackrox`) is installed.
 
-The add-on is configured to pull violation and vulnerability data from the RHACS API automatically.
+== Task 6.2: Check pull-based add-on data
 
-== Task 6.2: Check for add-on data
-
-. Click *Search & Reporting* in the left sidebar.
-. Run the following search to see violations pulled by the add-on:
+. Open *Search & Reporting*.
+. Run:
 +
 [source,text]
 ----
 index=* sourcetype="stackrox-violations"
 ----
-+
-. If data is present, review the fields: `alert_id`, `policy`, `deployment`, `namespace`, `severity`.
+. If events exist, review fields such as policy, deployment, namespace, and severity.
 
-NOTE: The add-on's modular inputs poll on a schedule (violations every 5 minutes, vulnerability management every 4 hours). If no data appears, the add-on may not have completed its first pull yet. Continue with the next task. The push-based HEC integration you configure below works independently.
+NOTE: The add-on polls on a schedule. An empty result does not block the HEC push path below.
 
-== Task 6.3: Configure the RHACS native Splunk notifier
+== Task 6.3: Configure the native Splunk HEC notifier
 
-The native notifier _pushes_ alerts in real time via HEC. Your environment has a pre-configured HEC token.
+This cluster may already have a notifier named `Splunk SIEM (local)`.
+If it exists and tests successfully, you may reuse it and skip create.
 
-. On the bastion, retrieve the HEC token:
+. Retrieve the HEC token:
 +
 [source,bash]
 ----
 oc exec deploy/splunk -n splunk -c splunk -- \
   curl -sk -u admin:RhacsSplunkDemo123! \
   "https://localhost:8089/services/data/inputs/http?output_mode=json" 2>/dev/null \
-  | python3 -c "import sys,json;[print(e['content']['token']) for e in json.load(sys.stdin)['entry'] if e['name']!='http']"
+  | python3 -c "import sys,json; d=json.load(sys.stdin); print('\n'.join(e['content']['token'] for e in d.get('entry',[]) if e.get('name')!='http'))"
 ----
-+
-Copy the token value printed to the terminal.
-+
-. In the RHACS Console, navigate to *Platform Configuration* > *Integrations*.
-. Scroll to *Notifier Integrations* and click *Splunk*.
-. Click *Create integration*.
-. Fill in the fields:
+. In RHACS, open *Platform Configuration* > *Integrations* > *Splunk*.
+. Create integration `Lab - Splunk HEC` (or edit the existing local SIEM notifier) with:
 +
 [cols="1,2",options="header"]
 |===
 |Field |Value
 
-|Integration name
-|`Lab - Splunk HEC`
-
 |HTTP Event Collector URL
 |`http://splunk.splunk.svc.cluster.local:8088`
 
 |HTTP Event Collector token
-|_(paste the HEC token from the command above)_
+|_(from the command above)_
 
 |Source type
 |`stackrox-alert`
 
 |Skip TLS verify
-|*Enabled*
+|Enabled
 |===
 +
-. Click *Test* to verify connectivity.
-. Click *Save*.
+. Click *Test*, then *Save*.
 
-TIP: The HEC URL uses the internal cluster service (`splunk.splunk.svc.cluster.local:8088`) because ACS Central and Splunk are on the same cluster. In production you would use the external HEC endpoint or a load-balanced URL.
+TIP: The internal service URL works because Central and Splunk share the cluster.
 
 == Task 6.4: Attach the notifier and trigger a violation
 
+Attach the Splunk notifier to both image policies below, then trigger each one.
+Use `Lab - Splunk HEC` (or `Splunk SIEM (local)` if you reused that notifier in Task 6.3).
+
+=== Configure *Curl in Image*
+
 . Navigate to *Platform Configuration* > *Policy Management*.
-. Search for the policy: *Curl in Image*.
-. Click the policy name to open its details.
+. In the policy search or filter, find *Curl in Image* and open it.
 . Click *Actions* > *Edit policy*.
-. Navigate to the *Policy behavior* section (step 4).
-. Under *Notification*, select *Lab - Splunk HEC* from the notifier dropdown.
-. Click *Save*.
-. On the bastion, deploy a pod that contains `curl` into the pre-existing `frontend` namespace:
+. On the first step (policy details / lifecycle), set the policy to *Enabled* if it is currently disabled.
+. Open *Policy behavior*.
+. Under *Notification*, select the Splunk notifier from Task 6.3.
+. Review the remaining wizard steps if prompted, then *Save* the policy.
+
+=== Configure *Alpine Linux Package Manager (apk) in Image*
+
+. Return to *Policy Management*.
+. Find *Alpine Linux Package Manager (apk) in Image* and open it.
+. Click *Actions* > *Edit policy*.
+. Set the policy to *Enabled* if it is currently disabled.
+. Open *Policy behavior*.
+. Under *Notification*, select the same Splunk notifier.
+. *Save* the policy.
+
+=== Trigger violations
+
+. On the bastion, create two short-lived workloads in `frontend`:
 +
 [source,bash]
 ----
-oc run splunk-trigger --image=registry.access.redhat.com/ubi9/ubi:9.4 --command -- sleep 3600 -n frontend
+oc run splunk-trigger-curl --image=docker.io/curlimages/curl:8.5.0 -n frontend --command -- sleep 3600
+oc run splunk-trigger-apk --image=docker.io/library/alpine:3.18 -n frontend --command -- sleep 3600
 ----
-+
-. Wait approximately 30 seconds for ACS to scan the image and evaluate the policy.
+. Wait about 30 to 60 seconds for image scan and policy evaluation.
+. Optional check in RHACS: open *Violations* and confirm alerts for:
+** *Curl in Image* on `splunk-trigger-curl`
+** *Alpine Linux Package Manager (apk) in Image* on `splunk-trigger-apk`
 
 == Task 6.5: Verify the alert in Splunk
 
-. Return to the Splunk console.
-. Run the following search:
+. In Splunk Search, run:
 +
 [source,text]
 ----
 index=* sourcetype="stackrox-alert"
 ----
-+
-. You should see events pushed by the RHACS native notifier.
-. Click an event and review the JSON payload. It contains the full policy details, deployment metadata, and violation context.
-. If the add-on also has data, compare the two sourcetypes:
+. Open an event and confirm policy and deployment metadata.
+. You should see events tied to *Curl in Image* and/or *Alpine Linux Package Manager (apk) in Image*.
+. Optional comparison:
 +
 [cols="1,1,1",options="header"]
 |===
@@ -127,22 +135,33 @@ index=* sourcetype="stackrox-alert"
 
 |Native Splunk notifier
 |`stackrox-alert`
-|Push (real-time via HEC)
+|Push (HEC)
 |===
 
 == Cleanup
 
-. Remove the test pod:
-+
 [source,bash]
 ----
-oc delete pod splunk-trigger -n frontend
+oc delete pod splunk-trigger-curl splunk-trigger-apk -n frontend --ignore-not-found
 ----
+
+. For each policy you changed (*Curl in Image* and *Alpine Linux Package Manager (apk) in Image*):
+** Remove the Splunk notifier from *Notification*.
+** Set the policy back to *Disabled* if you enabled it only for this lab.
 
 == Key takeaways
 
-* RHACS offers two Splunk integration paths: a pull-based add-on (TA-stackrox) and a push-based native notifier (HEC).
-* The add-on pulls violations, vulnerability management data, and compliance results on a schedule.
-* The native notifier pushes alerts in real time, making it useful for SOC workflows that need immediate notification.
-* Both can run simultaneously and produce different sourcetypes for distinct Splunk dashboards.
-* The HEC URL can be an internal cluster service when ACS and Splunk share a cluster, or an external endpoint in production.
+* Pull (add-on) and push (HEC) can run together with different sourcetypes.
+* HEC is the real-time path for SOC-style alerting.
+* A notifier only fires for policies that are enabled and have that notifier attached under *Policy behavior*.
+
+[.verification]
+****
+After creating the trigger pods, does Splunk Search return `index=* sourcetype="stackrox-alert"` events with policy and deployment metadata for *Curl in Image* and/or *Alpine Linux Package Manager (apk) in Image*?
+
+[.success]
+The HEC push path is working. You can correlate ACS policy breaches in Splunk in near real time. Continue to the lab summary.
+
+[.fail]
+Confirm the Splunk notifier Test succeeds, that both policies are enabled with the notifier attached under *Notification*, wait 30 to 60 seconds after creating the trigger pods, then rerun the `stackrox-alert` search.
+****

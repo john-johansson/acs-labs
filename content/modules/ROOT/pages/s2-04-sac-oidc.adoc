@@ -1,0 +1,266 @@
+= Exercise 3: Scoped Access Control and OIDC mapping
+:navtitle: Exercise 3: SAC and OIDC
+
+include::partial$session2-ui.adoc[]
+
+Estimated time: 20 minutes.
+
+RHACS *Scoped Access Control* (SAC) controls what each user can see and do inside a shared ACS Central.
+SAC uses three primitives:
+
+* *Permission Set*: what a user can do (read images, manage access, and so on).
+* *Access Scope*: where those permissions apply (which clusters and namespaces).
+* *Role*: one Permission Set plus one Access Scope.
+
+You will create a tenant-scoped role for the `payments` namespace, map a Keycloak group to that role, and prove isolation with a test user login.
+
+== Task 3.1: Review default roles
+
+. In the RHACS Console, navigate to *Platform Configuration* > *Access Control*.
+. Open the *Roles* tab and review the built-in roles (*Admin*, *Analyst*, *Vulnerability Management Approver*, *Vulnerability Report Creator*).
+. Note any demo roles already present (for example `demo-team-a-dev`). You will create a separate lab role instead of reusing them.
+
+== Task 3.2: Create an Access Scope for payments
+
+. Open the *Access scopes* tab.
+. Click *Create access scope*.
+. Enter:
+** *Name:* `lab-payments-scope`
+** *Description:* `Limits visibility to the payments namespace on the production cluster.`
+. In the cluster and namespace tree:
+** Expand the *production* cluster.
+** Select only the *payments* namespace.
+. Click *Save*.
+
+NOTE: This Showroom cluster uses the ACS cluster name `production`. Application namespaces that exist for this lab include `payments`, `backend`, `frontend`, `juice-shop`, and `log4shell`.
+
+== Task 3.3: Create a Permission Set
+
+. Open the *Permission sets* tab.
+. Click *Create permission set*.
+. Enter:
+** *Name:* `lab-vuln-reader`
+** *Description:* `Read-only access to images, vulnerabilities, and deployments.`
+. Start from *No access* on every resource, then set only:
++
+[cols="1,1",options="header"]
+|===
+|Resource |Access level
+
+|Alert
+|Read access
+
+|CVE
+|Read access
+
+|Deployment
+|Read access
+
+|Image
+|Read access
+
+|WatchedImage
+|Read access
+|===
++
+Leave every other resource at *No access* (including `Access`, `WorkflowAdministration`, and integration-related resources).
+. Click *Save*.
+
+NOTE: RHACS {rhacs-version} permission sets do not use a resource named `Policy`. Policy pages are gated by other resources such as workflow or access administration. Keeping those at *No access* is enough for a read-only vuln viewer.
+
+== Task 3.4: Create a Role
+
+. Open the *Roles* tab.
+. Click *Create role*.
+. Enter:
+** *Name:* `lab-payments-vuln-reader`
+** *Description:* `Read-only vulnerability viewer scoped to payments.`
+** *Permission set:* `lab-vuln-reader`
+** *Access scope:* `lab-payments-scope`
+. Click *Save*.
+
+== Task 3.5: Create a Keycloak realm, client, group, and user
+
+Keycloak is pre-installed in this Showroom.
+Use the bastion `oc` CLI to discover the console URL and the temporary admin credentials yourself (do not guess a static password).
+
+=== Get the Keycloak URL and admin credentials
+
+. On the bastion, print the Keycloak route and admin console URL:
++
+[source,bash]
+----
+SSO_HOST="$(oc get route keycloak -n keycloak -o jsonpath='{.spec.host}')"
+echo "Keycloak base URL:  https://${SSO_HOST}"
+echo "Admin console URL:  https://${SSO_HOST}/admin"
+----
+. Print the temporary admin username and password from the operator bootstrap secret:
++
+[source,bash]
+----
+echo -n "Username: "
+oc -n keycloak get secret keycloak-initial-admin -o jsonpath='{.data.username}' | base64 -d
+echo
+echo -n "Password: "
+oc -n keycloak get secret keycloak-initial-admin -o jsonpath='{.data.password}' | base64 -d
+echo
+----
++
+The username is typically `temp-admin`. The password is generated per environment.
+
+TIP: You can also copy the SSO URL from the Showroom dashboard. The CLI values above are the source of truth when the dashboard and cluster disagree.
+
+=== Sign in to the admin console
+
+. Open the *Admin console URL* from the previous step (path `/admin`).
+. Sign in with the username and password you printed from `keycloak-initial-admin`.
++
+image::s2/s2-03-keycloak-login.png[Keycloak Sign in to your account page,width=720]
+. After login you land in the Keycloak Administration Console (a yellow banner may note that you are a temporary admin).
++
+image::s2/s2-03-keycloak-welcome.png[Keycloak Manage realms list after temporary admin login,width=720]
+
+=== Create the `rhacs-lab` realm
+
+. Click *Manage realms* (or open *Create realm*).
+. Click *Create realm*.
+. Set *Realm name* to `rhacs-lab` and leave *Enabled* On.
++
+image::s2/s2-03-keycloak-create-realm.png[Create realm dialog with Realm name rhacs-lab,width=720]
+. Click *Create*.
+. Confirm the current realm selector shows `rhacs-lab` before you continue.
+
+=== Create the `acs-central` OpenID Connect client
+
+. In realm `rhacs-lab`, open *Clients* and click *Create client*.
++
+image::s2/s2-03-keycloak-clients-list.png[Clients list with Create client action,width=720]
+. On *General settings*:
+** *Client type:* OpenID Connect
+** *Client ID:* `acs-central`
++
+image::s2/s2-03-keycloak-create-client-general.png[Create client General settings with Client ID acs-central,width=720]
+. Click *Next*.
+. On *Capability config*, set *Client authentication* to On (leave *Standard flow* enabled).
++
+image::s2/s2-03-keycloak-create-client-capability.png[Create client Capability config with Client authentication On,width=720]
+. Click *Next*.
+. On *Login settings*, set *Valid redirect URIs* to your Central callback URL.
++
+Example for this Showroom:
++
+[source,text]
+----
+https://central-stackrox.apps.cluster-sz6zn.dyn.redhatworkshops.io/sso/providers/oidc/callback
+----
++
+Replace the Central hostname with yours if needed.
++
+image::s2/s2-03-keycloak-create-client-login.png[Create client Login settings with Valid redirect URIs,width=720]
+. Click *Save*.
+. Open the client *Credentials* tab and copy the *Client secret* (you need it in Task 3.6).
++
+image::s2/s2-03-keycloak-client-credentials.png[acs-central Credentials tab with Client secret,width=720]
+
+=== Add a `groups` token mapper
+
+. Still on client `acs-central`, open the *Client scopes* tab.
+. Open the dedicated scope (named like `acs-central-dedicated`).
+. Open the *Mappers* tab, click *Configure a new mapper*, and choose *Group Membership*.
+. Configure:
+** *Name:* `groups`
+** *Token Claim Name:* `groups`
+** *Full group path:* Off
+** *Add to ID token:* On
+** *Add to access token:* On
++
+image::s2/s2-03-keycloak-groups-mapper.png[Group Membership mapper named groups with claim groups,width=720]
+. Click *Save*.
+
+=== Create the group and lab user
+
+. Open *Groups* and click *Create group*.
+. Name the group `ctie-payments-devs` and click *Create*.
++
+image::s2/s2-03-keycloak-create-group.png[Create a group dialog with name ctie-payments-devs,width=720]
+. Open *Users* and click *Add user* (or *Create new user*).
+. Set:
+** *Username:* `payments-dev`
+** *Email:* `payments-dev@lab.local` (or another address you control)
+** *Email verified:* On (required)
+** *Required user actions:* none selected
+. Click *Create*.
++
+image::s2/s2-03-keycloak-create-user.png[payments-dev user details with Email and Email verified settings,width=720]
++
+On the user *Details* tab, confirm *Email verified* is On and click *Save* if you had to change it.
+. Open the user *Credentials* tab, click *Set password*, set a password with *Temporary* Off (example: `lab-password`), then save.
++
+image::s2/s2-03-keycloak-user-password.png[Set password dialog with Temporary Off,width=720]
+. Open the user *Groups* tab, click *Join group*, select `ctie-payments-devs`, and join.
++
+image::s2/s2-03-keycloak-user-groups.png[Join group dialog selecting ctie-payments-devs,width=720]
+
+IMPORTANT: If *Email verified* is Off or a required action remains, Keycloak returns `Account is not fully set up` and the ACS login fails.
+
+== Task 3.6: Add the OIDC auth provider in ACS
+
+. Return to RHACS > *Platform Configuration* > *Access Control* > *Auth providers*.
+. Click *Create auth provider* > *OpenID Connect*.
+. Fill in:
++
+[cols="1,2",options="header"]
+|===
+|Field |Value
+
+|Name
+|`Keycloak - rhacs-lab`
+
+|Issuer
+|`https://<SSO_HOST>/realms/rhacs-lab` (use the `SSO_HOST` value from Task 3.5; example: `https://sso.apps.cluster-sz6zn.dyn.redhatworkshops.io/realms/rhacs-lab`)
+
+|Client ID
+|`acs-central`
+
+|Client Secret
+|_(from Task 3.5)_
+
+|Mode
+|Auto-select (POST)
+|===
++
+. Under *Rules*, add:
+** *Key:* `groups`
+** *Value:* `ctie-payments-devs`
+** *Role:* `lab-payments-vuln-reader`
+. Click *Save*.
+
+== Task 3.7: Prove tenant isolation
+
+. Open a private or incognito browser window.
+. Open the RHACS Console URL.
+. Choose *Keycloak - rhacs-lab* and log in as `payments-dev`.
+. Verify:
+** *Vulnerability Management* shows workloads from `payments` only.
+** Other application namespaces (`backend`, `frontend`, `juice-shop`) are not visible.
+** Administrative areas such as creating auth providers or broad access-control changes are not available to this user.
+. Close the private window and return to your admin session.
+
+TIP: Optional stretch: in the OpenShift Console, open a Deployment and look for the ACS *Vulnerabilities* tab if the ACS Console Plugin is enabled on your cluster. That path is not required to complete this exercise.
+
+== Key takeaways
+
+* SAC isolates tenants inside one ACS Central using Permission Sets, Access Scopes, and Roles.
+* OIDC group mapping assigns those roles automatically from identity group claims.
+* A scoped login is the proof that multi-tenant ACS works without a separate Central per team.
+
+[.verification]
+****
+After logging in as `payments-dev` via Keycloak, do you only see the `payments` namespace and lack access to create auth providers or change broad Access Control settings?
+
+[.success]
+Tenant isolation works: the OIDC group mapped to `lab-payments-vuln-reader` limits what the user can see and do. Continue to Exercise 4.
+
+[.fail]
+Confirm the auth provider rule maps group `ctie-payments-devs` to role `lab-payments-vuln-reader`, that the Access Scope selects only `payments` on cluster `production`, and that the Keycloak user has Email verified On with no required actions. Then retry in a private window.
+****

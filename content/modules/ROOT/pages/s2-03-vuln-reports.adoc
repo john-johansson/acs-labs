@@ -1,73 +1,133 @@
 = Exercise 2: Automated vulnerability reports
 :navtitle: Exercise 2: Automated vulnerability reports
 
+include::partial$session2-ui.adoc[]
+
 Estimated time: 15 minutes.
 
-RHACS can generate scheduled or on-demand vulnerability reports in PDF and CSV format.
-Reports can be scoped to specific clusters, namespaces, or severity levels, replacing the need to manually export, zip, and email CSV files.
+RHACS can generate vulnerability reports in PDF and CSV format.
+Reports replace the old workflow of manually exporting, zipping, and emailing CSV files to tenant leads.
 
-== Task 2.1: Navigate to the reporting page
+On this Showroom, use *on-demand download* as the success path.
+A scheduled email report needs an email notifier under *Delivery*.
+Without SMTP, leave *Delivery* empty (no destination, no schedule) and generate the report manually after you save the configuration.
 
-. In the RHACS Console, expand *Vulnerability Management* in the left sidebar and click *Reports*.
-. Review any existing report configurations.
+== Task 2.1: Open Vulnerability Reporting
+
+. In the RHACS Console, expand *Vulnerability Management* and click *Reports*.
+. Confirm you land on *Image vulnerability reports* with the *Report configurations* tab selected.
+. An empty list is expected on a fresh lab (*No vulnerability reports yet*).
 +
-If no reports exist yet, this page will be empty. You will create one in the next task.
+image::s2/s2-02-reports-list.png[Empty Image vulnerability reports list with Create report button,width=720]
 
-== Task 2.2: Create a vulnerability report configuration
+== Task 2.2: Create a downloadable report configuration
+
+The create flow is a five-step wizard: *Details* → *Resources* → *Filters* → *Delivery* → *Review*.
+Work through each step below. Do not look for a single flat form with all fields on one page.
+
+=== Step 1: Details
 
 . Click *Create report*.
-. Fill in the report details:
+. On the *Details* step, fill in:
 +
 [cols="1,2",options="header"]
 |===
 |Field |Value
 
-|Report name
-|`Lab - Namespace Vulnerability Report`
+|Name
+|`Lab - Payments Vulnerability Report`
 
 |Description
-|`Fixable CVEs in the backend namespace, scheduled weekly.`
+|`Fixable Important and Critical CVEs for payments (on-demand download).`
 |===
++
+image::s2/s2-02-create-details.png[Create report Details step with name and description filled,width=720]
+. Click *Next*.
 
-. Under *CVE severity*, select at least *Important* and *Critical*.
-. Check *Fixable CVEs only* if you want to limit the report to actionable items.
-. Under *Report scope*, configure the scope:
-** Select the cluster: *production*
-** Select the namespace: *backend*
-. Under *Delivery destinations*, choose one:
-** *Download as CSV/PDF*: no email configuration needed.
-** *Email*: requires a configured email notifier (see note below).
-. Under *Schedule*, select *Weekly* and pick a day.
-. Click *Create*.
+=== Step 2: Resources
 
-NOTE: If no email notifier is configured in the environment, use the download option.
-You can configure an email notifier later under *Platform Configuration* > *Integrations* > *Email*.
+. On *Resources*, open *Image type* and select *Deployed images* (the toggle shows a count badge of `1` when selected).
+. Under *Scope method*, select *Custom scope* (preferred over *Collection scope*; collections are being retired).
+. In the custom scope filter row:
+.. Set the entity dropdown to *Namespace* (it may default to *Cluster*).
+.. Leave the attribute as *Name*.
+.. In *Filter results by Namespace name*, type `payments`, then select the `payments` suggestion so a chip appears (for example `Namespace name "payments"`).
++
+image::s2/s2-02-create-resources.png[Resources step with Deployed images Custom scope and payments namespace chip,width=720]
++
+IMPORTANT: You must select at least one *Image type* before *Next* enables the rest of the wizard. If you see *Select at least one image type*, reopen *Image type* and choose *Deployed images*.
+. Click *Next*.
 
-== Task 2.3: Generate an on-demand report
+=== Step 3: Filters
 
-You don't have to wait for the schedule. Generate a report immediately.
+. On *Filters*, confirm the default chips already match the lab goal:
+** *CVEs discovered in image since:* *All time*
+** *Vulnerability state:* *Observed*
+** *CVE severity:* *Critical* and *Important*
+** *CVE status:* *Fixable*
++
+image::s2/s2-02-create-filters.png[Filters step with Observed Critical Important Fixable defaults,width=720]
+. Leave these defaults. Click *Next*.
 
-. From the *Reports* page, locate the report you just created.
-. Click the three-dot menu (*⋮*) on the report row and select *Generate report*.
-. Wait for the report to complete (this may take a moment depending on the number of images).
-. Once ready, click *Download* to save the report.
-. Open the downloaded file and review its contents:
-** The *PDF* provides a summary view with severity breakdown and top affected images.
-** The *CSV* provides a detailed, machine-readable list of every CVE, component, image, and deployment.
+=== Step 4: Delivery
 
-== Task 2.4: Review report contents
+. On *Delivery*, leave the step empty.
+. Do *not* click *Add destination* (that path needs an email notifier / SMTP).
++
+image::s2/s2-02-create-delivery.png[Delivery step with no destinations added,width=720]
++
+IMPORTANT: ACS rejects a report that has a schedule or email destination without a working notifier. Weekly email digests are the production pattern after SMTP is configured. This lab proves report content with on-demand download instead.
+. Click *Next*.
 
-Examine the downloaded report and answer:
+=== Step 5: Review and save
 
-* How many fixable CVEs are in the scoped namespace?
-* Which image has the highest number of critical fixable CVEs?
-* Are there CVEs that appear across multiple images (shared base layer)?
+. On *Review*, confirm the summary looks like this:
+** *Name:* `Lab - Payments Vulnerability Report`
+** *Image type:* *Deployed images*
+** *Namespace name:* `payments`
+** *CVE severity:* *Critical*, *Important*
+** *CVE status:* *Fixable*
+** *Destinations* and *Schedule:* empty (`-`)
++
+image::s2/s2-02-create-review.png[Review step summarizing payments-scoped downloadable report,width=720]
+. Click *Save* (not *Create*). You land on the report configuration details page.
++
+image::s2/s2-02-report-created.png[Saved Lab Payments Vulnerability Report configuration details,width=720]
 
-TIP: The CSV format is particularly useful for importing into ticketing systems or SIEM tools. You can automate report management further with the RHACS API endpoint `/v2/reports/configurations`.
+== Task 2.3: Generate and download on demand
+
+. On the report details page, open *Actions*.
+. Click *Generate download* (*Send report* stays disabled while *Delivery* has no destination).
++
+image::s2/s2-02-report-actions.png[Actions menu showing Generate download for the saved report,width=720]
+. Wait until the job completes under the *All report jobs* tab.
+. Download the PDF and/or CSV when the run finishes.
+. Open the file and confirm it contains CVE, image, and deployment detail for the `payments` namespace.
+
+== Task 2.4: Review the output
+
+Answer from the downloaded report:
+
+* How many fixable Important or Critical CVEs are in scope?
+* Which image contributes the most critical fixable findings?
+* Do any CVEs repeat across images (shared base layer)?
+
+TIP: CSV output is useful for ticketing or SIEM import. Report configurations are also available through the RHACS API under `/v2/reports/configurations`.
 
 == Key takeaways
 
-* RHACS supports scheduled and on-demand vulnerability reports in PDF and CSV format.
-* Reports can be scoped by cluster, namespace, and severity. No need to export everything and filter manually.
-* On-demand generation lets you produce a report for a specific audience (audit, management review) at any time.
-* CSV exports can feed downstream automation: ticketing, dashboards, or compliance evidence collection.
+* The create wizard is five steps. Severity filters live on *Filters*, not on *Details*.
+* *Custom scope* with a namespace chip is the current scoping model (collections are legacy).
+* On-demand download works with an empty *Delivery* step. Scheduled email needs a notifier first.
+* Scope by namespace (or collection) so each tenant gets only their data.
+
+[.verification]
+****
+Did you save `Lab - Payments Vulnerability Report` with *Custom scope* for namespace `payments`, empty *Delivery*, then generate and download a PDF or CSV that includes CVE, image, and deployment detail?
+
+[.success]
+You can produce a tenant-scoped on-demand report without SMTP. Continue to Exercise 3.
+
+[.fail]
+Open *Vulnerability Management* > *Reports*, recreate the five-step wizard (leave *Delivery* empty, click *Save*), open *Actions* to generate a download, then open the file and look for CVE, image, and deployment columns.
+****

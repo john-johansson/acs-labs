@@ -13,10 +13,10 @@
 * Operations & Day-2
 ** xref:operations-day2.adoc[Overview]
 ** xref:s2-01-prerequisites.adoc[Prerequisites]
-** xref:s2-02-vuln-dashboard.adoc[Exercise 1: Vulnerability dashboard & Scanner V4]
+** xref:s2-02-vuln-dashboard.adoc[Exercise 1: Vulnerability dashboard and Scanner V4]
 ** xref:s2-03-vuln-reports.adoc[Exercise 2: Automated vulnerability reports]
-** xref:s2-04-sac.adoc[Exercise 3: Scoped Access Control]
-** xref:s2-05-oidc-plugin.adoc[Exercise 4: OIDC group mapping & Console Plugin]
+** xref:s2-04-sac-oidc.adoc[Exercise 3: SAC and OIDC]
+** xref:s2-05-risk-deferral.adoc[Exercise 4: Risk and CVE deferral]
 ** xref:s2-06-webhook.adoc[Exercise 5: Webhook notifier]
 ** xref:s2-07-splunk.adoc[Exercise 6: Splunk integration]
 ** xref:s2-08-summary.adoc[Lab summary]

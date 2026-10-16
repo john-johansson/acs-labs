@@ -1,30 +1,31 @@
 = Exercise 5: Webhook notifier
 :navtitle: Exercise 5: Webhook notifier
 
+include::partial$session2-ui.adoc[]
+
 Estimated time: 15 minutes.
 
 RHACS can push policy violation alerts to external systems using *notifiers*.
-A *Generic Webhook* notifier sends a JSON payload via HTTP POST to any endpoint, making it compatible with monitoring systems like OpenITCockpit (Nagios-based), PagerDuty, ServiceNow, or any custom receiver.
+A *Generic Webhook* notifier sends a JSON payload via HTTP POST to any endpoint.
+That pattern matches how CTIE would feed OpenITCockpit (Nagios-style) after a small transform layer.
 
-In this exercise you will configure a webhook notifier, attach it to a policy, trigger a violation, and inspect the payload.
+In this lab you use https://webhook.site[webhook.site] as the receiver so you can inspect the raw ACS payload.
+Live OpenITCockpit mapping stays discussion-only.
 
 == Task 5.1: Create an external webhook receiver
 
-You need a publicly reachable endpoint that accepts HTTP POST requests. https://webhook.site[webhook.site] provides a free, temporary endpoint for testing.
-
 . Open https://webhook.site in a new browser tab.
-. A unique URL is generated automatically (e.g. `https://webhook.site/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`).
-. Copy this URL. You will use it in the next task.
-+
-Leave this tab open so you can see incoming requests in real time.
+. Copy the unique URL that is generated automatically.
+. Leave the tab open so you can watch incoming requests.
+
+NOTE: Outbound HTTPS from this Showroom to webhook.site was verified during lab authoring. If your instance blocks it, ask the instructor for an in-cluster receiver URL instead.
 
 == Task 5.2: Create a Generic Webhook notifier in ACS
 
 . In the RHACS Console, navigate to *Platform Configuration* > *Integrations*.
-. Scroll down to the *Notifier Integrations* section.
-. Click *Generic Webhook*.
+. Under *Notifier Integrations*, click *Generic Webhook*.
 . Click *Create integration*.
-. Fill in the fields:
+. Fill in:
 +
 [cols="1,2",options="header"]
 |===
@@ -37,97 +38,72 @@ Leave this tab open so you can see incoming requests in real time.
 |_(paste your webhook.site URL)_
 
 |Skip TLS verify
-|*Enabled* (webhook.site uses a public CA, but this simplifies testing)
+|Enabled
 
 |Audit logging
-|*Disabled*
+|Disabled
 |===
 +
-. Leave *Headers* and *Extra fields* empty for now.
-. Click *Test* to verify connectivity. You should see a test payload arrive at webhook.site.
+. Click *Test* and confirm a request appears in webhook.site.
 . Click *Save*.
 
 == Task 5.3: Attach the webhook to a policy
 
 . Navigate to *Platform Configuration* > *Policy Management*.
-. Search for the policy: *Latest tag*.
-. Click the policy name to open its details.
+. Open the enabled policy *Latest tag*.
 . Click *Actions* > *Edit policy*.
-. Navigate to the *Policy behavior* section (step 4 in the wizard).
-. Under *Notification*, select *Lab - Webhook (OpenITCockpit)* from the notifier dropdown.
-. Click *Save*.
-
-TIP: You can attach multiple notifiers to a single policy. For example, you can attach both a webhook and Splunk to the same policy.
+. Open *Policy behavior*.
+. Under *Notification*, select `Lab - Webhook (OpenITCockpit)`.
+. Save.
 
 == Task 5.4: Trigger a violation and inspect the payload
 
-. On the bastion, deploy a pod with the `latest` tag into the pre-existing `backend` namespace:
+. On the bastion, create a pod that uses the `latest` tag in the `backend` namespace:
 +
 [source,bash]
 ----
 oc run webhook-trigger --image=image-registry.openshift-image-registry.svc:5000/openshift/httpd:latest -n backend
 ----
-+
-. Wait a few seconds for ACS to detect the violation.
-. Switch to the webhook.site browser tab.
-. You should see a new POST request with a JSON payload.
-. Click the request and review the payload structure:
-+
-[source,json]
-----
-{
-  "alert": {
-    "id": "...",
-    "policy": {
-      "name": "Latest tag",
-      "severity": "LOW_SEVERITY",
-      ...
-    },
-    "deployment": {
-      "name": "webhook-trigger",
-      "namespace": "backend",
-      ...
-    },
-    ...
-  }
-}
-----
-
-The payload includes the full policy details, deployment metadata, and violation context.
+. Wait a few seconds.
+. In webhook.site, open the new POST request and review the JSON.
+. Confirm the payload includes policy name `Latest tag`, deployment `webhook-trigger`, and namespace `backend`.
 
 == Task 5.5: Discussion: mapping to OpenITCockpit
 
-CTIE uses OpenITCockpit (Nagios-based) as the central monitoring system. To route ACS alerts there, you would:
+CTIE uses OpenITCockpit as the central monitoring system. A production path would:
 
-. Deploy a small middleware service (or serverless function) that accepts the ACS webhook payload.
-. Transform the JSON into a Nagios passive check result:
-** *Host:* deployment namespace (e.g. `backend`)
-** *Service:* policy name (e.g. `Latest tag`)
-** *State:* mapped from ACS severity (`CRITICAL_SEVERITY` → 2, `HIGH_SEVERITY` → 1, `LOW_SEVERITY` → 0)
-** *Output:* violation summary text
-. Forward the passive check to OpenITCockpit via its API or NSCA.
+. Accept the ACS webhook JSON in a small middleware service.
+. Map fields into a Nagios passive check:
+** Host: deployment namespace
+** Service: policy name
+** State: derived from ACS severity
+** Output: violation summary
+. Forward that result to OpenITCockpit.
 
-This mapping is not implemented in this lab, but the webhook payload contains all the fields needed for this integration.
+This lab stops at the ACS JSON payload. The payload already contains the fields needed for that mapping.
 
 == Cleanup
 
-. Remove the test pod:
-+
 [source,bash]
 ----
-oc delete pod webhook-trigger -n backend
+oc delete pod webhook-trigger -n backend --ignore-not-found
 ----
-. Detach the webhook from the policy:
-** Navigate to *Platform Configuration* > *Policy Management*.
-** Search for *Latest tag*, click the policy name.
-** Click *Actions* > *Edit policy*.
-** Navigate to *Policy behavior* (step 4).
-** Remove *Lab - Webhook (OpenITCockpit)* from the notifier dropdown.
-** Click *Save*.
+
+. Edit *Latest tag* again and remove `Lab - Webhook (OpenITCockpit)` from notifications before you leave the exercise.
 
 == Key takeaways
 
-* Generic Webhooks are the most flexible notifier type: any HTTP endpoint can receive ACS alerts.
-* The JSON payload contains full policy, deployment, and violation context.
-* Webhook.site is useful for prototyping; production systems use middleware to transform and route the payload.
-* One policy can send alerts to multiple notifiers simultaneously.
+* Generic Webhooks are the flexible bridge into existing monitoring stacks.
+* The ACS JSON payload includes policy, deployment, and violation context.
+* webhook.site is for labs. Production uses middleware in front of OpenITCockpit or similar.
+
+[.verification]
+****
+Did webhook.site receive a POST whose JSON includes policy `Latest tag`, deployment `webhook-trigger`, and namespace `backend`?
+
+[.success]
+The generic webhook path works and the ACS payload has the fields needed for an OpenITCockpit-style mapping. Continue to Exercise 6.
+
+[.fail]
+Confirm the notifier is attached to the enabled *Latest tag* policy, that the Test button already reached webhook.site, then recreate the `webhook-trigger` pod in `backend` and refresh the webhook.site request list.
+****

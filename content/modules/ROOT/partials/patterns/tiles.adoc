@@ -1,0 +1,368 @@
+++++
+
+<style>
+/* Hide raw tile sidebarblocks before JS transforms them */
+.sidebarblock.tile {
+  display: none;
+}
+
+/* Tile grid for index page */
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 10px 0;
+}
+.tile-card {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s;
+}
+.tile-card:hover {
+  box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+}
+.tile-card a {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.tile-card .tile-header {
+  background-color: #4A6785;
+  color: white;
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 15px;
+}
+.tile-card .tile-body {
+  padding: 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.tile-card .tile-desc {
+  font-size: 14px;
+  color: #444;
+  line-height: 1.5;
+  flex: 1;
+}
+.tile-card .tile-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+  font-size: 13px;
+  color: #777;
+}
+.tile-card .tile-footer .tile-time,
+.tile-card .tile-footer .tile-tasks {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+/* Progress bar */
+.tile-card .tile-progress {
+  margin-top: 10px;
+}
+.tile-card .tile-progress-track {
+  background: #e8e8e8;
+  border-radius: 3px;
+  height: 6px;
+  overflow: hidden;
+}
+.tile-card .tile-progress-fill {
+  background: #3e8635;
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+.tile-card .tile-progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 3px;
+}
+.tile-card .tile-progress-label {
+  font-size: 11px;
+  color: #777;
+}
+.tile-card .tile-completed-label {
+  font-size: 13px;
+  color: #3e8635;
+  font-weight: 600;
+}
+/* Session-level progress above the tile grid */
+.tile-session-progress {
+  margin: 0 0 16px 0;
+  padding: 12px 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+}
+.tile-session-progress .tile-session-label {
+  font-size: 14px;
+  color: #444;
+  margin-bottom: 8px;
+}
+.tile-session-progress .tile-progress-track {
+  background: #e8e8e8;
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+}
+.tile-session-progress .tile-progress-fill {
+  background: #3e8635;
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+</style>
+
+<script>
+window.addEventListener('DOMContentLoaded', function() {
+
+  // One-time migration from keys that incorrectly used "modules/" as a folder prefix.
+  // Collect keys first so index shifts from removeItem cannot skip entries.
+  (function migrateModuleKeys() {
+    var pending = [];
+    for (var mi = 0; mi < localStorage.length; mi++) {
+      var mk = localStorage.key(mi);
+      if (mk && (mk.indexOf('verify:modules/') === 0 || mk.indexOf('visited:modules/') === 0 || mk.indexOf('resume:modules/') === 0)) {
+        pending.push(mk);
+      }
+    }
+    pending.forEach(function(mk) {
+      if (mk.indexOf('verify:modules/') === 0) {
+        var nvk = 'verify:' + mk.slice('verify:modules/'.length);
+        if (!localStorage.getItem(nvk)) localStorage.setItem(nvk, localStorage.getItem(mk));
+        localStorage.removeItem(mk);
+      } else if (mk.indexOf('visited:modules/') === 0) {
+        var nvv = 'visited:' + mk.slice('visited:modules/'.length);
+        if (!localStorage.getItem(nvv)) localStorage.setItem(nvv, localStorage.getItem(mk));
+        localStorage.removeItem(mk);
+      } else {
+        localStorage.removeItem(mk);
+      }
+    });
+  })();
+
+  // Transform AsciiDoc .tile sidebar blocks into tile-card HTML
+  var tiles = document.querySelectorAll('.sidebarblock.tile');
+  if (!tiles.length) return;
+
+  var grid = document.createElement('div');
+  grid.className = 'tile-grid';
+  var clockSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#777" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+  tiles[0].parentNode.insertBefore(grid, tiles[0]);
+  tiles.forEach(function(sb) {
+    var content = sb.querySelector('.content');
+    if (!content) return;
+    var paragraphs = content.querySelectorAll('.paragraph');
+    var link = '', title = '', desc = '';
+    paragraphs.forEach(function(p) {
+      var a = p.querySelector('a');
+      if (a && !link) {
+        link = a.getAttribute('href');
+        title = a.textContent;
+      } else if (p.classList.contains('meta')) {
+        // Ignored — time/tasks are now dynamic
+      } else if (link) {
+        desc += (desc ? ' ' : '') + (p.querySelector('p') ? p.querySelector('p').textContent : p.textContent).trim();
+      }
+    });
+    // Extract module prefix from xref link:
+    // Folder style: "m1/m1.0.html" → "m1/"
+    // Flat style:   "s2-02-vuln-dashboard.html" → "s2-02-vuln-dashboard"
+    var prefixMatch = link.match(/([^\/]*\/)/);
+    var modulePrefix = prefixMatch
+      ? prefixMatch[1]
+      : link.replace(/^.*\//, '').replace(/\.html$/, '');
+
+    var card = document.createElement('div');
+    card.className = 'tile-card';
+    card.setAttribute('data-module', modulePrefix);
+    card.setAttribute('data-first-link', link);
+    card.innerHTML =
+      '<a href="' + link + '">' +
+        '<div class="tile-header">' + title + '</div>' +
+        '<div class="tile-body">' +
+          '<div class="tile-desc">' + desc + '</div>' +
+          '<div class="tile-footer">' +
+            '<span class="tile-time"></span>' +
+            '<span class="tile-tasks"></span>' +
+          '</div>' +
+          '<div class="tile-progress" style="display:none"></div>' +
+        '</div>' +
+      '</a>';
+
+    // Resume: link to last visited page instead of overview
+    var resumeUrl = localStorage.getItem('resume:' + modulePrefix);
+    if (resumeUrl) card.querySelector('a').setAttribute('href', resumeUrl);
+
+    grid.appendChild(card);
+    sb.remove();
+  });
+
+  // Populate task counts and times dynamically from the nav sidebar
+  var cards = grid.querySelectorAll('.tile-card[data-module]');
+  cards.forEach(function(card) {
+    var prefix = card.getAttribute('data-module');
+    if (!prefix) return;
+
+    // Find nav links for this module:
+    // Folder prefix ("m1/"): any href containing the prefix
+    // Flat page key ("s2-02-..."): exact filename stem match
+    var pageUrls = [];
+    var seen = {};
+    var allNavLinks = document.querySelectorAll('a.nav-link');
+    var isFlat = prefix.indexOf('/') === -1;
+    for (var i = 0; i < allNavLinks.length; i++) {
+      var href = allNavLinks[i].getAttribute('href');
+      if (!href || seen[href]) continue;
+      var match = false;
+      if (isFlat) {
+        var stem = href.replace(/^.*\//, '').replace(/\.html$/, '');
+        match = (stem === prefix);
+      } else {
+        match = href.indexOf(prefix) !== -1;
+      }
+      if (match) {
+        seen[href] = true;
+        pageUrls.push(href);
+      }
+    }
+    // Flat tiles always have at least the first-link page even if nav labels differ
+    if (!pageUrls.length && isFlat) {
+      var first = card.getAttribute('data-first-link');
+      if (first) pageUrls.push(first);
+    }
+
+    var tasksCount = pageUrls.length;
+    if (!tasksCount) return;
+
+    // Show task count immediately
+    card.setAttribute('data-tasks', tasksCount);
+    card.querySelector('.tile-tasks').textContent = tasksCount + ' tasks';
+    localStorage.setItem('module:' + prefix + 'tasks', tasksCount);
+
+    // Fetch pages in background to get per-page times
+    Promise.all(pageUrls.map(function(url) {
+      return fetch(url).then(function(r) { return r.text(); }).catch(function() { return ''; });
+    })).then(function(htmls) {
+      var times = htmls.map(function(html) {
+        if (!html) return 1;
+        var doc = new DOMParser().parseFromString(html, 'text/html');
+        var span = doc.querySelector('.page-time');
+        return span ? parseInt(span.getAttribute('data-time'), 10) || 1 : 1;
+      });
+      var total = times.reduce(function(a, b) { return a + b; }, 0);
+      card.querySelector('.tile-time').innerHTML = clockSvg + ' ' + total + ' min';
+      card.setAttribute('data-times', JSON.stringify(times));
+    });
+  });
+
+  // Build progress bars from localStorage
+  // Each page (task) has equal weight = 1. Pages with checks split their
+  // weight across the checks: each check is worth 1/numChecks.
+  // Pages without checks earn full credit when visited.
+  var sessionEarned = 0;
+  var sessionTotal = 0;
+  cards.forEach(function(card) {
+    var prefix = card.getAttribute('data-module');
+    var totalTasks = parseInt(card.getAttribute('data-tasks'), 10);
+    if (!prefix || !totalTasks) return;
+    sessionTotal += totalTasks;
+
+    // Collect page data from localStorage
+    var pagesWithChecks = {};  // pageKey → { total, completed }
+    var visitedPages = {};     // pageKey → true
+
+    for (var i = 0; i < localStorage.length; i++) {
+      var key = localStorage.key(i);
+
+      // Verification totals: "verify:m1/m1.2:total" or "verify:s2-02-vuln-dashboard:total"
+      if (key.indexOf('verify:' + prefix) === 0 && key.endsWith(':total')) {
+        var pageKey = key.slice(7, -6); // strip "verify:" and ":total"
+        var pageTotal = parseInt(localStorage.getItem(key), 10) || 0;
+        var pageCompleted = 0;
+        for (var j = 0; j < pageTotal; j++) {
+          if (localStorage.getItem('verify:' + pageKey + ':' + j) === 'yes') pageCompleted++;
+        }
+        pagesWithChecks[pageKey] = { total: pageTotal, completed: pageCompleted };
+      }
+
+      // Page visits: "visited:m1/m1.2" or "visited:s2-02-vuln-dashboard"
+      if (key.indexOf('visited:' + prefix) === 0) {
+        visitedPages[key.slice(8)] = true; // strip "visited:"
+      }
+    }
+
+    // Calculate earned weight
+    var earned = 0;
+    // Pages with checks: each page worth 1, split across its checks
+    for (var pk in pagesWithChecks) {
+      var info = pagesWithChecks[pk];
+      earned += info.completed / info.total;
+    }
+    // Visited pages without checks: each worth 1
+    for (var vk in visitedPages) {
+      if (!pagesWithChecks[vk]) earned += 1;
+    }
+
+    sessionEarned += earned;
+    if (earned === 0) return;
+    var pct = Math.min(100, Math.round((earned / totalTasks) * 100));
+    var progDiv = card.querySelector('.tile-progress');
+    progDiv.style.display = '';
+    if (pct === 100) {
+      card.querySelector('.tile-header').style.backgroundColor = '#3e8635';
+    }
+    progDiv.innerHTML =
+      '<div class="tile-progress-track">' +
+        '<div class="tile-progress-fill" style="width:' + pct + '%"></div>' +
+      '</div>' +
+      '<div class="tile-progress-info">' +
+        (pct === 100 ? '<span class="tile-completed-label">\u2705 Completed</span>' : '<span></span>') +
+        '<span class="tile-progress-label">' + pct + '%</span>' +
+      '</div>';
+  });
+
+  // Session-level progress across all tiles on this overview page
+  if (sessionTotal > 0) {
+    var sessionPct = Math.min(100, Math.round((sessionEarned / sessionTotal) * 100));
+    var sessionBar = document.createElement('div');
+    sessionBar.className = 'tile-session-progress';
+    sessionBar.innerHTML =
+      '<div class="tile-session-label">Session progress: <strong>' + sessionPct + '%</strong>' +
+        ' (' + Math.min(sessionTotal, Math.round(sessionEarned * 10) / 10) + ' / ' + sessionTotal + ' tasks)</div>' +
+      '<div class="tile-progress-track">' +
+        '<div class="tile-progress-fill" style="width:' + sessionPct + '%"></div>' +
+      '</div>';
+    grid.parentNode.insertBefore(sessionBar, grid);
+  }
+
+  // Reset progress button
+  var reset = document.createElement('div');
+  reset.style.cssText = 'text-align:right; margin-top:8px; font-size:12px;';
+  reset.innerHTML = '<a href="#" style="color:#999;">Reset progress</a>';
+  reset.querySelector('a').addEventListener('click', function(e) {
+    e.preventDefault();
+    Object.keys(localStorage).filter(function(k) {
+      return k.indexOf('verify:') === 0 || k.indexOf('visited:') === 0 || k.indexOf('resume:') === 0 || k.indexOf('module:') === 0 || k.indexOf('cp-done:') === 0;
+    }).forEach(function(k) { localStorage.removeItem(k); });
+    location.reload();
+  });
+  grid.parentNode.insertBefore(reset, grid.nextSibling);
+
+});
+</script>
+
+++++
