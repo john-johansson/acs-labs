@@ -121,7 +121,7 @@ Use `Lab - Splunk HEC` (or `Splunk SIEM (local)` if you reused that notifier in 
 +
 [source,bash]
 ----
-oc run splunk-trigger-curl --image=registry.access.redhat.com/ubi9/ubi:9.4 --command -- sleep 3600 -n frontend
+oc run splunk-trigger-curl -n frontend --image=registry.access.redhat.com/ubi9/ubi:9.4 --command -- sleep 3600
 oc run splunk-trigger-apk --image=docker.io/library/alpine:3.18 -n frontend --command -- sleep 3600
 ----
 +
