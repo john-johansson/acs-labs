@@ -10,3 +10,14 @@ In this session you explored RHACS operational capabilities beyond the policy en
 * *Notifiers*: cloned a system policy, attached a generic webhook, and sent alerts to Splunk HEC (Exercises 5 and 6).
 
 These capabilities are the Day-2 foundation for multi-team visibility, prioritization, and alert routing into the tools teams already operate.
+
+== Reset the environment
+
+To remove all resources created during this session and return the environment to its starting state, run the cleanup script on the bastion:
+
+[source,bash]
+----
+bash scripts/s2-cleanup.sh
+----
+
+The script removes report configurations, notifiers, policy clones, SAC objects (auth provider, role, permission set, access scope), the Keycloak realm, and trigger pods. It is idempotent and safe to run multiple times.

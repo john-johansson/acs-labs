@@ -69,6 +69,18 @@ git clone https://github.com/john-johansson/acs-labs.git
 cd acs-labs
 ----
 
+== Full reset (optional)
+
+If you have run these exercises before on this Showroom and want a clean starting point, run the cleanup script from the cloned repository:
+
+[source,bash]
+----
+bash scripts/s2-cleanup.sh
+----
+
+The script removes all lab-created resources (report configs, notifiers, policy clones, SAC objects, Keycloak realm, and trigger pods). It is idempotent and safe to run multiple times.
+On a fresh Showroom you can skip this step.
+
 == Lab namespaces on this cluster
 
 These application namespaces are pre-provisioned for Session 2:
