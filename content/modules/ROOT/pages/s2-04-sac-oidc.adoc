@@ -259,6 +259,9 @@ IMPORTANT: If *Email verified* is Off or a required action remains, Keycloak ret
 ** *Key:* `groups`
 ** *Value:* `lab-payments-devs`
 ** *Role:* `lab-payments-vuln-reader`
+. Change the *Minimum access role* (the default row with an empty key and value) from *Admin* to *None*.
++
+IMPORTANT: ACS pre-fills the default rule with *Admin*. If you leave it, every user who logs in through this provider gets full Admin access regardless of their group membership, and the group-to-role mapping is effectively ignored. Setting it to *None* ensures only users matching the `groups` rule receive the `lab-payments-vuln-reader` role.
 . Click *Save*.
 
 == Task 3.7: Prove tenant isolation
@@ -272,12 +275,19 @@ IMPORTANT: If *Email verified* is Off or a required action remains, Keycloak ret
 ** Administrative areas such as creating auth providers or broad access-control changes are not available to this user.
 . Close the private window and return to your admin session.
 
+TIP: If you see a *nonce verification failed* error, close the private window completely and open a fresh one before retrying. Stale browser state from a previous failed login attempt causes a nonce mismatch.
+
 TIP: Optional stretch: in the OpenShift Console, open a Deployment and look for the ACS *Vulnerabilities* tab if the ACS Console Plugin is enabled on your cluster. That path is not required to complete this exercise.
+
+== Cleanup
+
+NOTE: On a single-use Showroom that is destroyed after the session, you can skip cleanup. On a shared or reusable cluster, delete the auth provider, role, permission set, and access scope you created, and remove the Keycloak realm.
 
 == Key takeaways
 
 * SAC isolates tenants inside one ACS Central using Permission Sets, Access Scopes, and Roles.
 * OIDC group mapping assigns those roles automatically from identity group claims.
+* Set the *Minimum access role* to *None* on auth providers so only users matching a group rule get access. Leaving the default at Admin defeats the purpose of scoping.
 * A scoped login is the proof that multi-tenant ACS works without a separate Central per team.
 
 [.verification]
