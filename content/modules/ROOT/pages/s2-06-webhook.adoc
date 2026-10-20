@@ -10,7 +10,7 @@ A *Generic Webhook* notifier sends a JSON payload via HTTP POST to any endpoint.
 That pattern is how many teams feed a monitoring or ticketing stack after a small transform layer.
 
 In this lab you use https://webhook.site[webhook.site] as the receiver so you can inspect the raw ACS payload.
-Mapping into a live monitoring product stays discussion-only.
+Mapping into a live monitoring product is covered as a reflection exercise at the end.
 
 By the end of this exercise you will:
 
@@ -25,7 +25,7 @@ By the end of this exercise you will:
 . Copy the unique URL that is generated automatically.
 . Leave the tab open so you can watch incoming requests.
 
-NOTE: Outbound HTTPS from this Showroom to webhook.site was verified during lab authoring. If your instance blocks it, ask the instructor for an in-cluster receiver URL instead.
+NOTE: Outbound HTTPS from this Showroom to webhook.site was verified during lab authoring. If your instance blocks it, check the Showroom notes for an alternative in-cluster receiver URL.
 
 == Task 5.2: Create a Generic Webhook notifier in ACS
 
@@ -85,9 +85,9 @@ oc run webhook-trigger --image=image-registry.openshift-image-registry.svc:5000/
 ** `alert.deployment.namespace`: `backend`
 ** `alert.policy.severity`: the severity level you set on the clone
 
-== Task 5.5: Discussion: mapping to a monitoring system
+== Task 5.5: Reflect: mapping to a monitoring system
 
-A production path would often:
+Consider how you would connect this payload to your own monitoring stack. A production path would often:
 
 . Accept the ACS webhook JSON in a small middleware service.
 . Map fields into a monitoring or ticketing event, for example:

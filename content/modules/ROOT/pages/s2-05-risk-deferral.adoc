@@ -59,7 +59,7 @@ This task focuses on the auditable exception record that security and platform t
 ** Status (`Approved`)
 ** Scope (image registry, remote, and tag pattern)
 ** Approver or requester identity if shown
-. Discuss with the group: what rationale would you require before approving a 30-day deferral in production?
+. Reflect: what rationale would you require before approving a 30-day deferral in production?
 
 OPTIONAL: If your UI offers *Defer* or *Request deferral* on a CVE and the request succeeds, complete it with a 30-day duration and rationale
 `Lab deferral: vendor fix under evaluation; compensating controls documented for security review.`

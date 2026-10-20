@@ -78,7 +78,7 @@ xref:s2-07-splunk.adoc[Exercise 6: Splunk integration]
 Integrate RHACS with Splunk via HEC and verify policy alerts in search (~15 min).
 ****
 
-== Day-2 workflow (discussion)
+== Day-2 workflow (reflection)
 
 In production, these exercises chain together:
 
