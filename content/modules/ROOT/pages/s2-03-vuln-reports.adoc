@@ -12,6 +12,13 @@ On this Showroom, use *on-demand download* as the success path.
 A scheduled email report needs an email notifier under *Delivery*.
 Without SMTP, leave *Delivery* empty (no destination, no schedule) and generate the report manually after you save the configuration.
 
+By the end of this exercise you will:
+
+* Walk through the five-step report wizard (Details, Resources, Filters, Delivery, Review).
+* Scope a report to a single namespace using *Custom scope*.
+* Generate and download a PDF or CSV report on demand without SMTP.
+* Understand when to use on-demand download vs scheduled email delivery.
+
 == Task 2.1: Open Vulnerability Reporting
 
 . In the RHACS Console, expand *Vulnerability Management* and click *Reports*.

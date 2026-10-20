@@ -14,6 +14,13 @@ SAC uses three primitives:
 
 You will create a tenant-scoped role for the `payments` namespace, map a Keycloak group to that role, and prove isolation with a test user login.
 
+By the end of this exercise you will:
+
+* Build the three SAC primitives (Permission Set, Access Scope, Role) for a single-namespace tenant.
+* Configure a Keycloak OIDC realm, client, group, and user from scratch.
+* Map a Keycloak group claim to an ACS role so tenant isolation is automatic.
+* Prove isolation by logging in as a scoped user and confirming restricted visibility.
+
 == Task 3.1: Review default roles
 
 . In the RHACS Console, navigate to *Platform Configuration* > *Access Control*.

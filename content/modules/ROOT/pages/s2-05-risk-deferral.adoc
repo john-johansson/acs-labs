@@ -8,6 +8,12 @@ Estimated time: 15 minutes.
 ACS computes a *Risk Priority* for each deployment from policy violations, vulnerabilities, configuration, and related signals.
 Platform and security teams use that ranking to decide what to fix first, and use *vulnerability exceptions* (deferral or false positive) when a CVE cannot be fixed immediately but needs an auditable record.
 
+By the end of this exercise you will:
+
+* Use the Risk view to identify high-priority deployments and understand the signals that drive ranking.
+* Apply a policy scope exclusion to reduce noise from non-critical namespaces.
+* Review an existing vulnerability exception (deferral or false positive) and understand the audit trail.
+
 == Task 4.1: Analyze deployment risk factors
 
 . In the RHACS Console, open *Risk* in the left navigation.

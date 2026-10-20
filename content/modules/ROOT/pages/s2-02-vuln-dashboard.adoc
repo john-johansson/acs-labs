@@ -15,6 +15,13 @@ Under the hood, *Scanner V4* splits the work into two stages:
 
 Base OS vulnerabilities and application-level vulnerabilities are evaluated through different feeds, so coverage and timing can differ.
 
+By the end of this exercise you will:
+
+* Navigate the Results view and understand the default filters (Critical + Important, Fixable).
+* Drill into an image and distinguish OS-layer findings from language-level dependencies using the *Source* column.
+* Compare the severity profile of two images (application-heavy vs OS-heavy).
+* Know how *Manage watched images* supports pre-deployment scanning.
+
 == Task 1.1: Explore vulnerability results
 
 . In the RHACS Console, expand *Vulnerability Management* in the left navigation and click *Results*.

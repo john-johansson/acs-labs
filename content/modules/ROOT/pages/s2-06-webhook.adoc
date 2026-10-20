@@ -12,6 +12,13 @@ That pattern is how many teams feed a monitoring or ticketing stack after a smal
 In this lab you use https://webhook.site[webhook.site] as the receiver so you can inspect the raw ACS payload.
 Mapping into a live monitoring product stays discussion-only.
 
+By the end of this exercise you will:
+
+* Configure a Generic Webhook notifier in ACS and test connectivity.
+* Clone a system policy (rather than editing it directly) and attach the notifier to the clone.
+* Trigger a violation and inspect the raw ACS JSON payload in webhook.site.
+* Identify the fields in the payload that map to a monitoring or ticketing system.
+
 == Task 5.1: Create an external webhook receiver
 
 . Open https://webhook.site in a new browser tab.
