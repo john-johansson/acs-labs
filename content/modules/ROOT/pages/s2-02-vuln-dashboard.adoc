@@ -81,10 +81,10 @@ NOTE: *Manage watched images* remains the production path for candidates that ar
 
 == Key takeaways
 
-* *Results* on *User Workloads* is the unified triage surface for deploy-time vulnerability data.
+* *Vulnerability Management* > *Results* on the *User Workloads* tab is the unified triage surface. Default filters show *Critical* + *Important* severity, *Fixable* only.
 * Scanner V4 Indexer builds the SBOM. Matcher produces the CVE list (visible in the image header as *by Scanner V4*).
-* Expanding a CVE row exposes *Source* (*OS* vs language types such as *NODEJS* or *JAVA*).
-* Comparing two scanned images (for example juice-shop vs `quay.io/rhpds/nginx:1.25`) shows how base OS and language stacks change severity mix. *Manage watched images* is the path for images that are not deployed yet.
+* Expanding a CVE row exposes the *Source* column: *OS* for base-layer packages, *NODEJS* / *JAVA* / *GOLANG* for language-level dependencies.
+* Comparing two scanned images (for example juice-shop vs `quay.io/rhpds/nginx:1.25`) shows how base OS and language stacks change the severity mix. *Manage watched images* (top right on Results) is the path for images that are not deployed yet.
 
 [.verification]
 ****

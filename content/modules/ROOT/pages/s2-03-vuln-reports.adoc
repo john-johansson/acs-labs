@@ -101,11 +101,11 @@ IMPORTANT: ACS rejects a report that has a schedule or email destination without
 image::s2/s2-02-report-actions.png[Actions menu showing Generate download for the saved report,width=720]
 . Wait until the job completes under the *All report jobs* tab.
 . Download the PDF and/or CSV when the run finishes.
-. Open the file and confirm it contains CVE, image, and deployment detail for the `payments` namespace.
+. Open the file. The PDF lists CVEs grouped by image; the CSV contains columns such as CVE ID, severity, CVSS score, component, image name, and deployment. Both are scoped to the `payments` namespace.
 
 == Task 2.4: Review the output
 
-Answer from the downloaded report:
+Use these questions to evaluate whether the report gives a tenant lead enough to prioritize fixes:
 
 * How many fixable Important or Critical CVEs are in scope?
 * Which image contributes the most critical fixable findings?
@@ -115,10 +115,10 @@ TIP: CSV output is useful for ticketing or SIEM import. Report configurations ar
 
 == Key takeaways
 
-* The create wizard is five steps. Severity filters live on *Filters*, not on *Details*.
+* The create wizard is five steps: *Details* > *Resources* > *Filters* > *Delivery* > *Review*. Severity filters live on *Filters*, not on *Details*.
 * *Custom scope* with a namespace chip is the current scoping model (collections are legacy).
-* On-demand download works with an empty *Delivery* step. Scheduled email needs a notifier first.
-* Scope by namespace (or collection) so each tenant gets only their data.
+* On-demand download (*Vulnerability Management* > *Reports* > open report > *Actions* > *Generate download*) works with an empty *Delivery* step. Scheduled email needs a notifier first.
+* Scope by namespace so each tenant gets only their data. CSV output feeds ticketing and SIEM workflows.
 
 [.verification]
 ****
