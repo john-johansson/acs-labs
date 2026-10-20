@@ -3,7 +3,7 @@
 
 include::partial$session2-ui.adoc[]
 
-Estimated time: 20 minutes.
+Estimated time: 25 minutes.
 
 RHACS *Scoped Access Control* (SAC) controls what each user can see and do inside a shared ACS Central.
 SAC uses three primitives:
@@ -20,6 +20,7 @@ By the end of this exercise you will:
 * Configure a Keycloak OIDC realm, client, group, and user from scratch.
 * Map a Keycloak group claim to an ACS role so tenant isolation is automatic.
 * Prove isolation by logging in as a scoped user and confirming restricted visibility.
+* See scoped vulnerability data in the OpenShift Console via the ACS Console Plugin.
 
 == Task 3.1: Review default roles
 
@@ -277,7 +278,19 @@ IMPORTANT: ACS pre-fills the default rule with *Admin*. If you leave it, every u
 
 TIP: If you see a *nonce verification failed* error, close the private window completely and open a fresh one before retrying. Stale browser state from a previous failed login attempt causes a nonce mismatch.
 
-TIP: Optional stretch: in the OpenShift Console, open a Deployment and look for the ACS *Vulnerabilities* tab if the ACS Console Plugin is enabled on your cluster. That path is not required to complete this exercise.
+== Task 3.8: View vulnerabilities in the OpenShift Console
+
+The ACS Console Plugin adds a *Vulnerabilities* tab to Deployment pages in the OpenShift Console.
+This gives developers a self-service path to check their own workload findings without switching to ACS Central.
+
+. Open the OpenShift Console URL from your Showroom dashboard.
+. Navigate to *Workloads* > *Deployments* and select the `payments` namespace.
+. Open a deployment (for example `visa-processor`).
+. Click the *Vulnerabilities* tab. Confirm CVE data appears inline with severity and fixable status.
+
+NOTE: If the *Vulnerabilities* tab is not visible, the ACS Console Plugin may not be enabled on this Showroom build. Run `oc get consoleplugin` on the bastion to check. If no `acscs-console-plugin` (or similar) resource exists, skip this task and continue to Cleanup.
+
+This is the same vulnerability data from Exercise 1, surfaced inside the console developers already use. Combined with the scoped role from Task 3.4, a `payments` developer sees only their namespace's findings here as well.
 
 == Cleanup
 
@@ -289,6 +302,7 @@ NOTE: On a single-use Showroom that is destroyed after the session, you can skip
 * OIDC group mapping assigns those roles automatically from identity group claims.
 * Set the *Minimum access role* to *None* on auth providers so only users matching a group rule get access. Leaving the default at Admin defeats the purpose of scoping.
 * A scoped login is the proof that multi-tenant ACS works without a separate Central per team.
+* The ACS Console Plugin surfaces the same vulnerability data inside the OpenShift Console, giving developers a self-service view without leaving the interface they already use.
 
 [.verification]
 ****
