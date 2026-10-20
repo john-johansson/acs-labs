@@ -13,8 +13,9 @@ set -euo pipefail
 AUTH="Authorization: Bearer ${ROX_API_TOKEN}"
 CENTRAL="${ROX_CENTRAL_ADDRESS}"
 
-ok()   { printf "  %-40s %s\n" "$1" "deleted"; }
-skip() { printf "  %-40s %s\n" "$1" "not found, skipping"; }
+ok()    { printf "  %-40s %s\n" "$1" "deleted"; }
+reset() { printf "  %-40s %s\n" "$1" "reset"; }
+skip()  { printf "  %-40s %s\n" "$1" "not found, skipping"; }
 
 lookup_policy()    { curl -sk -H "${AUTH}" "${CENTRAL}/v1/policies"              | python3 -c "import sys,json; [print(p['id']) for p in json.load(sys.stdin)['policies']        if '${1}' in p['name']]"  2>/dev/null | head -1; }
 lookup_notifier()  { curl -sk -H "${AUTH}" "${CENTRAL}/v1/notifiers"             | python3 -c "import sys,json; [print(n['id']) for n in json.load(sys.stdin)['notifiers']       if '${1}' in n['name']]"  2>/dev/null | head -1; }
@@ -48,7 +49,7 @@ if os.environ.get('DISABLE_POLICY')=='true':
 p['exclusions']=[e for e in p.get('exclusions',[]) if not e.get('deployment',{}).get('scope',{}).get('namespace')]
 print(json.dumps(p))
 " | curl -sk -X PUT -H "${AUTH}" -H "Content-Type: application/json" -d @- "${CENTRAL}/v1/policies/${id}" > /dev/null 2>&1
-    ok "$label"
+    reset "$label"
   else
     skip "$label"
   fi
