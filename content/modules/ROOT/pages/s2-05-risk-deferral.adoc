@@ -1,0 +1,91 @@
+= Exercise 4: Risk profiling and CVE deferral
+:navtitle: Exercise 4: Risk and CVE deferral
+
+include::partial$session2-ui.adoc[]
+
+Estimated time: 15 minutes.
+
+ACS computes a *Risk Priority* for each deployment from policy violations, vulnerabilities, configuration, and related signals.
+Platform and security teams use that ranking to decide what to fix first, and use *vulnerability exceptions* (deferral or false positive) when a CVE cannot be fixed immediately but needs an auditable record.
+
+By the end of this exercise you will:
+
+* Use the Risk view to identify high-priority deployments and understand the signals that drive ranking.
+* Apply a policy scope exclusion to reduce noise from non-critical namespaces.
+* Review an existing vulnerability exception (deferral or false positive) and understand the audit trail.
+
+== Task 4.1: Analyze deployment risk factors
+
+. In the RHACS Console, open *Risk* in the left navigation.
+. Sort or scan the list for a high-priority application workload.
++
+On this Showroom, `visa-processor` in namespace `payments` and `log4shell` in namespace `log4shell` are reliable high-priority examples. Other candidates include `backend-atlas` (backend) and `webgoat` (webgoat).
+. Click the deployment name.
+. Review the risk breakdown panels:
+** Policy violations (for example privileged settings or dangerous capabilities)
+** Vulnerable images and CVE severity
+** Configuration and exposure signals shown for that deployment
+. Note one factor that would matter to platform operations and one that would matter to application owners.
+
+== Task 4.2: Add a policy scope exclusion
+
+Excluding non-production or sandbox workloads from a noisy policy recalibrates what appears as risk without disabling the policy globally.
+
+. Navigate to *Platform Configuration* > *Policy Management*.
+. Open *Fixable Severity at least Important* (enabled by default on this cluster).
+. Click *Actions* > *Edit policy*.
+. In the policy wizard, navigate to the *Policy scope* step.
+. Under *Exclude by scope*, click *Add exclusion scope*.
+. Set *Namespace* to a namespace you are willing to carve out of this policy for the demo.
++
+Example: namespace `frontend` (or another non-critical app namespace in your environment).
+. Save the policy.
+. Return to *Risk* and refresh the view.
+. Confirm that the excluded namespace's deployments are no longer driven by that policy's findings the same way (violations for that policy should stop accumulating there).
+
+IMPORTANT: After the exercise, remove the exclusion (or set the policy back to its previous scope) so later labs and other students are not affected.
+
+== Task 4.3: Review vulnerability exceptions (deferral and false positive)
+
+This Showroom has two pre-seeded exception records that model a real SST/DSI workflow: one team requests, another approves, and ACS tracks the audit trail.
+
+. In the RHACS Console, expand *Vulnerability Management* in the left navigation and open *Exception Management*.
+. Open exception *RR-261019-1* (False positive for `CVE-2022-42889`, Text4Shell). Note:
+** *Target state:* False positive
+** *Status:* Approved
+** *Scope:* `quay.io/mfoster/shop-api:.*`
+** *Requester comment:* references a VEX justification ("vulnerable_code_not_in_execute_path")
+** *Approver:* a separate identity (`demo-vuln-approver-token`) approved the request
+. Open exception *RR-261019-2* (Deferred for `CVE-2021-44228`, Log4Shell). Note:
+** *Target state:* Deferred
+** *Status:* Approved, but *expired*
+** *Scope:* `quay.io/mfoster/shop-api:.*`
+** *Requester comment:* references a planned upgrade to log4j 2.17.1
+** *System comment:* `[System Generated] Request expired` -- ACS automatically flags deferrals past their expiry date
++
+The expired state is the key learning point: when a deferral lapses, ACS marks it and the team must decide whether to extend, remediate, or escalate. This is the audit trail a security review relies on.
+. Reflect: the deferral comment references a planned fix in shop 1.1.0 with an Oct 1 expiry. The deferral has lapsed. What would your team do next -- extend, remediate, or escalate?
+
+OPTIONAL: If your UI offers *Defer* or *Request deferral* on a CVE, try creating your own 30-day deferral with rationale
+`Lab deferral: vendor fix under evaluation; compensating controls documented for security review.`
+
+== Cleanup
+
+NOTE: On a single-use Showroom that is destroyed after the session, you can skip cleanup. On a shared or reusable cluster, remove the namespace exclusion from *Fixable Severity at least Important* so later labs and other students are not affected.
+
+== Key takeaways
+
+* *Risk* (left navigation) ranks deployments by aggregating policy violations, vulnerabilities, configuration, and exposure signals. Open a deployment to see the breakdown.
+* Policy scope exclusions (under *Policy scope* > *Exclude by scope*) keep production gates strict while reducing noise from sandboxes.
+* Approved deferral and false-positive exceptions under *Vulnerability Management* > *Exception Management* are the auditable security record when a CVE is not fixed immediately. Expired deferrals force re-evaluation: extend, remediate, or escalate.
+
+[.verification]
+****
+Did you open a high-priority deployment on *Risk* (for example `visa-processor` or `log4shell`) and review an existing *Approved* vulnerability exception (Deferred or False positive) with its scope and status?
+
+[.success]
+You can use Risk priority for triage and treat Approved exceptions as the auditable security record. Continue to Exercise 5.
+
+[.fail]
+Open *Risk*, select `visa-processor` (payments) or `log4shell`, then under *Vulnerability Management* > *Exception Management* open an Approved Deferred or False positive record.
+****

@@ -1,0 +1,7 @@
+// Showroom UI patterns used by Operations & Day-2:
+// tile cards (overview), Check your work (exercises), and visit tracking.
+include::patterns/tiles.adoc[]
+
+include::patterns/verification.adoc[]
+
+include::patterns/progress.adoc[]

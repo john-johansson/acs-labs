@@ -1,0 +1,129 @@
+= Exercise 5: Webhook notifier
+:navtitle: Exercise 5: Webhook notifier
+
+include::partial$session2-ui.adoc[]
+
+Estimated time: 15 minutes.
+
+RHACS can push policy violation alerts to external systems using *notifiers*.
+A *Generic Webhook* notifier sends a JSON payload via HTTP POST to any endpoint.
+That pattern is how many teams feed a monitoring or ticketing stack after a small transform layer.
+
+In this lab you use https://webhook.site[webhook.site] as the receiver so you can inspect the raw ACS payload.
+Mapping into a live monitoring product is covered as a reflection exercise at the end.
+
+By the end of this exercise you will:
+
+* Configure a Generic Webhook notifier in ACS and test connectivity.
+* Clone a system policy (rather than editing it directly) and attach the notifier to the clone.
+* Trigger a violation and inspect the raw ACS JSON payload in webhook.site.
+* Identify the fields in the payload that map to a monitoring or ticketing system.
+
+== Task 5.1: Create an external webhook receiver
+
+. Open https://webhook.site in a new browser tab.
+. Copy the unique URL that is generated automatically.
+. Leave the tab open so you can watch incoming requests.
+
+NOTE: Outbound HTTPS from this Showroom to webhook.site was verified during lab authoring. If your instance blocks it, check the Showroom notes for an alternative in-cluster receiver URL.
+
+== Task 5.2: Create a Generic Webhook notifier in ACS
+
+. In the RHACS Console, navigate to *Platform Configuration* > *Integrations*.
+. Under *Notifier Integrations*, click *Generic Webhook*.
+. Click *Create integration*.
+. Fill in:
++
+[cols="1,2",options="header"]
+|===
+|Field |Value
+
+|Integration name
+|`Lab - Webhook`
+
+|Endpoint
+|_(paste your webhook.site URL)_
+
+|Skip TLS verify
+|Enabled
+
+|Audit logging
+|Disabled
+|===
++
+. Click *Test* and confirm a request appears in webhook.site.
+. Click *Save*.
+
+== Task 5.3: Clone Latest tag and attach the webhook
+
+Do not attach notifiers to a system policy.
+Clone it first, then map the webhook to the clone.
+That keeps the system policy untouched and matches the clone-first approach from the previous workshop.
+
+. Navigate to *Platform Configuration* > *Policy Management*.
+. Open the enabled system policy *Latest tag*.
+. Click *Actions* > *Clone policy*.
+. On *Details*, set the name to `Lab - Latest tag webhook`.
+. Open *Policy behavior*.
+. In the *Notifiers* section, select `Lab - Webhook`.
+. Confirm the clone is *Enabled*, then *Save*.
+
+Leave the system policy *Latest tag* as it is. Only the clone posts to the webhook.
+
+== Task 5.4: Trigger a violation and inspect the payload
+
+. On the bastion, create a pod that uses the `latest` tag in the `backend` namespace:
++
+[source,bash]
+----
+oc run webhook-trigger --image=image-registry.openshift-image-registry.svc:5000/openshift/httpd:latest -n backend
+----
+. Wait about 10 seconds, then refresh the webhook.site browser tab.
+. Open the new POST request and expand the JSON body. Look for these key fields:
+** `alert.policy.name`: should be `Lab - Latest tag webhook`
+** `alert.deployment.name`: `webhook-trigger`
+** `alert.deployment.namespace`: `backend`
+** `alert.policy.severity`: the severity level you set on the clone
+
+== Task 5.5: Reflect: mapping to a monitoring system
+
+Consider how you would connect this payload to your own monitoring stack. A production path would often:
+
+. Accept the ACS webhook JSON in a small middleware service.
+. Map fields into a monitoring or ticketing event, for example:
+** Host: deployment namespace
+** Service: policy name
+** State: derived from ACS severity
+** Output: violation summary
+. Forward that result to the organization's monitoring platform.
+
+This lab stops at the ACS JSON payload. The payload already contains the fields needed for that mapping.
+
+== Cleanup
+
+NOTE: On a single-use Showroom that is destroyed after the session, you can skip cleanup. On a shared or reusable cluster, run the commands below.
+
+[source,bash]
+----
+oc delete pod webhook-trigger -n backend --ignore-not-found
+----
+
+In *Policy Management*, delete the clone `Lab - Latest tag webhook` (or disable it and remove `Lab - Webhook` from *Notifiers*). Leave the system policy *Latest tag* enabled and unchanged.
+
+== Key takeaways
+
+* Clone system policies rather than editing originals. The clone enforces in your scope while the system policy continues informing cluster-wide.
+* Generic Webhooks (*Platform Configuration* > *Integrations* > *Generic Webhook*) are the flexible bridge into existing monitoring stacks.
+* The ACS JSON payload nests policy, deployment, and violation context under `alert`. The fields `alert.policy.name`, `alert.deployment.name`, and `alert.deployment.namespace` are the ones a middleware service maps into a monitoring or ticketing event.
+* webhook.site is for labs. Production uses middleware in front of the real monitoring or ticketing tools.
+
+[.verification]
+****
+Did webhook.site receive a POST whose JSON includes policy `Lab - Latest tag webhook`, deployment `webhook-trigger`, and namespace `backend`?
+
+[.success]
+The clone-first webhook path works and the ACS payload has the fields needed for a monitoring-style mapping. Continue to Exercise 6.
+
+[.fail]
+Confirm `Lab - Latest tag webhook` is enabled with notifier `Lab - Webhook`, that the Test button already reached webhook.site, then recreate the `webhook-trigger` pod in `backend` and refresh the webhook.site request list.
+****

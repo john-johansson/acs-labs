@@ -6,6 +6,7 @@
 *.token
 .idea/
 .vscode/
+.cursor/skills/
 _site/
 .jekyll-cache/
 .jekyll-metadata

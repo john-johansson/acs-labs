@@ -3,7 +3,7 @@
 
 Estimated time: 15 minutes.
 
-Exercises 3 and 4 used the GUI to toggle enforcement. A `SecurityPolicy` custom resource (CR) lets you define the same policies as YAML — each enforcement action is explicit, and the file lives in Git alongside your application manifests.
+Exercises 3 and 4 used the GUI to toggle enforcement. A `SecurityPolicy` custom resource (CR) lets you define the same policies as YAML, where each enforcement action is explicit and the file lives in Git alongside your application manifests.
 
 `SecurityPolicy` lives in `config.stackrox.io/v1alpha1` (not `platform.stackrox.io`).
 The config controller reconciles CRs in the `stackrox` namespace.
@@ -37,11 +37,11 @@ include::example$private-registry-policy.yaml[]
 
 Pay attention to these fields:
 
-* `metadata.namespace: stackrox` — the config controller only watches the `stackrox` namespace.
-* `negate: true` on the *policy group*, not on the value. This inverts the match: alert when the image registry is *not* `registry.internal.example.com`. Setting `negate` on the value instead of the group is silently ignored — a common mistake when writing CRs by hand.
-* `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` — tells the admission webhook to reject a new `oc apply`. This action is not exposed by the GUI Deploy switch (which stores `SCALE_TO_ZERO_ENFORCEMENT` instead).
-* `FAIL_DEPLOYMENT_UPDATE_ENFORCEMENT` — rejects updates to an existing Deployment.
-* `SCALE_TO_ZERO_ENFORCEMENT` — Sensor's fallback for workloads that bypassed admission. Also makes `roxctl deployment check` return exit code `1` (Exercise 7).
+* `metadata.namespace: stackrox`: the config controller only watches the `stackrox` namespace.
+* `negate: true` on the *policy group*, not on the value. This inverts the match: alert when the image registry is *not* `registry.internal.example.com`. Setting `negate` on the value instead of the group is silently ignored, which is a common mistake when writing CRs by hand.
+* `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT`: tells the admission webhook to reject a new `oc apply`. This action is not exposed by the GUI Deploy switch (which stores `SCALE_TO_ZERO_ENFORCEMENT` instead).
+* `FAIL_DEPLOYMENT_UPDATE_ENFORCEMENT`: rejects updates to an existing Deployment.
+* `SCALE_TO_ZERO_ENFORCEMENT`: Sensor's fallback for workloads that bypassed admission. Also makes `roxctl deployment check` return exit code `1` (Exercise 7).
 
 == Task 6.3: Export the Latest tag clone as a CR
 
@@ -50,7 +50,7 @@ The GUI can export any custom policy as a `SecurityPolicy` CR.
 . In *Policy Management*, find *Lab - Latest tag in policy-lab* in the list and click the three-dot menu (⋮) → *Save as Custom Resource*.
 +
 NOTE: The file downloads to your *local machine* (browser download), not to the bastion where you run `oc`.
-. Open the downloaded YAML on your laptop and check `spec.enforcementActions`. The GUI stored `SCALE_TO_ZERO_ENFORCEMENT` — the same action you saw in Task 6.1.
+. Open the downloaded YAML on your laptop and check `spec.enforcementActions`. The GUI stored `SCALE_TO_ZERO_ENFORCEMENT`, the same action you saw in Task 6.1.
 . Copy the YAML content and create a file on the bastion:
 +
 [source,bash]
@@ -75,12 +75,12 @@ oc get securitypolicy lab-enforce-private-registry -n stackrox
 ----
 . In *Platform Configuration → Policy Management*, open *Lab - Enforce Private Registry Only*.
 . Compare the GUI view with the CR you just applied.
-. The GUI shows *Inform and enforce* with *Deploy* on. It does not show the individual `FAIL_DEPLOYMENT_*` actions — those are only visible in the CR or the API.
-. Notice the policy is tagged *Externally managed*. Any edits you make in the GUI will be overwritten the next time the CR is reconciled — this is by design so that Git stays the single source of truth.
+. The GUI shows *Inform and enforce* with *Deploy* on. It does not show the individual `FAIL_DEPLOYMENT_*` actions, which are only visible in the CR or the API.
+. Notice the policy is tagged *Externally managed*. Any edits you make in the GUI will be overwritten the next time the CR is reconciled. This is by design so that Git stays the single source of truth.
 
 == Task 6.5: Dry-run a policy via the API
 
-The private-registry policy is now applied. Before creating more policies, try the dry-run API — it validates a policy definition without saving it, so you can catch errors before committing to Git.
+The private-registry policy is now applied. Before creating more policies, try the dry-run API. It validates a policy definition without saving it, so you can catch errors before committing to Git.
 
 You will use the *Lab - Latest tag in policy-lab* clone (from Exercise 3) as the test subject.
 
@@ -137,12 +137,12 @@ Policy: Lab - Enforce Private Registry Only
     - Image is from disallowed registry 'docker.io'
 ----
 
-Leave the private-registry policy in place — Exercise 7 uses it.
+Leave the private-registry policy in place. Exercise 7 uses it.
 
 == Task 6.7: Apply a fixable CVE threshold policy
 
 CVSS comparison is encoded *in the value string* (`">= 7.000000"`).
-Do not use a `comparisonOperator` field — the CRD does not have one.
+Do not use a `comparisonOperator` field. The CRD does not have one.
 
 [source,yaml]
 ----
@@ -156,7 +156,7 @@ include::example$fixable-cve-policy.yaml[]
 oc apply -f content/modules/ROOT/examples/fixable-cve-policy.yaml
 ----
 +
-The policy has no namespace scope — it applies cluster-wide. Build-time policies are evaluated in CI before deployment, so scoping them to a namespace does not make sense.
+The policy has no namespace scope and applies cluster-wide. Build-time policies are evaluated in CI before deployment, so scoping them to a namespace does not make sense.
 . Verify both policies are in place:
 +
 [source,bash]
@@ -169,6 +169,6 @@ You should see `lab-enforce-private-registry` and `lab-block-fixable-cves`. Exer
 == Key takeaways
 
 * `SecurityPolicy` CRs live in `config.stackrox.io/v1alpha1`, namespace `stackrox`. The config controller reconciles them into Central.
-* A CRD can set `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` directly. The GUI Deploy switch does not expose that action — it stores `SCALE_TO_ZERO_ENFORCEMENT`.
+* A CRD can set `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` directly. The GUI Deploy switch does not expose that action and instead stores `SCALE_TO_ZERO_ENFORCEMENT`.
 * `oc explain securitypolicy.spec --api-version=config.stackrox.io/v1alpha1` documents every field and enum the CR accepts.
-* Private registry enforcement and fixable CVE thresholds are common production patterns — both expressible as `SecurityPolicy` CRs managed via GitOps.
+* Private registry enforcement and fixable CVE thresholds are common production patterns, both expressible as `SecurityPolicy` CRs managed via GitOps.

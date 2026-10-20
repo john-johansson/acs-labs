@@ -8,7 +8,7 @@ This exercise proves the other path: a new `oc apply` is rejected by the admissi
 
 On this cluster the admission controller is already watching *CREATE* and *UPDATE* (`listenOnCreates: true`, webhook `policyeval.stackrox.io`).
 
-TIP: *Hard vs soft enforcement.* When the admission webhook blocks a create, the object never reaches `etcd` — that is *hard enforcement*. When the webhook is bypassed, disabled, or times out, the object is admitted and Sensor scales the pods to zero instead — that is *soft enforcement*. Soft enforcement is a safety net, not a replacement for the webhook.
+TIP: *Hard vs soft enforcement.* When the admission webhook blocks a create, the object never reaches `etcd` (that is *hard enforcement*). When the webhook is bypassed, disabled, or times out, the object is admitted and Sensor scales the pods to zero instead (that is *soft enforcement*). Soft enforcement is a safety net, not a replacement for the webhook.
 
 [cols="1,3",options="header"]
 |===
@@ -28,7 +28,7 @@ It is *not* the webhook that rejects creates.
 
 `FAIL_KUBE_REQUEST_ENFORCEMENT` is a different action: it applies to Kubernetes *events* such as `exec` / `port-forward` (webhook `k8sevents.stackrox.io`), not to Deployment CREATE.
 
-== Task 4.1: Inform-only — object is created
+== Task 4.1: Inform-only, object is created
 
 Deploy a privileged workload while the system policy *Privileged Container* is still set to *Inform only*:
 
@@ -46,11 +46,11 @@ oc get deployment test-privileged-app -n policy-lab
 ----
 +
 The Deployment *is created* (`spec.replicas=2`).
-ACS records a Deploy violation, but does not block the API request — the policy is inform-only.
+ACS records a Deploy violation but does not block the API request because the policy is inform-only.
 
 == Task 4.2: Clone Privileged Container and enforce it
 
-Just like Exercise 3, do not enforce the system policy directly — that would block privileged workloads across the entire cluster.
+Just like Exercise 3, do not enforce the system policy directly. That would block privileged workloads across the entire cluster.
 Clone it and scope enforcement to `policy-lab`.
 
 . In *Platform Configuration → Policy Management*, open *Privileged Container*.
@@ -101,12 +101,12 @@ In case of emergency, add the annotation {"admission.stackrox.io/break-glass": "
 
 == Task 4.5: Break the glass
 
-Sometimes enforcement must be bypassed — a critical hotfix, a debugging session, or a workload that legitimately needs privileged access.
+Sometimes enforcement must be bypassed for a critical hotfix, a debugging session, or a workload that legitimately needs privileged access.
 RHACS provides a controlled escape hatch: the `admission.stackrox.io/break-glass` annotation.
 Adding it to the manifest tells the admission webhook to allow the request through despite the policy violation.
 
 The annotation must be on the manifest *before* the `CREATE` request reaches the API server.
-Using `oc annotate` on an existing object sends a `PATCH`, which is not intercepted by the webhook — so it must be in the YAML itself.
+Using `oc annotate` on an existing object sends a `PATCH`, which is not intercepted by the webhook, so it must be in the YAML itself.
 
 . Apply the break-glass manifest:
 +
@@ -125,7 +125,7 @@ RHACS always fires the *Emergency Deployment Annotation* policy when this annota
 == Cleanup
 
 Delete the clone and the test deployment so later exercises are not blocked.
-The system policy *Privileged Container* was never modified — it stays at *Inform only*.
+The system policy *Privileged Container* was never modified and stays at *Inform only*.
 
 . In *Policy Management*, delete *Lab - Privileged Container in policy-lab*.
 . Delete the test deployment:

@@ -1,0 +1,83 @@
+= Prerequisites and environment verification
+:navtitle: Prerequisites
+
+include::partial$session2-ui.adoc[]
+
+Estimated time: 5 minutes.
+
+== Web consoles
+
+Copy the console URLs from your Showroom dashboard.
+The table below shows the values for the reference environment used while authoring this lab.
+
+[cols="1,2",options="header"]
+|===
+|Console |Example URL (this Showroom)
+
+|OpenShift
+|https://console-openshift-console.apps.cluster-sz6zn.dyn.redhatworkshops.io
+
+|RHACS
+|https://central-stackrox.apps.cluster-sz6zn.dyn.redhatworkshops.io
+
+|Keycloak
+|https://sso.apps.cluster-sz6zn.dyn.redhatworkshops.io
+|===
+
+OpenShift and RHACS admin credentials for this Showroom are published on the dashboard (example user: `admin`).
+
+== Access the RHEL bastion host
+
+SSH into the lab bastion host provided in your Showroom dashboard:
+
+. Connect to the bastion using the host, port, and user from Showroom.
++
+Example shape:
++
+[source,bash]
+----
+ssh lab-user@<bastion-host> -p <port>
+----
+
+== Verify RHACS CLI access
+
+`ROX_CENTRAL_ADDRESS` and `ROX_API_TOKEN` are already set on the bastion.
+`roxctl` reads the token from the environment. Do not pass `--token`.
+
+. Set `ROX_ENDPOINT` so `roxctl` picks up the address automatically:
++
+[source,bash]
+----
+export ROX_ENDPOINT="$ROX_CENTRAL_ADDRESS"
+----
+. Verify CLI access:
++
+[source,bash]
+----
+roxctl central whoami
+----
++
+Expected output includes an Admin (or equivalent) role.
+
+== Clone the lab repository
+
+Later exercises use YAML files from this repository. Clone it on the bastion and `cd` into it:
+
+[source,bash]
+----
+git clone https://github.com/john-johansson/acs-labs.git
+cd acs-labs
+----
+
+== Lab namespaces on this cluster
+
+These application namespaces are pre-provisioned for Session 2:
+
+* `payments`
+* `backend`
+* `frontend`
+* `juice-shop`
+* `log4shell`
+* `apache-struts`
+
+The ACS secured cluster name is `production`.

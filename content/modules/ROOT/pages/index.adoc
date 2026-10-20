@@ -14,6 +14,10 @@ This site uses the same Antora + Red Hat Demo Platform Showroom theme as other R
 |xref:policy-engine.adoc[Policy Engine]
 |75 min
 |{rhacs-version}
+
+|xref:operations-day2.adoc[Operations & Day-2]
+|90 min
+|{rhacs-version}
 |===
 
 Working YAML for each session lives in the Antora `examples/` directory.
@@ -21,9 +25,9 @@ Clone https://github.com/john-johansson/acs-labs[this repository] onto the Showr
 
 == How to use this guide
 
-* **This page is home** — start here, then follow *Next* at the bottom of each page.
-* **Navigate with the table of contents** — modules are in the left sidebar.
-* **Use the bastion** — run `oc` and `roxctl` on the RHEL bastion.
+* **This page is home**: start here, then follow *Next* at the bottom of each page.
+* **Navigate with the table of contents**: modules are in the left sidebar.
+* **Use the bastion**: run `oc` and `roxctl` on the RHEL bastion.
 
 IMPORTANT: Do not commit tokens, Showroom passwords, or kubeconfigs.
 

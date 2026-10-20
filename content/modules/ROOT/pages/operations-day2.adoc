@@ -1,0 +1,88 @@
+= Operations & Day-2
+:navtitle: Overview
+
+include::partial$session2-ui.adoc[]
+
+A hands-on lab for platform, infrastructure, and security engineering teams.
+
+[cols="1,3"]
+|===
+|Session date |TBD
+|Duration |~100 minutes (5 min prereqs + six exercises)
+|Environment |Red Hat Showroom / RHACS {rhacs-version}
+|===
+
+== Lab objectives
+
+By completing this lab, participants will:
+
+. Navigate the RHACS vulnerability dashboard and understand how Scanner V4 Indexer and Matcher produce scan results for base OS and language-level dependencies.
+. Create automated vulnerability reports (PDF/CSV) scoped to a tenant namespace, using download or generate-now when SMTP is unavailable.
+. Build Scoped Access Control (Permission Set, Access Scope, Role) and map a Keycloak OIDC group to that role for tenant isolation.
+. Use the Risk view, policy scope exclusions, and CVE deferral to support prioritization workflows.
+. Clone a system policy, attach a generic webhook notifier, and inspect the ACS JSON payload.
+. Integrate RHACS with Splunk via HEC for SIEM correlation of policy breach events.
+
+== Session flow
+
+TIP: For the best experience, follow the exercises in order. Each one builds on the previous concepts. You can also jump to a specific exercise below.
+
+Select an exercise below to get started.
+
+[.tile]
+****
+xref:s2-01-prerequisites.adoc[Prerequisites]
+
+Bastion access, `roxctl whoami`, and clone the lab repository (~5 min).
+****
+
+[.tile]
+****
+xref:s2-02-vuln-dashboard.adoc[Exercise 1: Vulnerability dashboard and Scanner V4]
+
+Navigate Results, compare OS vs language findings, and use watched images (~15 min).
+****
+
+[.tile]
+****
+xref:s2-03-vuln-reports.adoc[Exercise 2: Automated vulnerability reports]
+
+Create a scoped PDF/CSV report and generate it on demand without SMTP (~15 min).
+****
+
+[.tile]
+****
+xref:s2-04-sac-oidc.adoc[Exercise 3: SAC and OIDC]
+
+Build Permission Set, Access Scope, and Role, then map a Keycloak group for tenant isolation (~25 min).
+****
+
+[.tile]
+****
+xref:s2-05-risk-deferral.adoc[Exercise 4: Risk and CVE deferral]
+
+Inspect Risk priority, apply a policy scope exclusion, and review CVE exceptions (~15 min).
+****
+
+[.tile]
+****
+xref:s2-06-webhook.adoc[Exercise 5: Webhook notifier]
+
+Clone a system policy, attach a generic webhook, and inspect the ACS JSON payload (~15 min).
+****
+
+[.tile]
+****
+xref:s2-07-splunk.adoc[Exercise 6: Splunk integration]
+
+Integrate RHACS with Splunk via HEC and verify policy alerts in search (~15 min).
+****
+
+== Day-2 workflow (reflection)
+
+In production, these exercises chain together:
+
+. A developer with a scoped role (Exercise 3) works only in their namespace.
+. Risk and deferral (Exercise 4) decide what must be fixed now versus tracked with an exception.
+. Webhook and Splunk (Exercises 5 and 6) carry the same policy event into monitoring and SIEM.
+. Scheduled reports (Exercise 2) give tenant leads a recurring digest without manual CSV packs.

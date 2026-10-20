@@ -3,7 +3,7 @@
 
 Estimated time: 5 minutes.
 
-A violation in RHACS is a record of a specific moment when a policy criterion was met by an object in your cluster — an image, a deployment configuration, or a runtime process.
+A violation in RHACS is a record of a specific moment when a policy criterion was met by an object in your cluster: an image, a deployment configuration, or a runtime process.
 The Violations page lists *build*, *deploy*, and *runtime* violations for the images and workloads RHACS is watching.
 A CI check such as `roxctl image check` is separate: that result is returned to the pipeline and is not stored on this page.
 
@@ -27,7 +27,7 @@ A CI check such as `roxctl image check` is separate: that result is returned to 
 ** Container ID
 ** Exact timestamp
 . Open the policy that triggered this violation.
-. Note the *Guidance* section — it tells the development team exactly what to remove from the Containerfile to prevent this from happening again.
+. Note the *Guidance* section. It tells the development team exactly what to remove from the Containerfile to prevent this from happening again.
 
 A package manager has no legitimate purpose in a container that ships with all its dependencies.
 Removing it from the image eliminates an entire class of attacker capability in the next build.

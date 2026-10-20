@@ -22,16 +22,14 @@ A pipeline typically runs *both*: `image check` right after the image is built, 
 
 == Task 7.1: Image check
 
-`image check` evaluates an image reference against all BUILD and DEPLOY policies that match *image contents* — CVEs, packages, Dockerfile instructions.
+`image check` evaluates an image reference against all BUILD and DEPLOY policies that match *image contents*: CVEs, packages, and Dockerfile instructions.
 Policies with `FAIL_BUILD_ENFORCEMENT` are marked *BREAKS BUILD* and cause exit code `1`.
 
 . Run an image check against an older Ubuntu image:
 +
 [source,bash]
 ----
-roxctl image check \
-  --endpoint "$ROX_CENTRAL_ADDRESS" \
-  -i docker.io/library/ubuntu:20.04
+roxctl image check -i docker.io/library/ubuntu:20.04
 ----
 . Check the exit code:
 +
@@ -42,9 +40,9 @@ echo "Roxctl Exit Code: $?"
 
 What to observe in the output:
 
-* *Lab - Block Fixable CVEs >= 7.0* shows *BREAKS BUILD* — that is the policy you applied in Exercise 6.
+* *Lab - Block Fixable CVEs >= 7.0* shows *BREAKS BUILD*. That is the policy you applied in Exercise 6.
 * Other system policies (e.g., *Fixable Severity at least Important*) may also show *BREAKS BUILD* if they have `FAIL_BUILD_ENFORCEMENT` enabled.
-* The private-registry policy from Exercise 6 does *not* appear — `image check` only sees image contents, not which registry the image was pulled from or how it is deployed. Task 7.2 picks that up.
+* The private-registry policy from Exercise 6 does *not* appear. `image check` only sees image contents, not which registry the image was pulled from or how it is deployed. Task 7.2 picks that up.
 
 == Task 7.2: Deployment check
 
@@ -55,7 +53,6 @@ What to observe in the output:
 [source,bash]
 ----
 roxctl deployment check \
-  --endpoint "$ROX_CENTRAL_ADDRESS" \
   --cluster production \
   --namespace policy-lab \
   -f content/modules/ROOT/examples/unapproved-external-app.yaml
@@ -68,7 +65,7 @@ echo "Roxctl Exit Code: $?"
 ----
 +
 Policies with `SCALE_TO_ZERO_ENFORCEMENT` show *BREAKS DEPLOY* and cause exit code `1`.
-In {rhacs-version}, `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` alone does *not* set BREAKS DEPLOY — `SCALE_TO_ZERO_ENFORCEMENT` does. That is why the registry policy includes it.
+In {rhacs-version}, `FAIL_DEPLOYMENT_CREATE_ENFORCEMENT` alone does *not* set BREAKS DEPLOY. `SCALE_TO_ZERO_ENFORCEMENT` does, which is why the registry policy includes it.
 
 Compare the output to Task 7.1: the private-registry policy and deployment-spec policies (resource limits, service account token, privilege escalation) now appear because `deployment check` has the full manifest.
 
@@ -79,7 +76,7 @@ Compare the output to Task 7.1: the private-registry policy and deployment-spec 
 |Policy |`image check` |`deployment check`
 
 |Lab - Enforce Private Registry Only
-|—
+|-
 |✓ BREAKS DEPLOY
 
 |Lab - Block Fixable CVEs >= 7.0
@@ -87,15 +84,15 @@ Compare the output to Task 7.1: the private-registry policy and deployment-spec 
 |✓ BREAKS BUILD
 
 |No CPU request or memory limit specified
-|—
+|-
 |✓
 
 |Privileged / privilege escalation
-|—
+|-
 |✓
 |===
 
-The registry policy only fires on `deployment check` because the registry is a deployment-level attribute — `image check` receives an image reference, not a registry enforcement rule.
+The registry policy only fires on `deployment check` because the registry is a deployment-level attribute. `image check` receives an image reference, not a registry enforcement rule.
 
 NOTE: Exit code `1` from either command is what GitLab CI, Azure DevOps, or Tekton should use as the pipeline gate, before the manifest ever reaches the cluster.
 
@@ -103,5 +100,4 @@ NOTE: Exit code `1` from either command is what GitLab CI, Azure DevOps, or Tekt
 
 * `image check` evaluates the image alone (BUILD + DEPLOY image policies). `deployment check` evaluates the full manifest (DEPLOY policies including spec-level criteria). A pipeline should run both.
 * `FAIL_BUILD_ENFORCEMENT` drives exit code `1` for `image check`. `SCALE_TO_ZERO_ENFORCEMENT` drives exit code `1` for `deployment check`.
-* `roxctl` uses `ROX_API_TOKEN` from the environment; pass `--endpoint`, not `--token`.
-
+* `roxctl` reads `ROX_ENDPOINT` and `ROX_API_TOKEN` from the environment (set in the prerequisites). No flags needed for authentication or endpoint.

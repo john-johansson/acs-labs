@@ -3,14 +3,14 @@
 
 Estimated time: 15 minutes.
 
-Exercises 3 and 4 covered *deploy-time* enforcement — the admission webhook blocks a bad create, or Sensor scales an existing workload to zero.
+Exercises 3 and 4 covered *deploy-time* enforcement: the admission webhook blocks a bad create, or Sensor scales an existing workload to zero.
 Runtime enforcement is different: RHACS watches *what processes run inside a container* and can kill the pod or block future `exec` / `port-forward` requests.
 
 Runtime policies use the `RUNTIME` lifecycle stage.
 Two enforcement actions apply at runtime:
 
-* `KILL_POD_ENFORCEMENT` — Sensor kills the pod when the violating process is detected.
-* `FAIL_KUBE_REQUEST_ENFORCEMENT` — the `k8sevents.stackrox.io` webhook blocks `exec` and `port-forward` to pods that have an active runtime violation from the policy.
+* `KILL_POD_ENFORCEMENT`: Sensor kills the pod when the violating process is detected.
+* `FAIL_KUBE_REQUEST_ENFORCEMENT`: the `k8sevents.stackrox.io` webhook blocks `exec` and `port-forward` to pods that have an active runtime violation from the policy.
 
 == Before you begin
 
@@ -54,7 +54,7 @@ POD=$(oc get pod -n policy-lab -l app=runtime-test -o jsonpath='{.items[0].metad
 oc exec -n policy-lab "$POD" -- apt-get update
 ----
 +
-The command runs to completion because the policy is inform-only — no enforcement is active yet.
+The command runs to completion because the policy is inform-only and no enforcement is active yet.
 
 == Task 5.3: Inspect the runtime violation
 
@@ -155,4 +155,4 @@ oc delete deployment runtime-test -n policy-lab --ignore-not-found
 * Runtime policies watch *observed behavior* (processes, network connections), not the workload spec or image contents.
 * `KILL_POD_ENFORCEMENT` kills the pod after the violating process is detected. The Deployment controller restarts it, but the violation repeats on the next attempt.
 * `FAIL_KUBE_REQUEST_ENFORCEMENT` blocks `exec` and `port-forward` at the API server level via the `k8sevents.stackrox.io` webhook. It works with policies that match *Kubernetes API events* (like *Kubernetes Actions: Exec into Pod*), not with process-execution policies.
-* Runtime forensic data (process name, arguments, UID, container ID, timestamp) is not available for deploy-time violations — only runtime violations capture what actually ran.
+* Runtime forensic data (process name, arguments, UID, container ID, timestamp) is not available for deploy-time violations. Only runtime violations capture what actually ran.

@@ -3,19 +3,19 @@
 
 Estimated time: 5 minutes.
 
-So far every policy has been *inform only* — RHACS records a violation, but nothing stops the workload from running.
+So far every policy has been *inform only*. RHACS records a violation, but nothing stops the workload from running.
 This exercise flips the switch to *enforce*.
-You will deploy a workload that violates a policy, enable enforcement, and observe what happens — and what does *not* happen — to a Deployment that is already running.
+You will deploy a workload that violates a policy, enable enforcement, and observe what happens (and what does *not* happen) to a Deployment that is already running.
 
 When you select *Inform and enforce* and turn *Deploy* on in the GUI, RHACS stores the choice as `SCALE_TO_ZERO_ENFORCEMENT`.
-There is no separate "scale to zero" button — the Deploy toggle is that action.
+There is no separate "scale to zero" button; the Deploy toggle is that action.
 Sensor may set `replicas` to `0` on new workloads that violate the policy, but it does not retroactively scale down a Deployment that was already running when you clicked *Save*.
 
 NOTE: Exercise 4 shows the other enforcement path: a new `oc apply` is rejected outright by the admission webhook.
 
 === Why clone instead of enforce the system policy?
 
-You can turn enforcement on for any system policy, but a cluster-wide *Latest tag* block would affect every `:latest` image in the Showroom — including infrastructure workloads.
+You can turn enforcement on for any system policy, but a cluster-wide *Latest tag* block would affect every `:latest` image in the Showroom, including infrastructure workloads.
 Clone the policy instead: the original keeps informing on every namespace, while the copy enforces only in `policy-lab`.
 Criteria on a system policy still cannot be edited, and the policy cannot be deleted.
 
@@ -36,7 +36,7 @@ oc get deploy test-latest-tag -o jsonpath='{.spec.template.spec.containers[0].im
 Wait until the Deployment is `1/1`.
 
 The system policy *Latest tag* matches this Deployment and records a violation, but the Deployment is created and running.
-That is because the policy is still set to *Inform only* — it observes and reports, but does not block or scale anything.
+That is because the policy is still set to *Inform only*: it observes and reports, but does not block or scale anything.
 
 == Task 3.2: Clone Latest tag and enforce it in policy-lab
 
@@ -46,7 +46,7 @@ That is because the policy is still set to *Inform only* — it observes and rep
 . On *Rules*, leave the image-tag rule as `latest`. Click *Next*.
 . On *Resources*, include only the namespace `policy-lab`. Click *Next*.
 . On *Behavior → Actions*, select *Inform and enforce* and turn *Deploy* enforcement on. Leave *Build* enforcement off. Click *Next*.
-. On *Review policy*, verify the preview shows only matched deployments from `policy-lab` (the namespace name is not displayed in the results — confirm you see `test-latest-tag` and no workloads from other namespaces). Click *Save*.
+. On *Review policy*, verify the preview shows only matched deployments from `policy-lab` (the namespace name is not displayed in the results, so confirm you see `test-latest-tag` and no workloads from other namespaces). Click *Save*.
 
 The system policy keeps informing on every namespace.
 The clone enforces only in `policy-lab`.
