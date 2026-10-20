@@ -5,6 +5,13 @@ include::partial$session2-ui.adoc[]
 
 Estimated time: 15 minutes.
 
+*Splunk* is a SIEM and log analytics platform: it indexes machine data so security and operations teams can search, correlate, and build dashboards across many sources.
+In this exercise you send RHACS policy alerts into Splunk so breaches sit next to the rest of your security telemetry.
+
+*Splunk HEC* is the *HTTP Event Collector*: a Splunk endpoint that accepts events over HTTPS as JSON (or other supported formats).
+Applications and security tools POST alerts to an HEC URL with a token, and Splunk indexes those events for search and dashboards.
+RHACS uses HEC when you configure the native Splunk notifier, so policy violations can land in Splunk as soon as they fire.
+
 RHACS integrates with Splunk in two ways on this Showroom:
 
 * *RHACS Technology Add-on (TA-stackrox)*: Splunk pulls violations and related data from the RHACS API on a schedule.
