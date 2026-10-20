@@ -64,8 +64,8 @@ That keeps the system policy untouched and matches the clone-first approach from
 . Open the enabled system policy *Latest tag*.
 . Click *Actions* > *Clone policy*.
 . On *Details*, set the name to `Lab - Latest tag webhook`.
-. Open *Policy behavior* > *Actions*.
-. Under *Notifiers*, select `Lab - Webhook`.
+. Open *Policy behavior*.
+. In the *Notifiers* section, select `Lab - Webhook`.
 . Confirm the clone is *Enabled*, then *Save*.
 
 Leave the system policy *Latest tag* as it is. Only the clone posts to the webhook.
@@ -78,9 +78,12 @@ Leave the system policy *Latest tag* as it is. Only the clone posts to the webho
 ----
 oc run webhook-trigger --image=image-registry.openshift-image-registry.svc:5000/openshift/httpd:latest -n backend
 ----
-. Wait a few seconds.
-. In webhook.site, open the new POST request and review the JSON.
-. Confirm the payload includes policy name `Lab - Latest tag webhook`, deployment `webhook-trigger`, and namespace `backend`.
+. Wait about 10 seconds, then refresh the webhook.site browser tab.
+. Open the new POST request and expand the JSON body. Look for these key fields:
+** `alert.policy.name`: should be `Lab - Latest tag webhook`
+** `alert.deployment.name`: `webhook-trigger`
+** `alert.deployment.namespace`: `backend`
+** `alert.policy.severity`: the severity level you set on the clone
 
 == Task 5.5: Discussion: mapping to a monitoring system
 
@@ -109,9 +112,9 @@ In *Policy Management*, delete the clone `Lab - Latest tag webhook` (or disable 
 
 == Key takeaways
 
-* Clone system policies before attaching notifiers or changing behavior. Leave the originals as the shared baseline.
-* Generic Webhooks are the flexible bridge into existing monitoring stacks.
-* The ACS JSON payload includes policy, deployment, and violation context.
+* Clone system policies rather than editing originals. The clone enforces in your scope while the system policy continues informing cluster-wide.
+* Generic Webhooks (*Platform Configuration* > *Integrations* > *Generic Webhook*) are the flexible bridge into existing monitoring stacks.
+* The ACS JSON payload nests policy, deployment, and violation context under `alert`. The fields `alert.policy.name`, `alert.deployment.name`, and `alert.deployment.namespace` are the ones a middleware service maps into a monitoring or ticketing event.
 * webhook.site is for labs. Production uses middleware in front of the real monitoring or ticketing tools.
 
 [.verification]
