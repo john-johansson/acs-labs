@@ -32,7 +32,7 @@
 * Keycloak lab users need Email verified On and no Required user actions, or login fails with `Account is not fully set up`.
 * Auth providers out of the box: basic (+ monitoring userpki). Students create Keycloak OIDC.
 * Keycloak `temp-admin` login works.
-* Policy `Latest tag` enabled (webhook trigger). Splunk trigger: students enable *Curl in Image* and *Alpine Linux Package Manager (apk) in Image*, attach HEC, then run `curlimages/curl` and `alpine:3.18`.
+* Webhook trigger: students clone system policy `Latest tag` to `Lab - Latest tag webhook`, attach the Generic Webhook notifier, then run `httpd:latest` in `backend`. Splunk trigger: students enable *Curl in Image* and *Alpine Linux Package Manager (apk) in Image*, attach HEC, then run `curlimages/curl` and `alpine:3.18`.
 * Splunk route and HEC token retrieval work. Existing notifier name may be `Splunk SIEM (local)`.
 * webhook.site reachable over HTTPS.
 
