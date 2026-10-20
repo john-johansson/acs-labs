@@ -4,12 +4,12 @@
 # Safe to run multiple times (idempotent).
 #
 # Usage:
-#   bash scripts/s2-cleanup.sh --all          # clean everything
-#   bash scripts/s2-cleanup.sh --ex2          # clean Exercise 2 only
-#   bash scripts/s2-cleanup.sh --ex3 --ex5    # clean Exercises 3 and 5
-#   bash scripts/s2-cleanup.sh                # (no args) same as --all
+#   bash scripts/s2-cleanup.sh all      # clean everything
+#   bash scripts/s2-cleanup.sh 2        # clean Exercise 2 only
+#   bash scripts/s2-cleanup.sh 3 5      # clean Exercises 3 and 5
+#   bash scripts/s2-cleanup.sh          # (no args) same as all
 #
-# Flags: --ex2  --ex3  --ex4  --ex5  --ex6  --all
+# Arguments: 2  3  4  5  6  all
 #
 # Requires: ROX_CENTRAL_ADDRESS and ROX_API_TOKEN in the environment,
 #           oc logged in to the cluster, and python3 available.
@@ -27,18 +27,18 @@ fi
 
 for arg in "$@"; do
   case "$arg" in
-    --all) DO_ALL=true ;;
-    --ex2) DO_EX2=true ;;
-    --ex3) DO_EX3=true ;;
-    --ex4) DO_EX4=true ;;
-    --ex5) DO_EX5=true ;;
-    --ex6) DO_EX6=true ;;
-    -h|--help)
-      echo "Usage: bash scripts/s2-cleanup.sh [--all] [--ex2] [--ex3] [--ex4] [--ex5] [--ex6]"
-      echo "  No arguments = --all"
+    all)        DO_ALL=true ;;
+    2)          DO_EX2=true ;;
+    3)          DO_EX3=true ;;
+    4)          DO_EX4=true ;;
+    5)          DO_EX5=true ;;
+    6)          DO_EX6=true ;;
+    -h|--help|help)
+      echo "Usage: bash scripts/s2-cleanup.sh [all] [2] [3] [4] [5] [6]"
+      echo "  No arguments = all"
       exit 0
       ;;
-    *) echo "Unknown flag: $arg (use --help)"; exit 1 ;;
+    *) echo "Unknown argument: $arg (use help)"; exit 1 ;;
   esac
 done
 
