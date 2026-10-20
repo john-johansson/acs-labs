@@ -40,8 +40,6 @@ Work through each step below. Do not look for a single flat form with all fields
 |Description
 |`Fixable Important and Critical CVEs for payments (on-demand download).`
 |===
-+
-image::s2/s2-02-create-details.png[Create report Details step with name and description filled,width=720]
 . Click *Next*.
 
 === Step 2: Resources
@@ -74,8 +72,6 @@ image::s2/s2-02-create-filters.png[Filters step with Observed Critical Important
 . On *Delivery*, leave the step empty.
 . Do *not* click *Add destination* (that path needs an email notifier / SMTP).
 +
-image::s2/s2-02-create-delivery.png[Delivery step with no destinations added,width=720]
-+
 IMPORTANT: ACS rejects a report that has a schedule or email destination without a working notifier. Weekly email digests are the production pattern after SMTP is configured. This lab proves report content with on-demand download instead.
 . Click *Next*.
 
@@ -88,11 +84,7 @@ IMPORTANT: ACS rejects a report that has a schedule or email destination without
 ** *CVE severity:* *Critical*, *Important*
 ** *CVE status:* *Fixable*
 ** *Destinations* and *Schedule:* empty (`-`)
-+
-image::s2/s2-02-create-review.png[Review step summarizing payments-scoped downloadable report,width=720]
 . Click *Save* (not *Create*). You land on the report configuration details page.
-+
-image::s2/s2-02-report-created.png[Saved Lab Payments Vulnerability Report configuration details,width=720]
 
 == Task 2.3: Generate and download on demand
 
