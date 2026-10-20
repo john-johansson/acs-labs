@@ -19,7 +19,7 @@ By the end of this exercise you will:
 . In the RHACS Console, open *Risk* in the left navigation.
 . Sort or scan the list for a high-priority application workload.
 +
-On this Showroom, `juice-shop` in namespace `juice-shop` is a reliable high-priority example. `log4shell` and workloads in `payments` are also good candidates.
+On this Showroom, `visa-processor` in namespace `payments` and `log4shell` in namespace `log4shell` are reliable high-priority examples. Other candidates include `backend-atlas` (backend) and `webgoat` (webgoat).
 . Click the deployment name.
 . Review the risk breakdown panels:
 ** Policy violations (for example privileged settings or dangerous capabilities)
@@ -34,8 +34,8 @@ Excluding non-production or sandbox workloads from a noisy policy recalibrates w
 . Navigate to *Platform Configuration* > *Policy Management*.
 . Open *Fixable Severity at least Important* (enabled by default on this cluster).
 . Click *Actions* > *Edit policy*.
-. Open the *Resources* step (under *Policy behavior*).
-. Under *Excluded resources*, click *Add exclusion*.
+. In the policy wizard, navigate to the *Policy scope* step.
+. Under *Exclude by scope*, click *Add exclusion scope*.
 . Set *Namespace* to a namespace you are willing to carve out of this policy for the demo.
 +
 Example: namespace `frontend` (or another non-critical app namespace in your environment).
@@ -50,8 +50,7 @@ IMPORTANT: After the exercise, remove the exclusion (or set the policy back to i
 Creating a brand-new deferral request can fail on some Showroom builds even for Admin.
 This task focuses on the auditable exception record that security and platform teams rely on.
 
-. Navigate to *Vulnerability Management*.
-. Open *Exception configuration* or *Vulnerability exceptions* (wording varies by UI build), or open an image CVE detail page and look for exception or request history.
+. In the RHACS Console, expand *Vulnerability Management* in the left navigation and open *Exception Management*.
 . Find an existing exception on this cluster. Sample records often include:
 ** A *Deferred* exception for `CVE-2021-44228` (Log4Shell)
 ** A *False positive* exception for another CVE
@@ -66,19 +65,23 @@ OPTIONAL: If your UI offers *Defer* or *Request deferral* on a CVE and the reque
 `Lab deferral: vendor fix under evaluation; compensating controls documented for security review.`
 If the request fails or never creates a record, continue with the existing Approved exceptions above. That still meets the learning goal for this lab.
 
+== Cleanup
+
+NOTE: On a single-use Showroom that is destroyed after the session, you can skip cleanup. On a shared or reusable cluster, remove the namespace exclusion from *Fixable Severity at least Important* so later labs and other students are not affected.
+
 == Key takeaways
 
-* Risk priority aggregates multiple signals so teams do not triage from a flat CVE list alone.
-* Policy scope exclusions keep production gates strict while reducing noise from sandboxes.
-* Approved deferral and false-positive exceptions are the auditable security record when a CVE is not fixed immediately.
+* *Risk* (left navigation) ranks deployments by aggregating policy violations, vulnerabilities, configuration, and exposure signals. Open a deployment to see the breakdown.
+* Policy scope exclusions (under *Policy scope* > *Exclude by scope*) keep production gates strict while reducing noise from sandboxes.
+* Approved deferral and false-positive exceptions under *Vulnerability Management* > *Exception Management* are the auditable security record when a CVE is not fixed immediately.
 
 [.verification]
 ****
-Did you open a high-priority deployment on *Risk* (for example `juice-shop`) and review an existing *Approved* vulnerability exception (Deferred or False positive) with its scope and status?
+Did you open a high-priority deployment on *Risk* (for example `visa-processor` or `log4shell`) and review an existing *Approved* vulnerability exception (Deferred or False positive) with its scope and status?
 
 [.success]
 You can use Risk priority for triage and treat Approved exceptions as the auditable security record. Continue to Exercise 5.
 
 [.fail]
-Open *Risk*, select `juice-shop` (or another high-priority workload), then under *Vulnerability Management* find *Exception configuration* / *Vulnerability exceptions* and open an Approved Deferred or False positive record.
+Open *Risk*, select `visa-processor` (payments) or `log4shell`, then under *Vulnerability Management* > *Exception Management* open an Approved Deferred or False positive record.
 ****
