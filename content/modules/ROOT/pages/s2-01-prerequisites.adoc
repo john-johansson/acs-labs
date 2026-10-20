@@ -7,22 +7,17 @@ Estimated time: 5 minutes.
 
 == Web consoles
 
-Copy the console URLs from your Showroom dashboard.
-The table below shows the values for the reference environment used while authoring this lab.
+After you SSH into the bastion (next step), discover your console URLs from the cluster routes:
 
-[cols="1,2",options="header"]
-|===
-|Console |Example URL (this Showroom)
+[source,bash]
+----
+echo "OpenShift Console: https://$(oc get route console -n openshift-console -o jsonpath='{.spec.host}')"
+echo "RHACS Console:     https://$(oc get route central-reencrypt -n stackrox -o jsonpath='{.spec.host}')"
+echo "Keycloak Console:  https://$(oc get route keycloak -n keycloak -o jsonpath='{.spec.host}')"
+echo "Splunk Console:    https://$(oc get route splunk-web -n splunk -o jsonpath='{.spec.host}')"
+----
 
-|OpenShift
-|https://console-openshift-console.apps.cluster-sz6zn.dyn.redhatworkshops.io
-
-|RHACS
-|https://central-stackrox.apps.cluster-sz6zn.dyn.redhatworkshops.io
-
-|Keycloak
-|https://sso.apps.cluster-sz6zn.dyn.redhatworkshops.io
-|===
+TIP: The Showroom dashboard also lists these URLs. The `oc get route` commands above are the source of truth when the dashboard and cluster disagree.
 
 OpenShift and RHACS admin credentials for this Showroom are published on the dashboard (example user: `admin`).
 

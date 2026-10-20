@@ -244,7 +244,7 @@ IMPORTANT: If *Email verified* is Off or a required action remains, Keycloak ret
 |`Keycloak - rhacs-lab`
 
 |Issuer
-|`https://<SSO_HOST>/realms/rhacs-lab` (use the `SSO_HOST` value from Task 3.5; example: `https://sso.apps.cluster-sz6zn.dyn.redhatworkshops.io/realms/rhacs-lab`)
+|`https://<SSO_HOST>/realms/rhacs-lab` (use the `SSO_HOST` value from Task 3.5)
 
 |Client ID
 |`acs-central`
