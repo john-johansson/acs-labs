@@ -72,14 +72,6 @@ This dialog is how you keep scanning an image that is not deployed yet (pre-prom
 
 NOTE: *Manage watched images* remains the production path for candidates that are not running yet (*More Views* > *Inactive images* after they scan). On this Showroom, prefer the deployed `quay.io/rhpds/nginx:1.25` image for a reliable side-by-side comparison.
 
-== Task 1.4: Scanner V4 discussion
-
-Discuss:
-
-* Why might a RHEL-based image and an Alpine-based image show different CVE counts for similar apps?
-* Where does Scanner V4 find Quarkus or Spring JARs inside a fat JAR image?
-* What does *Fixable* mean for the development team?
-
 == Key takeaways
 
 * *Results* on *User Workloads* is the unified triage surface for deploy-time vulnerability data.
