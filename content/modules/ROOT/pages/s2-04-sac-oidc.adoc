@@ -245,7 +245,7 @@ IMPORTANT: If *Email verified* is Off or a required action remains, Keycloak ret
 |_(from Task 3.5)_
 
 |Mode
-|Auto-select (POST)
+|Auto-select
 |===
 +
 . Under *Rules*, add:
