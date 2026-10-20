@@ -12,6 +12,13 @@ On this Showroom, use *on-demand download* as the success path.
 A scheduled email report needs an email notifier under *Delivery*.
 Without SMTP, leave *Delivery* empty (no destination, no schedule) and generate the report manually after you save the configuration.
 
+By the end of this exercise you will:
+
+* Walk through the five-step report wizard (Details, Resources, Filters, Delivery, Review).
+* Scope a report to a single namespace using *Custom scope*.
+* Generate and download a PDF or CSV report on demand without SMTP.
+* Understand when to use on-demand download vs scheduled email delivery.
+
 == Task 2.1: Open Vulnerability Reporting
 
 . In the RHACS Console, expand *Vulnerability Management* and click *Reports*.
@@ -40,8 +47,6 @@ Work through each step below. Do not look for a single flat form with all fields
 |Description
 |`Fixable Important and Critical CVEs for payments (on-demand download).`
 |===
-+
-image::s2/s2-02-create-details.png[Create report Details step with name and description filled,width=720]
 . Click *Next*.
 
 === Step 2: Resources
@@ -74,9 +79,7 @@ image::s2/s2-02-create-filters.png[Filters step with Observed Critical Important
 . On *Delivery*, leave the step empty.
 . Do *not* click *Add destination* (that path needs an email notifier / SMTP).
 +
-image::s2/s2-02-create-delivery.png[Delivery step with no destinations added,width=720]
-+
-IMPORTANT: ACS rejects a report that has a schedule or email destination without a working notifier. Weekly email digests are the production pattern after SMTP is configured. This lab proves report content with on-demand download instead.
+IMPORTANT: In production, this step is where you add an email destination and a weekly or daily schedule. ACS then generates and emails the report automatically, replacing the old workflow of manually zipping CSV files and attaching them. ACS rejects a schedule without a working email notifier, so this lab proves report content with on-demand download instead.
 . Click *Next*.
 
 === Step 5: Review and save
@@ -88,11 +91,7 @@ IMPORTANT: ACS rejects a report that has a schedule or email destination without
 ** *CVE severity:* *Critical*, *Important*
 ** *CVE status:* *Fixable*
 ** *Destinations* and *Schedule:* empty (`-`)
-+
-image::s2/s2-02-create-review.png[Review step summarizing payments-scoped downloadable report,width=720]
 . Click *Save* (not *Create*). You land on the report configuration details page.
-+
-image::s2/s2-02-report-created.png[Saved Lab Payments Vulnerability Report configuration details,width=720]
 
 == Task 2.3: Generate and download on demand
 
@@ -102,11 +101,11 @@ image::s2/s2-02-report-created.png[Saved Lab Payments Vulnerability Report confi
 image::s2/s2-02-report-actions.png[Actions menu showing Generate download for the saved report,width=720]
 . Wait until the job completes under the *All report jobs* tab.
 . Download the PDF and/or CSV when the run finishes.
-. Open the file and confirm it contains CVE, image, and deployment detail for the `payments` namespace.
+. Open the file. The PDF lists CVEs grouped by image; the CSV contains columns such as CVE ID, severity, CVSS score, component, image name, and deployment. Both are scoped to the `payments` namespace.
 
 == Task 2.4: Review the output
 
-Answer from the downloaded report:
+Use these questions to evaluate whether the report gives a tenant lead enough to prioritize fixes:
 
 * How many fixable Important or Critical CVEs are in scope?
 * Which image contributes the most critical fixable findings?
@@ -116,10 +115,10 @@ TIP: CSV output is useful for ticketing or SIEM import. Report configurations ar
 
 == Key takeaways
 
-* The create wizard is five steps. Severity filters live on *Filters*, not on *Details*.
+* The create wizard is five steps: *Details* > *Resources* > *Filters* > *Delivery* > *Review*. Severity filters live on *Filters*, not on *Details*.
 * *Custom scope* with a namespace chip is the current scoping model (collections are legacy).
-* On-demand download works with an empty *Delivery* step. Scheduled email needs a notifier first.
-* Scope by namespace (or collection) so each tenant gets only their data.
+* On-demand download (*Vulnerability Management* > *Reports* > open report > *Actions* > *Generate download*) works with an empty *Delivery* step. Adding a schedule and email destination under *Delivery* turns this into the automated replacement for manual CSV zips.
+* Scope by namespace so each tenant gets only their data. CSV output feeds ticketing and SIEM workflows.
 
 [.verification]
 ****

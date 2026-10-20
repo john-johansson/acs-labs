@@ -15,6 +15,13 @@ Under the hood, *Scanner V4* splits the work into two stages:
 
 Base OS vulnerabilities and application-level vulnerabilities are evaluated through different feeds, so coverage and timing can differ.
 
+By the end of this exercise you will:
+
+* Navigate the Results view and understand the default filters (Critical + Important, Fixable).
+* Drill into an image and distinguish OS-layer findings from language-level dependencies using the *Source* column.
+* Compare the severity profile of two images (application-heavy vs OS-heavy).
+* Know how *Manage watched images* supports pre-deployment scanning.
+
 == Task 1.1: Explore vulnerability results
 
 . In the RHACS Console, expand *Vulnerability Management* in the left navigation and click *Results*.
@@ -72,20 +79,12 @@ This dialog is how you keep scanning an image that is not deployed yet (pre-prom
 
 NOTE: *Manage watched images* remains the production path for candidates that are not running yet (*More Views* > *Inactive images* after they scan). On this Showroom, prefer the deployed `quay.io/rhpds/nginx:1.25` image for a reliable side-by-side comparison.
 
-== Task 1.4: Scanner V4 discussion
-
-Discuss:
-
-* Why might a RHEL-based image and an Alpine-based image show different CVE counts for similar apps?
-* Where does Scanner V4 find Quarkus or Spring JARs inside a fat JAR image?
-* What does *Fixable* mean for the development team?
-
 == Key takeaways
 
-* *Results* on *User Workloads* is the unified triage surface for deploy-time vulnerability data.
+* *Vulnerability Management* > *Results* on the *User Workloads* tab is the unified triage surface. Default filters show *Critical* + *Important* severity, *Fixable* only.
 * Scanner V4 Indexer builds the SBOM. Matcher produces the CVE list (visible in the image header as *by Scanner V4*).
-* Expanding a CVE row exposes *Source* (*OS* vs language types such as *NODEJS* or *JAVA*).
-* Comparing two scanned images (for example juice-shop vs `quay.io/rhpds/nginx:1.25`) shows how base OS and language stacks change severity mix. *Manage watched images* is the path for images that are not deployed yet.
+* Expanding a CVE row exposes the *Source* column: *OS* for base-layer packages, *NODEJS* / *JAVA* / *GOLANG* for language-level dependencies.
+* Comparing two scanned images (for example juice-shop vs `quay.io/rhpds/nginx:1.25`) shows how base OS and language stacks change the severity mix. *Manage watched images* (top right on Results) is the path for images that are not deployed yet.
 
 [.verification]
 ****

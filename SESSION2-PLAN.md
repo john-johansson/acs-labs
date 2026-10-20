@@ -1,10 +1,10 @@
 # Session 2: Operations & Day-2
 
-90 to 95 minute hands-on lab. CTIE platform and security engineers. Standalone (no Session 1 dependency). Same Showroom environment.
+90 to 95 minute hands-on lab for platform and security engineers. Standalone (no Session 1 dependency). Same Showroom environment.
 
 ## Decisions
 
-* Notifiers: Generic Webhook + Splunk (Jira and live OpenITCockpit are discussion-only).
+* Notifiers: Generic Webhook + Splunk (live monitoring-product mapping is discussion-only).
 * Structure: six exercise slots. SAC and OIDC are merged so Risk and CVE deferral fit without a seventh timed block.
 * Source of truth for student steps: Antora `s2-*.adoc` pages.
 
@@ -32,7 +32,7 @@
 * Keycloak lab users need Email verified On and no Required user actions, or login fails with `Account is not fully set up`.
 * Auth providers out of the box: basic (+ monitoring userpki). Students create Keycloak OIDC.
 * Keycloak `temp-admin` login works.
-* Policy `Latest tag` enabled (webhook trigger). Splunk trigger: students enable *Curl in Image* and *Alpine Linux Package Manager (apk) in Image*, attach HEC, then run `curlimages/curl` and `alpine:3.18`.
+* Webhook trigger: students clone system policy `Latest tag` to `Lab - Latest tag webhook`, attach the Generic Webhook notifier, then run `httpd:latest` in `backend`. Splunk trigger: students enable *Curl in Image* and *Alpine Linux Package Manager (apk) in Image*, attach HEC, then run `curlimages/curl` and `alpine:3.18`.
 * Splunk route and HEC token retrieval work. Existing notifier name may be `Splunk SIEM (local)`.
 * webhook.site reachable over HTTPS.
 
