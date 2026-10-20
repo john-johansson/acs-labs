@@ -39,11 +39,11 @@ reset_policy() {
   id=$(lookup_policy "$search")
   if [ -n "$id" ]; then
     curl -sk -H "${AUTH}" "${CENTRAL}/v1/policies/${id}" | \
-      python3 -c "
-import sys,json
+      DISABLE_POLICY="${disable}" python3 -c "
+import sys,json,os
 p=json.load(sys.stdin)
 p['notifiers']=[]
-if ${disable}:
+if os.environ.get('DISABLE_POLICY')=='true':
     p['disabled']=True
 p['exclusions']=[e for e in p.get('exclusions',[]) if not e.get('deployment',{}).get('scope',{}).get('namespace')]
 print(json.dumps(p))
