@@ -28,10 +28,11 @@ Excluding non-production or sandbox workloads from a noisy policy recalibrates w
 . Navigate to *Platform Configuration* > *Policy Management*.
 . Open *Fixable Severity at least Important* (enabled by default on this cluster).
 . Click *Actions* > *Edit policy*.
-. Open the *Policy scope* step.
-. Add an exclusion for a namespace you are willing to carve out of this policy for the demo.
+. Open the *Resources* step (under *Policy behavior*).
+. Under *Excluded resources*, click *Add exclusion*.
+. Set *Namespace* to a namespace you are willing to carve out of this policy for the demo.
 +
-Example: exclude namespace `frontend` (or another non-critical app namespace in your environment).
+Example: namespace `frontend` (or another non-critical app namespace in your environment).
 . Save the policy.
 . Return to *Risk* and refresh the view.
 . Confirm that the excluded namespace's deployments are no longer driven by that policy's findings the same way (violations for that policy should stop accumulating there).
