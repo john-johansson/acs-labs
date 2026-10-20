@@ -199,9 +199,9 @@ image::s2/s2-03-keycloak-groups-mapper.png[Group Membership mapper named groups 
 === Create the group and lab user
 
 . Open *Groups* and click *Create group*.
-. Name the group `ctie-payments-devs` and click *Create*.
+. Name the group `lab-payments-devs` and click *Create*.
 +
-image::s2/s2-03-keycloak-create-group.png[Create a group dialog with name ctie-payments-devs,width=720]
+image::s2/s2-03-keycloak-create-group.png[Create a group dialog with name lab-payments-devs,width=720]
 . Open *Users* and click *Add user* (or *Create new user*).
 . Set:
 ** *Username:* `payments-dev`
@@ -216,9 +216,9 @@ On the user *Details* tab, confirm *Email verified* is On and click *Save* if yo
 . Open the user *Credentials* tab, click *Set password*, set a password with *Temporary* Off (example: `lab-password`), then save.
 +
 image::s2/s2-03-keycloak-user-password.png[Set password dialog with Temporary Off,width=720]
-. Open the user *Groups* tab, click *Join group*, select `ctie-payments-devs`, and join.
+. Open the user *Groups* tab, click *Join group*, select `lab-payments-devs`, and join.
 +
-image::s2/s2-03-keycloak-user-groups.png[Join group dialog selecting ctie-payments-devs,width=720]
+image::s2/s2-03-keycloak-user-groups.png[Join group dialog selecting lab-payments-devs,width=720]
 
 IMPORTANT: If *Email verified* is Off or a required action remains, Keycloak returns `Account is not fully set up` and the ACS login fails.
 
@@ -250,7 +250,7 @@ IMPORTANT: If *Email verified* is Off or a required action remains, Keycloak ret
 +
 . Under *Rules*, add:
 ** *Key:* `groups`
-** *Value:* `ctie-payments-devs`
+** *Value:* `lab-payments-devs`
 ** *Role:* `lab-payments-vuln-reader`
 . Click *Save*.
 
@@ -281,5 +281,5 @@ After logging in as `payments-dev` via Keycloak, do you only see the `payments` 
 Tenant isolation works: the OIDC group mapped to `lab-payments-vuln-reader` limits what the user can see and do. Continue to Exercise 4.
 
 [.fail]
-Confirm the auth provider rule maps group `ctie-payments-devs` to role `lab-payments-vuln-reader`, that the Access Scope selects only `payments` on cluster `production`, and that the Keycloak user has Email verified On with no required actions. Then retry in a private window.
+Confirm the auth provider rule maps group `lab-payments-devs` to role `lab-payments-vuln-reader`, that the Access Scope selects only `payments` on cluster `production`, and that the Keycloak user has Email verified On with no required actions. Then retry in a private window.
 ****

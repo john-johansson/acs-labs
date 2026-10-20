@@ -7,6 +7,6 @@ In this session you explored RHACS operational capabilities beyond the policy en
 * *Reporting*: created a scoped PDF/CSV report and generated it on demand (Exercise 2).
 * *Scoped Access Control and identity*: built Permission Set, Access Scope, and Role, then mapped a Keycloak group for tenant isolation (Exercise 3).
 * *Risk and exceptions*: inspected Risk priority, applied a policy scope exclusion, and deferred a CVE with an auditable rationale (Exercise 4).
-* *Notifiers*: sent policy alerts to a generic webhook (OpenITCockpit pattern) and to Splunk HEC (Exercises 5 and 6).
+* *Notifiers*: sent policy alerts to a generic webhook and to Splunk HEC (Exercises 5 and 6).
 
-These capabilities are the Day-2 foundation for multi-team visibility, prioritization, and alert routing into the tools CTIE already operates.
+These capabilities are the Day-2 foundation for multi-team visibility, prioritization, and alert routing into the tools teams already operate.

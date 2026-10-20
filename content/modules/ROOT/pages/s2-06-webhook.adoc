@@ -7,10 +7,10 @@ Estimated time: 15 minutes.
 
 RHACS can push policy violation alerts to external systems using *notifiers*.
 A *Generic Webhook* notifier sends a JSON payload via HTTP POST to any endpoint.
-That pattern matches how CTIE would feed OpenITCockpit (Nagios-style) after a small transform layer.
+That pattern is how many teams feed a monitoring or ticketing stack after a small transform layer.
 
 In this lab you use https://webhook.site[webhook.site] as the receiver so you can inspect the raw ACS payload.
-Live OpenITCockpit mapping stays discussion-only.
+Mapping into a live monitoring product stays discussion-only.
 
 == Task 5.1: Create an external webhook receiver
 
@@ -32,7 +32,7 @@ NOTE: Outbound HTTPS from this Showroom to webhook.site was verified during lab 
 |Field |Value
 
 |Integration name
-|`Lab - Webhook (OpenITCockpit)`
+|`Lab - Webhook`
 
 |Endpoint
 |_(paste your webhook.site URL)_
@@ -53,7 +53,7 @@ NOTE: Outbound HTTPS from this Showroom to webhook.site was verified during lab 
 . Open the enabled policy *Latest tag*.
 . Click *Actions* > *Edit policy*.
 . Open *Policy behavior*.
-. Under *Notification*, select `Lab - Webhook (OpenITCockpit)`.
+. Under *Notification*, select `Lab - Webhook`.
 . Save.
 
 == Task 5.4: Trigger a violation and inspect the payload
@@ -68,17 +68,17 @@ oc run webhook-trigger --image=image-registry.openshift-image-registry.svc:5000/
 . In webhook.site, open the new POST request and review the JSON.
 . Confirm the payload includes policy name `Latest tag`, deployment `webhook-trigger`, and namespace `backend`.
 
-== Task 5.5: Discussion: mapping to OpenITCockpit
+== Task 5.5: Discussion: mapping to a monitoring system
 
-CTIE uses OpenITCockpit as the central monitoring system. A production path would:
+A production path would often:
 
 . Accept the ACS webhook JSON in a small middleware service.
-. Map fields into a Nagios passive check:
+. Map fields into a monitoring or ticketing event, for example:
 ** Host: deployment namespace
 ** Service: policy name
 ** State: derived from ACS severity
 ** Output: violation summary
-. Forward that result to OpenITCockpit.
+. Forward that result to the organization's monitoring platform.
 
 This lab stops at the ACS JSON payload. The payload already contains the fields needed for that mapping.
 
@@ -89,20 +89,20 @@ This lab stops at the ACS JSON payload. The payload already contains the fields 
 oc delete pod webhook-trigger -n backend --ignore-not-found
 ----
 
-. Edit *Latest tag* again and remove `Lab - Webhook (OpenITCockpit)` from notifications before you leave the exercise.
+. Edit *Latest tag* again and remove `Lab - Webhook` from notifications before you leave the exercise.
 
 == Key takeaways
 
 * Generic Webhooks are the flexible bridge into existing monitoring stacks.
 * The ACS JSON payload includes policy, deployment, and violation context.
-* webhook.site is for labs. Production uses middleware in front of OpenITCockpit or similar.
+* webhook.site is for labs. Production uses middleware in front of the real monitoring or ticketing tools.
 
 [.verification]
 ****
 Did webhook.site receive a POST whose JSON includes policy `Latest tag`, deployment `webhook-trigger`, and namespace `backend`?
 
 [.success]
-The generic webhook path works and the ACS payload has the fields needed for an OpenITCockpit-style mapping. Continue to Exercise 6.
+The generic webhook path works and the ACS payload has the fields needed for a monitoring-style mapping. Continue to Exercise 6.
 
 [.fail]
 Confirm the notifier is attached to the enabled *Latest tag* policy, that the Test button already reached webhook.site, then recreate the `webhook-trigger` pod in `backend` and refresh the webhook.site request list.

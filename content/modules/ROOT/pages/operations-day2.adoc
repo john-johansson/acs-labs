@@ -19,8 +19,8 @@ By completing this lab, participants will:
 . Navigate the RHACS vulnerability dashboard and understand how Scanner V4 Indexer and Matcher produce scan results for base OS and language-level dependencies.
 . Create automated vulnerability reports (PDF/CSV) scoped to a tenant namespace, using download or generate-now when SMTP is unavailable.
 . Build Scoped Access Control (Permission Set, Access Scope, Role) and map a Keycloak OIDC group to that role for tenant isolation.
-. Use the Risk view, policy scope exclusions, and CVE deferral to support SST and DSI prioritization workflows.
-. Configure a generic webhook notifier (OpenITCockpit pattern) and inspect the ACS JSON payload.
+. Use the Risk view, policy scope exclusions, and CVE deferral to support prioritization workflows.
+. Configure a generic webhook notifier and inspect the ACS JSON payload.
 . Integrate RHACS with Splunk via HEC for SIEM correlation of policy breach events.
 
 == Session flow
@@ -68,7 +68,7 @@ Inspect Risk priority, apply a policy scope exclusion, and review CVE exceptions
 ****
 xref:s2-06-webhook.adoc[Exercise 5: Webhook notifier]
 
-Configure a generic webhook (OpenITCockpit pattern) and inspect the ACS JSON payload (~15 min).
+Configure a generic webhook and inspect the ACS JSON payload (~15 min).
 ****
 
 [.tile]

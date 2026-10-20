@@ -1,10 +1,10 @@
 # Session 2: Operations & Day-2
 
-90 to 95 minute hands-on lab. CTIE platform and security engineers. Standalone (no Session 1 dependency). Same Showroom environment.
+90 to 95 minute hands-on lab for platform and security engineers. Standalone (no Session 1 dependency). Same Showroom environment.
 
 ## Decisions
 
-* Notifiers: Generic Webhook + Splunk (Jira and live OpenITCockpit are discussion-only).
+* Notifiers: Generic Webhook + Splunk (live monitoring-product mapping is discussion-only).
 * Structure: six exercise slots. SAC and OIDC are merged so Risk and CVE deferral fit without a seventh timed block.
 * Source of truth for student steps: Antora `s2-*.adoc` pages.
 
