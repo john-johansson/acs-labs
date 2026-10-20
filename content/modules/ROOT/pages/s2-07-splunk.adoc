@@ -164,17 +164,6 @@ TIP: If the table is empty, click the triangle next to an event in a plain `inde
 +
 The add-on events cover historical violations pulled on a schedule. The HEC events are the ones you just triggered, pushed in near real time. Both sourcetypes can coexist and serve different SOC workflows.
 
-== Cleanup
-
-NOTE: On a single-use Showroom that is destroyed after the session, you can skip cleanup. On a shared or reusable cluster, run the commands below to remove the trigger pods and detach the notifier from both policies.
-
-[source,bash]
-----
-oc delete pod splunk-trigger-curl splunk-trigger-apk -n frontend --ignore-not-found
-----
-
-For each policy you changed (*Curl in Image* and *Alpine Linux Package Manager (apk) in Image*): remove the Splunk notifier from *Notifiers* and set the policy back to *Disabled* if you enabled it only for this lab.
-
 == Key takeaways
 
 * Pull-based add-on (`stackrox-violations`) and push-based HEC notifier (`stackrox-alert`) can run together with different sourcetypes. Use pull for historical coverage and push for real-time SOC alerting.

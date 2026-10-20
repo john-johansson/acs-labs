@@ -292,10 +292,6 @@ NOTE: If the *Vulnerabilities* tab is not visible, the ACS Console Plugin may no
 
 This is the same vulnerability data from Exercise 1, surfaced inside the console developers already use. Combined with the scoped role from Task 3.4, a `payments` developer sees only their namespace's findings here as well.
 
-== Cleanup
-
-NOTE: On a single-use Showroom that is destroyed after the session, you can skip cleanup. On a shared or reusable cluster, delete the auth provider, role, permission set, and access scope you created, and remove the Keycloak realm.
-
 == Key takeaways
 
 * SAC isolates tenants inside one ACS Central using Permission Sets, Access Scopes, and Roles.

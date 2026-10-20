@@ -69,10 +69,6 @@ The expired state is the key learning point: when a deferral lapses, ACS marks i
 OPTIONAL: If your UI offers *Defer* or *Request deferral* on a CVE, try creating your own 30-day deferral with rationale
 `Lab deferral: vendor fix under evaluation; compensating controls documented for security review.`
 
-== Cleanup
-
-NOTE: On a single-use Showroom that is destroyed after the session, you can skip cleanup. On a shared or reusable cluster, remove the namespace exclusion from *Fixable Severity at least Important* so later labs and other students are not affected.
-
 == Key takeaways
 
 * *Risk* (left navigation) ranks deployments by aggregating policy violations, vulnerabilities, configuration, and exposure signals. Open a deployment to see the breakdown.

@@ -99,17 +99,6 @@ Consider how you would connect this payload to your own monitoring stack. A prod
 
 This lab stops at the ACS JSON payload. The payload already contains the fields needed for that mapping.
 
-== Cleanup
-
-NOTE: On a single-use Showroom that is destroyed after the session, you can skip cleanup. On a shared or reusable cluster, run the commands below.
-
-[source,bash]
-----
-oc delete pod webhook-trigger -n backend --ignore-not-found
-----
-
-In *Policy Management*, delete the clone `Lab - Latest tag webhook` (or disable it and remove `Lab - Webhook` from *Notifiers*). Leave the system policy *Latest tag* enabled and unchanged.
-
 == Key takeaways
 
 * Clone system policies rather than editing originals. The clone enforces in your scope while the system policy continues informing cluster-wide.
