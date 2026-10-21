@@ -250,7 +250,12 @@ IMPORTANT: If *Email verified* is Off or a required action remains, Keycloak ret
 |`Keycloak - rhacs-lab`
 
 |Issuer
-|`https://<SSO_HOST>/realms/rhacs-lab` (use the `SSO_HOST` value from Task 3.5)
+a|On the bastion, print the issuer URL:
+[source,bash]
+----
+echo "https://$(oc get route keycloak -n keycloak -o jsonpath='{.spec.host}')/realms/rhacs-lab"
+----
+Copy the printed value into the *Issuer* field.
 
 |Client ID
 |`acs-central`
