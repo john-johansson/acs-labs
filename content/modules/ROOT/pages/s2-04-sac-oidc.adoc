@@ -149,7 +149,7 @@ image::s2/s2-03-keycloak-clients-list.png[Clients list with Create client action
 +
 image::s2/s2-03-keycloak-create-client-general.png[Create client General settings with Client ID acs-central,width=720]
 . Click *Next*.
-. On *Capability config*, set *Client authentication* to On (leave *Standard flow* enabled).
+. On *Capability config*, set *Client authentication* to On, leave *Standard flow* enabled, and also turn *Implicit flow* On.
 +
 image::s2/s2-03-keycloak-create-client-capability.png[Create client Capability config with Client authentication On,width=720]
 . Click *Next*.
@@ -183,17 +183,14 @@ if [ -z "$CENTRAL_HOST" ]; then
   CENTRAL_HOST="${CENTRAL_HOST%%/*}"
 fi
 
-echo "https://${CENTRAL_HOST}/sso/providers/oidc/callback"
+echo "https://${CENTRAL_HOST}/*"
 ----
 +
-Copy the printed callback URL into *Valid redirect URIs*.
-Confirm it matches the host in your RHACS Console browser URL.
+Copy the printed wildcard URI into *Valid redirect URIs*.
+The trailing `/*` allows ACS to use any callback path, which is required for the Fragment OIDC mode configured in Task 3.6.
 +
 image::s2/s2-03-keycloak-create-client-login.png[Create client Login settings with Valid redirect URIs field,width=720]
 . Click *Save*.
-. Open the client *Credentials* tab and copy the *Client secret* (you need it in Task 3.6).
-+
-image::s2/s2-03-keycloak-client-credentials.png[acs-central Credentials tab with Client secret,width=720]
 
 === Add a `groups` token mapper
 
@@ -260,11 +257,8 @@ Copy the printed value into the *Issuer* field.
 |Client ID
 |`acs-central`
 
-|Client Secret
-|_(from Task 3.5)_
-
 |Mode
-|Auto-select
+|Fragment
 |===
 +
 . Under *Rules*, add:
