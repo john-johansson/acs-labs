@@ -55,10 +55,10 @@ Other good demo candidates on this cluster:
 +
 image::s2/s2-01-juice-shop-image.png[juice-shop image detail showing Scanner V4 scan and CVE severity summary,width=720]
 . Scroll to the CVE table. Columns include *CVE severity*, *CVE status* (*Fixable* / *Not fixable*), *CVSS*, and *Affected components*.
-. Expand a CVE row (chevron / *Details*). In the nested component table, find the *Source* column:
+. Click the expand chevron (small triangle on the left of a CVE row) to reveal the *component detail* sub-table. This nested table shows which packages are affected and includes a *Source* column that is not visible in the top-level CVE list:
 ** Language findings show values such as *NODEJS*, *JAVA*, or *GOLANG*
 ** OS-layer findings show *OS*
-. Identify at least one *OS* Source finding and one language Source finding (for juice-shop, most Critical rows are *NODEJS*; expand further rows or clear severity filters if you need an *OS* example).
+. Expand a few different CVE rows. Identify at least one *OS* Source finding and one language Source finding. For juice-shop, most Critical rows are *NODEJS*. Expand further rows or clear severity filters if you need an *OS* example.
 
 TIP: Distroless or UBI Micro bases often show most findings under language sources rather than *OS*.
 
