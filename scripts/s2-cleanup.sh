@@ -107,15 +107,14 @@ if $DO_EX6; then
   delete_by_id "Lab - Splunk HEC notifier"                   "/v1/notifiers"                       "$(lookup_notifier 'Lab - Splunk HEC')"
 
   # Delete lab events from Splunk so previous test data does not confuse students
-  SPLUNK_POD="$(oc get pod -n splunk -l app=splunk -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)" || true
-  if [ -n "$SPLUNK_POD" ]; then
-    oc exec "$SPLUNK_POD" -n splunk -c splunk -- curl -sk -u admin:RhacsSplunkDemo123! \
-      -X POST "https://localhost:8089/services/search/jobs" \
-      -d 'search=| delete index=* sourcetype="stackrox-lab-alert"' \
-      -d 'output_mode=json' > /dev/null 2>&1 && ok "stackrox-lab-alert events in Splunk" || skip "stackrox-lab-alert events (delete requires admin)"
-  else
-    skip "Splunk pod not found"
-  fi
+  oc exec deploy/splunk -n splunk -c splunk -- curl -sk -u admin:RhacsSplunkDemo123! \
+    -X POST "https://localhost:8089/services/authorization/roles/admin" \
+    -d "imported_roles=can_delete&imported_roles=power&imported_roles=user" \
+    -o /dev/null 2>/dev/null
+  oc exec deploy/splunk -n splunk -c splunk -- curl -sk -u admin:RhacsSplunkDemo123! \
+    -X POST "https://localhost:8089/services/search/jobs" \
+    -d 'search=search index=* sourcetype="stackrox-lab-alert" | delete' \
+    -d "output_mode=json" -o /dev/null 2>/dev/null && ok "stackrox-lab-alert events in Splunk" || skip "stackrox-lab-alert events in Splunk"
 fi
 
 # ── Exercise 5: Webhook ──
