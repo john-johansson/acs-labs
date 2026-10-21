@@ -6,13 +6,13 @@ include::partial$session2-ui.adoc[]
 Estimated time: 15 minutes.
 
 ACS computes a *Risk Priority* for each deployment from policy violations, vulnerabilities, configuration, and related signals.
-Platform and security teams use that ranking to decide what to fix first, and use *vulnerability exceptions* (deferral or false positive) when a CVE cannot be fixed immediately but needs an auditable record.
+Platform teams and security teams use that ranking to decide what to fix first, and use *vulnerability exceptions* (deferral or false positive) when a CVE cannot be fixed immediately but needs an auditable record.
 
 By the end of this exercise you will:
 
 * Use the Risk view to identify high-priority deployments and understand the signals that drive ranking.
 * Apply a policy scope exclusion to reduce noise from non-critical namespaces.
-* Review an existing vulnerability exception (deferral or false positive) and understand the audit trail.
+* Create a vulnerability deferral and inspect the audit trail in Exception Management.
 
 == Task 4.1: Analyze deployment risk factors
 
@@ -29,59 +29,60 @@ On this Showroom, `visa-processor` in namespace `payments` and `log4shell` in na
 
 == Task 4.2: Add a policy scope exclusion
 
-Excluding non-production or sandbox workloads from a noisy policy recalibrates what appears as risk without disabling the policy globally.
+In production, noisy policies that fire on sandbox or dev namespaces dilute the Risk ranking.
+Excluding those namespaces keeps the signal-to-noise ratio useful for security triage without disabling the policy globally.
 
 . Navigate to *Platform Configuration* > *Policy Management*.
 . Open *Fixable Severity at least Important* (enabled by default on this cluster).
 . Click *Actions* > *Edit policy*.
-. In the policy wizard, navigate to the *Policy scope* step.
-. Under *Exclude by scope*, click *Add exclusion scope*.
-. Set *Namespace* to a namespace you are willing to carve out of this policy for the demo.
+. In the policy wizard, navigate to the *Policy scope* step (listed as *Resources* in the wizard sidebar).
+. Scroll to the *Excluded scopes* section and click *Add exclusion scope*.
+. In the *Namespace* field, enter a namespace you want to carve out of this policy.
 +
-Example: namespace `frontend` (or another non-critical app namespace in your environment).
-. Save the policy.
+Example: `frontend` (or another non-critical app namespace in your environment).
+. Click through the remaining wizard steps and *Save*.
 . Return to *Risk* and refresh the view.
-. Confirm that the excluded namespace's deployments are no longer driven by that policy's findings the same way (violations for that policy should stop accumulating there).
+. Confirm that deployments in the excluded namespace are no longer flagged by that policy.
 
-IMPORTANT: After the exercise, remove the exclusion (or set the policy back to its previous scope) so later labs and other students are not affected.
+The takeaway: scope exclusions let you keep strict policies on production namespaces while silencing known noise elsewhere. This is a calibration tool, not a way to ignore findings.
 
-== Task 4.3: Review vulnerability exceptions (deferral and false positive)
+== Task 4.3: Create a vulnerability deferral
 
-This Showroom has two pre-seeded exception records that model a real SST/DSI workflow: one team requests, another approves, and ACS tracks the audit trail.
+When a CVE cannot be fixed immediately but needs an auditable record, security and platform teams use *vulnerability exceptions*. A *deferral* marks a CVE as "accepted for now" with an expiry date and a rationale. An *Admin* user's deferral is auto-approved. In production, a separate approver role would review the request.
 
-. In the RHACS Console, expand *Vulnerability Management* in the left navigation and open *Exception Management*.
-. Open exception *RR-261019-1* (False positive for `CVE-2022-42889`, Text4Shell). Note:
-** *Target state:* False positive
-** *Status:* Approved
-** *Scope:* `quay.io/mfoster/shop-api:.*`
-** *Requester comment:* references a VEX justification ("vulnerable_code_not_in_execute_path")
-** *Approver:* a separate identity (`demo-vuln-approver-token`) approved the request
-. Open exception *RR-261019-2* (Deferred for `CVE-2021-44228`, Log4Shell). Note:
-** *Target state:* Deferred
-** *Status:* Approved, but *expired*
-** *Scope:* `quay.io/mfoster/shop-api:.*`
-** *Requester comment:* references a planned upgrade to log4j 2.17.1
-** *System comment:* `[System Generated] Request expired` -- ACS automatically flags deferrals past their expiry date
+. In the RHACS Console, expand *Vulnerability Management* and open *Results*.
+. Switch to the *Images* toggle. Filter for `visa-processor` (or another image with Critical CVEs).
+. Open the image and find a *Critical* or *Important* fixable CVE.
+. Click the CVE name to open its detail page.
+. Click *Defer CVE* (or *Request deferral*, depending on your RHACS version).
+. Set the deferral window to *30 days* and enter the rationale:
 +
-The expired state is the key learning point: when a deferral lapses, ACS marks it and the team must decide whether to extend, remediate, or escalate. This is the audit trail a security review relies on.
-. Reflect: the deferral comment references a planned fix in shop 1.1.0 with an Oct 1 expiry. The deferral has lapsed. What would your team do next -- extend, remediate, or escalate?
-
-OPTIONAL: If your UI offers *Defer* or *Request deferral* on a CVE, try creating your own 30-day deferral with rationale
 `Lab deferral: vendor fix under evaluation; compensating controls documented for security review.`
+. Submit the request. Because you are logged in as Admin, it is auto-approved.
+. Navigate to *Vulnerability Management* > *Exception Management*.
+. Find your new deferral in the *Approved deferrals* list. Confirm:
+** *Target state:* Deferred
+** *Status:* Approved
+** *Scope:* the image you selected
+** *Requester:* your admin identity
+** *Expiry:* 30 days from now
+. Reflect: when this deferral expires, ACS will flag it automatically. The team must then decide whether to extend, remediate, or escalate. This audit trail is what a security review relies on.
+
+NOTE: If pre-seeded exceptions exist on your Showroom (for example records starting with `RR-`), feel free to inspect those as well. Expired deferrals show a system comment like `[System Generated] Request expired`, which illustrates the re-evaluation trigger.
 
 == Key takeaways
 
 * *Risk* (left navigation) ranks deployments by aggregating policy violations, vulnerabilities, configuration, and exposure signals. Open a deployment to see the breakdown.
 * Policy scope exclusions (under *Policy scope* > *Exclude by scope*) keep production gates strict while reducing noise from sandboxes.
-* Approved deferral and false-positive exceptions under *Vulnerability Management* > *Exception Management* are the auditable security record when a CVE is not fixed immediately. Expired deferrals force re-evaluation: extend, remediate, or escalate.
+* Deferrals under *Vulnerability Management* > *Exception Management* are the auditable security record when a CVE cannot be fixed immediately. Admin users auto-approve; production workflows use a separate approver role. Expired deferrals force re-evaluation: extend, remediate, or escalate.
 
 [.verification]
 ****
-Did you open a high-priority deployment on *Risk* (for example `visa-processor` or `log4shell`) and review an existing *Approved* vulnerability exception (Deferred or False positive) with its scope and status?
+Did you open a high-priority deployment on *Risk*, create a 30-day deferral for a CVE, and find it as *Approved* under *Exception Management*?
 
 [.success]
-You can use Risk priority for triage and treat Approved exceptions as the auditable security record. Continue to Exercise 5.
+You can use Risk priority for triage and create auditable vulnerability exceptions. Continue to Exercise 5.
 
 [.fail]
-Open *Risk*, select `visa-processor` (payments) or `log4shell`, then under *Vulnerability Management* > *Exception Management* open an Approved Deferred or False positive record.
+Open *Vulnerability Management* > *Results* > *Images*, find a Critical CVE on a deployed image, click *Defer CVE*, set 30 days with a rationale, then check *Exception Management* for the approved record.
 ****
