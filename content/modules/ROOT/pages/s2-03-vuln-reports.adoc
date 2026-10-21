@@ -95,15 +95,15 @@ IMPORTANT: In production, this step is where you add an email destination and a 
 
 == Task 2.3: Generate and download on demand
 
+NOTE: RHACS reports download as a *ZIP file containing a CSV*. PDF export was removed in RHACS 4.11 for security reasons.
+
 . On the report details page, open *Actions*.
 . Click *Generate download* (*Send report* stays disabled while *Delivery* has no destination).
 +
 image::s2/s2-02-report-actions.png[Actions menu showing Generate download for the saved report,width=720]
 . Wait until the job completes under the *All report jobs* tab.
-. Click *Ready for download* when the status changes. The download is a ZIP containing a CSV file.
-. Extract and open the CSV. Columns include CVE ID, severity, CVSS score, component, image name, and deployment, scoped to the `payments` namespace.
-+
-NOTE: PDF export was removed in RHACS 4.11 for security reasons. CSV is the supported download format.
+. Click *Ready for download* when the status changes. The download is a `.zip` file.
+. Extract the ZIP and open the CSV inside. Columns include CVE ID, severity, CVSS score, component, image name, and deployment, scoped to the `payments` namespace.
 
 == Task 2.4: Review the output
 
