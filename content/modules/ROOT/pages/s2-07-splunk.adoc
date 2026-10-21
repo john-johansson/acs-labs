@@ -50,7 +50,9 @@ You will compare these pull-based events with the push-based HEC events you crea
 +
 TIP: If no fields appear in the event body, click *All Fields* in the left sidebar and tick the relevant ones. Splunk hides fields that are not in the "selected" list by default.
 
-NOTE: The add-on polls on a schedule. An empty result does not block the HEC push path below, but this Showroom typically has events within the first hour.
+NOTE: The add-on polls on a schedule and may take up to an hour after Showroom provisioning before the first events appear. If the search returns empty, that is expected on a fresh build. Proceed to Task 6.3; the HEC push path does not depend on pull data.
+
+TIP: If `stackrox-violations` returns nothing, try `index=* sourcetype=stackrox*` to discover the actual sourcetype name on your Showroom. Different TA-stackrox versions may use slightly different names.
 
 == Task 6.3: Configure the native Splunk HEC notifier
 
@@ -90,30 +92,32 @@ oc exec deploy/splunk -n splunk -c splunk -- \
 
 TIP: The URL uses HTTPS because the Splunk HEC listener has SSL enabled. The internal service name works because Central and Splunk share the cluster.
 
-== Task 6.4: Attach the notifier and trigger a violation
+== Task 6.4: Clone policies, attach the notifier, and trigger violations
 
-Attach the Splunk notifier to both image policies below, then trigger each one.
-Use `Lab - Splunk HEC` (or `Splunk SIEM (local)` if you reused that notifier in Task 6.3).
+As in Exercise 5, clone the system policies rather than editing them directly.
+Attach the Splunk notifier to the clones, then trigger each one.
 
-=== Configure *Curl in Image*
+=== Clone *Curl in Image*
 
 . Navigate to *Platform Configuration* > *Policy Management*.
 . In the policy search or filter, find *Curl in Image* and open it.
-. Click *Actions* > *Edit policy*.
-. On the first step (policy details / lifecycle), set the policy to *Enabled* if it is currently disabled.
+. Click *Actions* > *Clone policy*.
+. On *Details*, set the name to `Lab - Curl in Image Splunk`.
 . Open *Policy behavior*.
-. In the *Notifiers* section, select the Splunk notifier from Task 6.3.
-. Review the remaining wizard steps if prompted, then *Save* the policy.
+. In the *Notifiers* section, select `Lab - Splunk HEC` (or `Splunk SIEM (local)` if you reused that notifier in Task 6.3).
+. Confirm the clone is *Enabled*, then *Save*.
 
-=== Configure *Alpine Linux Package Manager (apk) in Image*
+=== Clone *Alpine Linux Package Manager (apk) in Image*
 
 . Return to *Policy Management*.
 . Find *Alpine Linux Package Manager (apk) in Image* and open it.
-. Click *Actions* > *Edit policy*.
-. Set the policy to *Enabled* if it is currently disabled.
+. Click *Actions* > *Clone policy*.
+. On *Details*, set the name to `Lab - APK in Image Splunk`.
 . Open *Policy behavior*.
 . In the *Notifiers* section, select the same Splunk notifier.
-. *Save* the policy.
+. Confirm the clone is *Enabled*, then *Save*.
+
+Leave the original system policies untouched.
 
 === Trigger violations
 
@@ -128,8 +132,8 @@ oc run splunk-trigger-apk --image=docker.io/library/alpine:3.18 -n frontend --co
 The UBI 9 image contains `curl`, which triggers the *Curl in Image* policy. The Alpine image contains `apk`, which triggers the *Alpine Linux Package Manager (apk) in Image* policy.
 . Wait about 30 to 60 seconds. There is no progress indicator; ACS scans the new images and evaluates policies in the background.
 . In the *RHACS Console*, open *Violations* from the left navigation. Filter or search for `splunk-trigger`. Confirm you see alerts for:
-** *Curl in Image* on `splunk-trigger-curl`
-** *Alpine Linux Package Manager (apk) in Image* on `splunk-trigger-apk`
+** *Lab - Curl in Image Splunk* on `splunk-trigger-curl`
+** *Lab - APK in Image Splunk* on `splunk-trigger-apk`
 +
 This confirms ACS detected the violations. Next you verify the alerts reached Splunk.
 
@@ -144,7 +148,7 @@ index=* sourcetype="stackrox-alert" | spath | table _time policy.name deployment
 ----
 +
 This extracts the JSON fields into columns so you can see the policy name, deployment, and namespace at a glance.
-. Confirm you see events tied to *Curl in Image* and/or *Alpine Linux Package Manager (apk) in Image* with deployment names `splunk-trigger-curl` and `splunk-trigger-apk` in namespace `frontend`.
+. Confirm you see events tied to *Lab - Curl in Image Splunk* and/or *Lab - APK in Image Splunk* with deployment names `splunk-trigger-curl` and `splunk-trigger-apk` in namespace `frontend`.
 +
 TIP: If the table is empty, click the triangle next to an event in a plain `index=* sourcetype="stackrox-alert"` search to expand it and inspect the raw JSON. Splunk hides fields that are not in the "selected" set by default.
 . Compare pull vs push. Run the add-on search from Task 6.2 alongside the HEC search:
@@ -168,15 +172,16 @@ The add-on events cover historical violations pulled on a schedule. The HEC even
 
 * Pull-based add-on (`stackrox-violations`) and push-based HEC notifier (`stackrox-alert`) can run together with different sourcetypes. Use pull for historical coverage and push for real-time SOC alerting.
 * The HEC URL must use HTTPS when Splunk has SSL enabled on the collector (the default on this Showroom).
+* Clone system policies before attaching notifiers (same pattern as Exercise 5). The clone fires alerts while the system policy stays untouched.
 * A notifier only fires for policies that are enabled and have that notifier attached under *Policy behavior*.
 
 [.verification]
 ****
-After creating the trigger pods, does the Splunk search `index=* sourcetype="stackrox-alert" | spath | table _time policy.name deployment.name deployment.namespace` show events for *Curl in Image* and/or *Alpine Linux Package Manager (apk) in Image*?
+After creating the trigger pods, does the Splunk search `index=* sourcetype="stackrox-alert" | spath | table _time policy.name deployment.name deployment.namespace` show events for *Lab - Curl in Image Splunk* and/or *Lab - APK in Image Splunk*?
 
 [.success]
 The HEC push path is working. You can correlate ACS policy breaches in Splunk in near real time. Continue to the lab summary.
 
 [.fail]
-Confirm the Splunk notifier *Test* succeeds (the HEC URL must be `https`), that both policies are enabled with the notifier attached under *Notifiers*, wait 30 to 60 seconds after creating the trigger pods, then rerun the search.
+Confirm the Splunk notifier *Test* succeeds (the HEC URL must be `https`), that both cloned policies are enabled with the notifier attached under *Notifiers*, wait 30 to 60 seconds after creating the trigger pods, then rerun the search.
 ****

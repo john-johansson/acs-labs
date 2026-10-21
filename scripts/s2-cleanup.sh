@@ -102,8 +102,8 @@ if $DO_EX6; then
   echo ""
   echo "Exercise 6 (Splunk):"
   oc delete pod splunk-trigger-curl splunk-trigger-apk -n frontend --ignore-not-found 2>/dev/null && ok "splunk trigger pods" || skip "splunk trigger pods"
-  reset_policy "Curl in Image"                               "Curl in Image"                       true
-  reset_policy "Alpine Linux Package Manager (apk) in Image" "Alpine Linux Package Manager"         true
+  delete_by_id "Lab - Curl in Image Splunk policy"           "/v1/policies"                        "$(lookup_policy 'Lab - Curl in Image Splunk')"
+  delete_by_id "Lab - APK in Image Splunk policy"            "/v1/policies"                        "$(lookup_policy 'Lab - APK in Image Splunk')"
   delete_by_id "Lab - Splunk HEC notifier"                   "/v1/notifiers"                       "$(lookup_notifier 'Lab - Splunk HEC')"
 fi
 
