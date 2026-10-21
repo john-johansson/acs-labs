@@ -5,9 +5,20 @@ include::partial$session2-ui.adoc[]
 
 Estimated time: 5 minutes.
 
-== Web consoles
+== Access the bastion host
 
-After you SSH into the bastion (next step), discover your console URLs from the cluster routes:
+SSH into the bastion host using the credentials from the Showroom dashboard:
+
+[source,bash]
+----
+ssh lab-user@<bastion-host> -p <port>
+----
+
+NOTE: Replace `<bastion-host>` and `<port>` with the values shown on your Showroom dashboard under *Bastion Host*.
+
+== Discover your console URLs
+
+On the bastion, run:
 
 [source,bash]
 ----
@@ -17,46 +28,40 @@ echo "Keycloak Console:  https://$(oc get route keycloak -n keycloak -o jsonpath
 echo "Splunk Console:    https://$(oc get route splunk-web -n splunk -o jsonpath='{.spec.host}')"
 ----
 
-TIP: The Showroom dashboard also lists these URLs. The `oc get route` commands above are the source of truth when the dashboard and cluster disagree.
+Open each URL in your browser. Credentials for this Showroom:
 
-OpenShift and RHACS admin credentials for this Showroom are published on the dashboard (example user: `admin`).
+[cols="1,1,1",options="header"]
+|===
+|Console |Username |Password
 
-== Access the RHEL bastion host
+|OpenShift
+|`admin`
+|_(from Showroom dashboard)_
 
-SSH into the lab bastion host provided in your Showroom dashboard:
+|RHACS
+|`admin`
+|_(from Showroom dashboard)_
 
-. Connect to the bastion using the host, port, and user from Showroom.
-+
-Example shape:
-+
-[source,bash]
-----
-ssh lab-user@<bastion-host> -p <port>
-----
+|Splunk
+|`admin`
+|`RhacsSplunkDemo123!`
+|===
+
+NOTE: Keycloak admin credentials are retrieved from the cluster in Exercise 3. You do not need to log in to Keycloak now.
 
 == Verify RHACS CLI access
 
 `ROX_CENTRAL_ADDRESS` and `ROX_API_TOKEN` are already set on the bastion.
-`roxctl` reads the token from the environment. Do not pass `--token`.
 
-. Set `ROX_ENDPOINT` so `roxctl` picks up the address automatically:
-+
 [source,bash]
 ----
 export ROX_ENDPOINT="$ROX_CENTRAL_ADDRESS"
-----
-. Verify CLI access:
-+
-[source,bash]
-----
 roxctl central whoami
 ----
-+
-Expected output includes an Admin (or equivalent) role.
+
+NOTE: Expected output includes an *Admin* (or equivalent) role. Do not pass `--token` -- `roxctl` reads it from the environment.
 
 == Clone the lab repository
-
-Later exercises use YAML files from this repository. Clone it on the bastion and `cd` into it:
 
 [source,bash]
 ----

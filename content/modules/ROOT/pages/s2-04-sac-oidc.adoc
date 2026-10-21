@@ -159,14 +159,20 @@ RHACS Central on OpenShift is exposed through a *reencrypt* Route (TLS terminate
 Keycloak must allow the hostname from that route, which is the same URL you use for the RHACS Console in the browser.
 Do not use an edge-only alternate host or an in-cluster service DNS name.
 +
-On the bastion, print the callback URL from the Central *reencrypt* route:
+On the bastion, list the Central-related routes so you can see which one uses *reencrypt* termination:
 +
 [source,bash]
 ----
 oc get route -A -o custom-columns=\
 NAMESPACE:.metadata.namespace,NAME:.metadata.name,HOST:.spec.host,TERMINATION:.spec.tls.termination \
   --no-headers | awk 'tolower($2) ~ /central/ || tolower($3) ~ /central/'
-
+----
++
+The route with `reencrypt` termination is the one Keycloak needs for its redirect URI.
+Now extract the callback URL from that route:
++
+[source,bash]
+----
 CENTRAL_HOST="$(oc get route -A -o custom-columns=\
 NAME:.metadata.name,HOST:.spec.host,TERMINATION:.spec.tls.termination \
   --no-headers | awk 'tolower($1) ~ /central/ && $3 == "reencrypt" { print $2; exit }')"
