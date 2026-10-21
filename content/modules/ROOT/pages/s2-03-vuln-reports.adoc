@@ -5,7 +5,7 @@ include::partial$session2-ui.adoc[]
 
 Estimated time: 15 minutes.
 
-RHACS can generate vulnerability reports in PDF and CSV format.
+RHACS can generate on-demand vulnerability reports in CSV format (downloaded as a ZIP).
 Reports replace the old workflow of manually exporting, zipping, and emailing CSV files to tenant leads.
 
 On this Showroom, use *on-demand download* as the success path.
@@ -16,7 +16,7 @@ By the end of this exercise you will:
 
 * Walk through the five-step report wizard (Details, Resources, Filters, Delivery, Review).
 * Scope a report to a single namespace using *Custom scope*.
-* Generate and download a PDF or CSV report on demand without SMTP.
+* Generate and download a CSV report on demand without SMTP.
 * Understand when to use on-demand download vs scheduled email delivery.
 
 == Task 2.1: Open Vulnerability Reporting
@@ -100,8 +100,10 @@ IMPORTANT: In production, this step is where you add an email destination and a 
 +
 image::s2/s2-02-report-actions.png[Actions menu showing Generate download for the saved report,width=720]
 . Wait until the job completes under the *All report jobs* tab.
-. Download the PDF and/or CSV when the run finishes.
-. Open the file. The PDF lists CVEs grouped by image; the CSV contains columns such as CVE ID, severity, CVSS score, component, image name, and deployment. Both are scoped to the `payments` namespace.
+. Click *Ready for download* when the status changes. The download is a ZIP containing a CSV file.
+. Extract and open the CSV. Columns include CVE ID, severity, CVSS score, component, image name, and deployment, scoped to the `payments` namespace.
++
+NOTE: PDF export was removed in RHACS 4.11 for security reasons. CSV is the supported download format.
 
 == Task 2.4: Review the output
 
@@ -122,7 +124,7 @@ TIP: CSV output is useful for ticketing or SIEM import. Report configurations ar
 
 [.verification]
 ****
-Did you save `Lab - Payments Vulnerability Report` with *Custom scope* for namespace `payments`, empty *Delivery*, then generate and download a PDF or CSV that includes CVE, image, and deployment detail?
+Did you save `Lab - Payments Vulnerability Report` with *Custom scope* for namespace `payments`, empty *Delivery*, then generate and download a CSV that includes CVE, image, and deployment detail?
 
 [.success]
 You can produce a tenant-scoped on-demand report without SMTP. Continue to Exercise 3.

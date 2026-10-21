@@ -17,7 +17,7 @@ A hands-on lab for platform, infrastructure, and security engineering teams.
 By completing this lab, participants will:
 
 . Navigate the RHACS vulnerability dashboard and understand how Scanner V4 Indexer and Matcher produce scan results for base OS and language-level dependencies.
-. Create automated vulnerability reports (PDF/CSV) scoped to a tenant namespace, using download or generate-now when SMTP is unavailable.
+. Create automated vulnerability reports (CSV) scoped to a tenant namespace, using on-demand download when SMTP is unavailable.
 . Build Scoped Access Control (Permission Set, Access Scope, Role) and map a Keycloak OIDC group to that role for tenant isolation.
 . Use the Risk view, policy scope exclusions, and CVE deferral to support prioritization workflows.
 . Clone a system policy, attach a generic webhook notifier, and inspect the ACS JSON payload.
@@ -47,7 +47,7 @@ Navigate Results, compare OS vs language findings, and use watched images (~15 m
 ****
 xref:s2-03-vuln-reports.adoc[Exercise 2: Automated vulnerability reports]
 
-Create a scoped PDF/CSV report and generate it on demand without SMTP (~15 min).
+Create a scoped CSV report and generate it on demand without SMTP (~15 min).
 ****
 
 [.tile]
