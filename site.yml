@@ -29,6 +29,36 @@ ui:
         <title>Redirect Notice</title>
         <h1>Redirect Notice</h1>
         <p>The page you requested has been relocated to <a href="modules/operations-day2.html">Operations &amp; Day-2</a>.</p>
+    - path: partials/footer-scripts.hbs
+      contents: |
+        <script defer src="{{uiRootPath}}/js/vendor/clipboard.js"></script>
+        <script defer src="{{uiRootPath}}/js/site.js"></script>
+        <script defer src="{{uiRootPath}}/js/vendor/highlight.js"></script>
+        {{#if env.SITE_SEARCH_PROVIDER}}
+        {{> search-scripts}}
+        {{/if}}
+        <style>
+        .doc .listingblock pre,
+        .doc .listingblock pre.highlight {
+          background-color: #fdf6e3 !important;
+          color: #333 !important;
+          border: 1px solid #e8dcc8;
+          border-radius: 4px;
+        }
+        .doc .listingblock pre code,
+        .doc .listingblock pre.highlight code {
+          background-color: transparent !important;
+          color: #333 !important;
+        }
+        .doc .listingblock pre.highlight .hljs-keyword { color: #859900 !important; }
+        .doc .listingblock pre.highlight .hljs-string { color: #2aa198 !important; }
+        .doc .listingblock pre.highlight .hljs-variable { color: #268bd2 !important; }
+        .doc .listingblock pre.highlight .hljs-comment { color: #93a1a1 !important; }
+        .doc .listingblock pre.highlight .hljs-built_in { color: #b58900 !important; }
+        .doc .listingblock pre.highlight .hljs-title { color: #268bd2 !important; }
+        .doc .listingblock pre.highlight .hljs-meta { color: #cb4b16 !important; }
+        .doc .listingblock pre.highlight .hljs-number { color: #d33682 !important; }
+        </style>
     - path: ui.yml
       contents: "static_files: [ .nojekyll, operations-day2.html ]"
 
