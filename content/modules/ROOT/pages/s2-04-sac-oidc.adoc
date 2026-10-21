@@ -237,7 +237,13 @@ IMPORTANT: If *Email verified* is Off or a required action remains, Keycloak ret
 
 . Return to RHACS > *Platform Configuration* > *Access Control* > *Auth providers*.
 . Click *Create auth provider* > *OpenID Connect*.
-. Fill in:
+. On the bastion, print the Issuer URL you will need for the form:
++
+[source,bash]
+----
+echo "https://$(oc get route keycloak -n keycloak -o jsonpath='{.spec.host}')/realms/rhacs-lab"
+----
+. Fill in the auth provider form:
 +
 [cols="1,2",options="header"]
 |===
@@ -247,12 +253,7 @@ IMPORTANT: If *Email verified* is Off or a required action remains, Keycloak ret
 |`Keycloak - rhacs-lab`
 
 |Issuer
-a|On the bastion, print the issuer URL:
-[source,bash]
-----
-echo "https://$(oc get route keycloak -n keycloak -o jsonpath='{.spec.host}')/realms/rhacs-lab"
-----
-Copy the printed value into the *Issuer* field.
+|Paste the URL printed in the previous step
 
 |Client ID
 |`acs-central`
@@ -261,14 +262,14 @@ Copy the printed value into the *Issuer* field.
 |Fragment
 |===
 +
-. Under *Rules*, add:
+. Change the *Minimum access role* (the default row at the top of the *Rules* section, with an empty key and value) from *Admin* to *None*.
++
+IMPORTANT: ACS pre-fills the default rule with *Admin*. If you leave it, every user who logs in through this provider gets full Admin access regardless of their group membership, and the group-to-role mapping is effectively ignored. Setting it to *None* ensures only users matching the `groups` rule receive the `lab-payments-vuln-reader` role.
+. Under *Rules*, click *Add new rule* and set:
 ** *Key:* `groups`
 ** *Value:* `lab-payments-devs`
 ** *Role:* `lab-payments-vuln-reader`
-. Change the *Minimum access role* (the default row with an empty key and value) from *Admin* to *None*.
-+
-IMPORTANT: ACS pre-fills the default rule with *Admin*. If you leave it, every user who logs in through this provider gets full Admin access regardless of their group membership, and the group-to-role mapping is effectively ignored. Setting it to *None* ensures only users matching the `groups` rule receive the `lab-payments-vuln-reader` role.
-. Click *Save*.
+. Click *Save* (the button is at the top of the page, not the bottom).
 
 == Task 3.7: Prove tenant isolation
 
@@ -283,17 +284,23 @@ IMPORTANT: ACS pre-fills the default rule with *Admin*. If you leave it, every u
 
 TIP: If you see a *nonce verification failed* error, close the private window completely and open a fresh one before retrying. Stale browser state from a previous failed login attempt causes a nonce mismatch.
 
-== Task 3.8: View vulnerabilities in the OpenShift Console
+== Task 3.8: View vulnerabilities in the OpenShift Console (optional)
 
 The ACS Console Plugin adds a *Security* tab to Deployment pages in the OpenShift Console.
 This gives developers a self-service path to check their own workload findings without switching to ACS Central.
 
-. Open the OpenShift Console URL from your Showroom dashboard.
+NOTE: This task depends on the ACS Console Plugin being enabled on your Showroom. Run `oc get consoleplugin` on the bastion. If no `advanced-cluster-security` (or similar) resource is listed, the plugin is not available on this build. Skip to the Key takeaways below.
+
+. On the bastion, print the OpenShift Console URL:
++
+[source,bash]
+----
+oc get route console -n openshift-console -o jsonpath='https://{.spec.host}{"\n"}'
+----
+. Open that URL and log in as `admin`.
 . Navigate to *Workloads* > *Deployments* and select the `payments` namespace.
 . Open a deployment (for example `visa-processor`).
 . Click the *Security* tab. Confirm CVE data appears inline with severity and fixable status.
-
-NOTE: If the *Security* tab is not visible, the ACS Console Plugin may not be enabled on this Showroom build. Run `oc get consoleplugin` on the bastion to check. If no `advanced-cluster-security` (or similar) resource exists, skip this task and continue to Cleanup.
 
 This is the same vulnerability data from Exercise 1, surfaced inside the console developers already use. Combined with the scoped role from Task 3.4, a `payments` developer sees only their namespace's findings here as well.
 
