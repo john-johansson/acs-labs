@@ -15,11 +15,11 @@ RHACS uses HEC when you configure the native Splunk notifier, so policy violatio
 RHACS integrates with Splunk in two ways on this Showroom:
 
 * *RHACS Technology Add-on (TA-stackrox)*: Splunk pulls violations and related data from the RHACS API on a schedule. Events arrive under sourcetype `stackrox-violations`.
-* *Native Splunk notifier*: RHACS pushes alerts to Splunk HEC when a policy fires. Events arrive under sourcetype `stackrox-alert`.
+* *Native Splunk notifier*: RHACS pushes alerts to Splunk HEC when a policy fires. In this lab you use sourcetype `stackrox-lab-alert` to keep your events separate from the pre-existing notifier.
 
 By the end of this exercise you will:
 
-* Understand the difference between the pull-based add-on (`stackrox-violations`) and the push-based HEC notifier (`stackrox-alert`).
+* Understand the difference between the pull-based add-on (`stackrox-violations`) and the push-based HEC notifier (`stackrox-lab-alert`).
 * Configure an ACS native Splunk notifier with an HEC token and endpoint.
 * Trigger a policy violation and verify the alert appears in Splunk search.
 * See both sourcetypes side by side and know when to use pull vs push for SOC-style alerting.
@@ -79,7 +79,7 @@ oc exec deploy/splunk -n splunk -c splunk -- \
 |_(from the command above)_
 
 |Source type
-|`stackrox-alert`
+|`stackrox-lab-alert`
 
 |Skip TLS verify
 |Enabled
@@ -141,13 +141,13 @@ This confirms ACS detected the violations. Next you verify the alerts reached Sp
 +
 [source,text]
 ----
-index=* sourcetype="stackrox-alert" | spath | table _time policy.name deployment.name deployment.namespace
+index=* sourcetype="stackrox-lab-alert" | spath | table _time policy.name deployment.name deployment.namespace
 ----
 +
 This extracts the JSON fields into columns so you can see the policy name, deployment, and namespace at a glance.
 . Confirm you see events tied to *Lab - Curl in Image Splunk* and/or *Lab - APK in Image Splunk* with deployment names `splunk-trigger-curl` and `splunk-trigger-apk` in namespace `frontend`.
 +
-TIP: If the table is empty, click the triangle next to an event in a plain `index=* sourcetype="stackrox-alert"` search to expand it and inspect the raw JSON. Splunk hides fields that are not in the "selected" set by default.
+TIP: If the table is empty, click the triangle next to an event in a plain `index=* sourcetype="stackrox-lab-alert"` search to expand it and inspect the raw JSON. Splunk hides fields that are not in the "selected" set by default.
 . Compare pull vs push. Run the add-on search from Task 6.2 alongside the HEC search:
 +
 [cols="1,1,1,1",options="header"]
@@ -160,23 +160,23 @@ TIP: If the table is empty, click the triangle next to an event in a plain `inde
 |Pre-installed on this Showroom. You did not create this.
 
 |Native Splunk notifier
-|`index=* sourcetype="stackrox-alert"`
+|`index=* sourcetype="stackrox-lab-alert"`
 |Push (real-time, fires per policy violation)
 |You created this in Tasks 6.3 and 6.4.
 |===
 +
-The add-on events (`stackrox-violations`) cover historical violations pulled on a schedule by the pre-installed TA-stackrox app. The HEC events (`stackrox-alert`) are the ones you just triggered through the notifier you built. Both sourcetypes can coexist and serve different SOC workflows.
+The add-on events (`stackrox-violations`) cover historical violations pulled on a schedule by the pre-installed TA-stackrox app. The HEC events (`stackrox-lab-alert`) are the ones you just triggered through the notifier you built. Using a distinct sourcetype keeps your lab events cleanly separated from the pre-existing `Splunk SIEM (local)` notifier.
 
 == Key takeaways
 
-* Pull-based add-on (`stackrox-violations`) and push-based HEC notifier (`stackrox-alert`) can run together with different sourcetypes. Use pull for historical coverage and push for real-time SOC alerting.
+* Pull-based add-on (`stackrox-violations`) and push-based HEC notifier (`stackrox-lab-alert`) can run together with different sourcetypes. Use pull for historical coverage and push for real-time SOC alerting. Using a unique sourcetype per notifier keeps events cleanly separated in Splunk.
 * The HEC URL must use HTTPS when Splunk has SSL enabled on the collector (the default on this Showroom).
 * Clone system policies before attaching notifiers (same pattern as Exercise 5). The clone fires alerts while the system policy stays untouched.
 * A notifier only fires for policies that are enabled and have that notifier attached under *Policy behavior*.
 
 [.verification]
 ****
-After creating the trigger pods, does the Splunk search `index=* sourcetype="stackrox-alert" | spath | table _time policy.name deployment.name deployment.namespace` show events for *Lab - Curl in Image Splunk* and/or *Lab - APK in Image Splunk*?
+After creating the trigger pods, does the Splunk search `index=* sourcetype="stackrox-lab-alert" | spath | table _time policy.name deployment.name deployment.namespace` show events for *Lab - Curl in Image Splunk* and/or *Lab - APK in Image Splunk*?
 
 [.success]
 The HEC push path is working. You can correlate ACS policy breaches in Splunk in near real time. Continue to the lab summary.
