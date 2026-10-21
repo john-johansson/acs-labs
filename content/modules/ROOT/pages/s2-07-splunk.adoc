@@ -56,9 +56,6 @@ TIP: If `stackrox-violations` returns nothing, try `index=* sourcetype=stackrox*
 
 == Task 6.3: Configure the native Splunk HEC notifier
 
-This cluster may already have a notifier named `Splunk SIEM (local)`.
-If it exists and tests successfully, you may reuse it and skip create.
-
 . Retrieve the HEC token:
 +
 [source,bash]
@@ -69,7 +66,7 @@ oc exec deploy/splunk -n splunk -c splunk -- \
   | python3 -c "import sys,json; d=json.load(sys.stdin); print('\n'.join(e['content']['token'] for e in d.get('entry',[]) if e.get('name')!='http'))"
 ----
 . In RHACS, open *Platform Configuration* > *Integrations* > *Splunk*.
-. Create integration `Lab - Splunk HEC` (or edit the existing local SIEM notifier) with:
+. Create integration `Lab - Splunk HEC` with:
 +
 [cols="1,2",options="header"]
 |===
@@ -104,7 +101,7 @@ Attach the Splunk notifier to the clones, then trigger each one.
 . Click *Actions* > *Clone policy*.
 . On *Details*, set the name to `Lab - Curl in Image Splunk`.
 . Open *Policy behavior*.
-. In the *Notifiers* section, select `Lab - Splunk HEC` (or `Splunk SIEM (local)` if you reused that notifier in Task 6.3).
+. In the *Notifiers* section, select `Lab - Splunk HEC`.
 . Confirm the clone is *Enabled*, then *Save*.
 
 === Clone *Alpine Linux Package Manager (apk) in Image*
