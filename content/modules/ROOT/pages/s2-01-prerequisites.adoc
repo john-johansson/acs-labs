@@ -47,7 +47,7 @@ Open each URL in your browser. Credentials for this Showroom:
 |`RhacsSplunkDemo123!`
 |===
 
-NOTE: The OpenShift and RHACS admin password is shown on the Showroom dashboard under *User Info* (or *Credentials*). Look for the panel on the right side of the dashboard page. Keycloak admin credentials are retrieved from the cluster in Exercise 3. You do not need to log in to Keycloak now.
+NOTE: The OpenShift and RHACS admin password was sent to you in the Showroom provisioning email. Keycloak admin credentials are retrieved from the cluster in Exercise 3. You do not need to log in to Keycloak now.
 
 == Verify RHACS CLI access
 
