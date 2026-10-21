@@ -150,20 +150,22 @@ This extracts the JSON fields into columns so you can see the policy name, deplo
 TIP: If the table is empty, click the triangle next to an event in a plain `index=* sourcetype="stackrox-alert"` search to expand it and inspect the raw JSON. Splunk hides fields that are not in the "selected" set by default.
 . Compare pull vs push. Run the add-on search from Task 6.2 alongside the HEC search:
 +
-[cols="1,1,1",options="header"]
+[cols="1,1,1,1",options="header"]
 |===
-|Source |Search |Mechanism
+|Source |Search |Mechanism |Who set it up?
 
 |TA-stackrox add-on
 |`index=* sourcetype="stackrox-violations"`
 |Pull (scheduled, broader data set)
+|Pre-installed on this Showroom. You did not create this.
 
 |Native Splunk notifier
 |`index=* sourcetype="stackrox-alert"`
 |Push (real-time, fires per policy violation)
+|You created this in Tasks 6.3 and 6.4.
 |===
 +
-The add-on events cover historical violations pulled on a schedule. The HEC events are the ones you just triggered, pushed in near real time. Both sourcetypes can coexist and serve different SOC workflows.
+The add-on events (`stackrox-violations`) cover historical violations pulled on a schedule by the pre-installed TA-stackrox app. The HEC events (`stackrox-alert`) are the ones you just triggered through the notifier you built. Both sourcetypes can coexist and serve different SOC workflows.
 
 == Key takeaways
 
