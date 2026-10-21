@@ -285,15 +285,15 @@ TIP: If you see a *nonce verification failed* error, close the private window co
 
 == Task 3.8: View vulnerabilities in the OpenShift Console
 
-The ACS Console Plugin adds a *Vulnerabilities* tab to Deployment pages in the OpenShift Console.
+The ACS Console Plugin adds a *Security* tab to Deployment pages in the OpenShift Console.
 This gives developers a self-service path to check their own workload findings without switching to ACS Central.
 
 . Open the OpenShift Console URL from your Showroom dashboard.
 . Navigate to *Workloads* > *Deployments* and select the `payments` namespace.
 . Open a deployment (for example `visa-processor`).
-. Click the *Vulnerabilities* tab. Confirm CVE data appears inline with severity and fixable status.
+. Click the *Security* tab. Confirm CVE data appears inline with severity and fixable status.
 
-NOTE: If the *Vulnerabilities* tab is not visible, the ACS Console Plugin may not be enabled on this Showroom build. Run `oc get consoleplugin` on the bastion to check. If no `acscs-console-plugin` (or similar) resource exists, skip this task and continue to Cleanup.
+NOTE: If the *Security* tab is not visible, the ACS Console Plugin may not be enabled on this Showroom build. Run `oc get consoleplugin` on the bastion to check. If no `advanced-cluster-security` (or similar) resource exists, skip this task and continue to Cleanup.
 
 This is the same vulnerability data from Exercise 1, surfaced inside the console developers already use. Combined with the scoped role from Task 3.4, a `payments` developer sees only their namespace's findings here as well.
 
