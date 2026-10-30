@@ -1,52 +1,109 @@
-= Exercise 2: Compliance results in RHACS
-:navtitle: Exercise 2: Compliance results in RHACS
+= Exercise 2: Working with compliance in RHACS
+:navtitle: Exercise 2: Working with compliance in RHACS
 
 include::partial$session3-ui.adoc[]
 
-Estimated time: 10 minutes.
+Estimated time: 15 minutes.
 
-The Compliance Operator evaluates infrastructure and platform controls, but the raw `ComplianceCheckResult` CRDs are spread across the cluster.
-RHACS Sensor ingests those CRDs and presents them in a unified compliance view.
-When a control fails, RHACS acts as a "pointer to the fix," linking directly to the specific resource that needs remediation rather than just reporting a pass/fail verdict.
+In Exercise 1 you deployed scans from the CLI using a `ScanSettingBinding`.
+That approach works well for GitOps pipelines, but RHACS also provides a full UI workflow for creating scan schedules, selecting profiles, and managing compliance operations.
+In this exercise you create a scan schedule through the RHACS console, triage the compliance results, and work with the remediation guidance to identify what needs to change before the audit.
 
-This exercise explores the RHACS *Compliance > OpenShift Coverage* page to review scan results, drill into failing checks, and understand the distinction between platform compliance (Compliance Operator) and workload runtime security (RHACS policy engine).
-
-*Persona: [Information Security]*
+Platform Operations has deployed the scans.
+Switching to the *Information Security* perspective, your job is now to verify whether the cluster meets CIS requirements and identify the gaps that need remediation before the auditor arrives.
 
 By the end of this exercise you will:
 
-* Navigate the RHACS compliance Coverage page and select a CIS profile.
-* Review the pass/fail/manual breakdown for individual checks.
-* Drill into a failing check to see which nodes or platform resources failed.
-* Understand the boundary between Compliance Operator checks and RHACS policy engine checks.
+* Create a compliance scan schedule through the RHACS UI.
+* Configure scan settings: profile selection, cluster scope, and schedule frequency.
+* Navigate the Coverage page and compare profile coverage.
+* Find a specific failing check, read its remediation guidance, and understand what needs to change.
 
-== Task 2.1: Open the compliance Coverage page
+== Task 2.1: Create a scan schedule via the RHACS UI
 
-. In the RHACS Console, navigate to *Compliance > OpenShift Coverage*.
-. If a scan schedule filter is shown, select *All scan schedules* (or the schedule matching `cis-weekly-scan`).
+Exercise 1 used `oc apply` to create a `ScanSettingBinding` directly.
+RHACS provides the same capability through its console, which is how most Information Security teams manage compliance day-to-day.
+
+. In the RHACS Console, navigate to *Compliance > OpenShift Schedules*.
++
+You should see the `acs-catch-all` schedule (or any schedule the Compliance Operator created automatically).
+
+. Click *Create scan schedule*.
+. Configure the schedule:
+.. *Name*: `cis-audit-schedule`
+.. *Description*: `Weekly CIS scan for Q4 audit evidence`
+.. *Schedule*: Select *Weekly* and pick a day (e.g., Monday).
+.. *Profiles*: Select `ocp4-cis` and `ocp4-cis-node` from the profile list.
+.. *Clusters*: Select `production` (or all clusters).
+. Click *Create* to save the schedule.
++
+RHACS creates the underlying `ScanSettingBinding` on the cluster automatically.
+This is the equivalent of the `oc apply` step in Exercise 1, but managed entirely through the UI.
+
+. Verify the new schedule appears in the list alongside any existing schedules.
+
+NOTE: Both the CLI-created `cis-weekly-scan` and the UI-created `cis-audit-schedule` produce `ComplianceCheckResult` CRDs on the cluster. RHACS aggregates results from all schedules on the Coverage page.
+
+== Task 2.2: Explore profile coverage and scan settings
+
+Before reviewing results, explore what each profile covers.
+
+. On the *Compliance > OpenShift Schedules* page, click your `cis-audit-schedule` to open the detail view.
+. Review the *Configuration* tab:
+** *Profiles*: Which CIS benchmarks are included.
+** *Clusters*: Which clusters the scan targets.
+** *Schedule*: The recurrence pattern.
++
+These settings can be edited at any time by clicking the *Edit* button (pencil icon).
+
+. Navigate to *Compliance > OpenShift Coverage*.
+. Use the *Profile* dropdown to switch between `ocp4-cis` and `ocp4-cis-node`:
+** `ocp4-cis`: Platform-level controls (API server flags, etcd encryption, RBAC settings). These are cluster-wide checks.
+** `ocp4-cis-node`: Node-level controls (kernel parameters, file permissions, kubelet configuration). These run on every node.
+. Compare the check counts and compliance percentages between the two profiles.
++
+Most clusters show a lower compliance percentage for `ocp4-cis-node` because it covers a larger number of OS-level hardening controls.
 
 ifdef::env-site[]
 image::s3/s3-02-compliance-coverage.png[Compliance Coverage page showing CIS-OCP profile selection]
 endif::[]
 
-== Task 2.2: Select a profile and review checks
+== Task 2.3: Find and triage a specific failing check
 
-. Use the benchmark toggle group to select *ocp4-cis* (platform checks) or *ocp4-cis-node* (node-level checks).
-. Review the *Checks* view. Each row shows:
-** *Check*: the name of the compliance control.
-** *Controls*: the CIS benchmark reference (e.g., 1.2.1).
-** *Fail*, *Pass*, *Manual*, *Other*: status counts across clusters.
-** *Compliance*: the overall compliance percentage.
-. Note the compliance percentage for the selected profile. Most default clusters show below 100%.
+Rather than browsing the full list, work through a targeted triage workflow.
 
-== Task 2.3: Drill into a failing check
-
-. Sort or filter the checks to find one with a *Fail* count greater than zero.
+. On the Coverage page, ensure the *Checks* view is selected.
+. Use the *Status* filter to show only *Fail* checks. This narrows the view to controls that need attention before the audit.
+. Sort by *Fail* count (descending) to prioritize checks that affect the most resources.
+. Find the CIS check for *API server TLS certificates* (look for a check name containing `api-server` and `tls` or `cert`, or browse the 1.2.x control references).
++
+If that specific check is not failing, select any check with a *Fail* count greater than zero.
 . Click the check name to open the detail view.
-. Review which cluster nodes or platform resources failed the control.
-. Read the remediation context provided for the check. This is the "pointer to the fix" that tells an administrator what to change.
 
-== Task 2.4: Understand platform vs workload compliance
+== Task 2.4: Work with remediation guidance
+
+This is where RHACS goes beyond a simple pass/fail report.
+Each failing check includes remediation guidance that tells an administrator exactly what to change.
+
+. In the detail panel, review:
+** *Description*: What the control evaluates and why it matters.
+** *Rationale*: The security reasoning behind the control.
+** *Failing entities*: Which cluster nodes or platform resources failed.
+** *Remediation*: Specific instructions for bringing the resource into compliance.
++
+This is the "pointer to the fix" concept: RHACS does not just report failures, it links directly to the resource that needs remediation and explains what to change.
+
+. Note the remediation instruction. In a real audit preparation workflow, you would:
+.. File a ticket for Platform Operations with the remediation steps.
+.. Re-scan after the fix to confirm the check passes.
+.. Generate the evidence report (Exercise 3) showing the improved posture.
+
+. Navigate back and click a second failing check from a different profile (e.g., if you first reviewed a platform control from `ocp4-cis`, now pick a node control from `ocp4-cis-node`).
+. Compare the remediation guidance: platform checks typically reference API server or etcd configuration, while node checks reference file permissions or kubelet flags.
+
+NOTE: Some checks show a *Manual* status. These are controls that require human judgment (e.g., reviewing organizational policies). They cannot be evaluated automatically and are flagged for manual review during audits.
+
+== Task 2.5: Understand platform vs workload compliance
 
 The Coverage page shows *infrastructure and platform compliance* evaluated by the Compliance Operator:
 
@@ -61,17 +118,20 @@ NOTE: The Coverage page filters by scan schedule, profile, cluster, and complian
 
 == Key takeaways
 
-* *Compliance > OpenShift Coverage* is the unified view for Compliance Operator scan results in RHACS.
-* Drilling into a failing check shows exactly which nodes or platform resources need attention, along with remediation guidance.
+* RHACS provides both UI and CLI workflows for managing compliance scans. The UI approach (*Compliance > OpenShift Schedules*) is how most teams manage compliance day-to-day.
+* Creating a scan schedule in the RHACS UI generates the same `ScanSettingBinding` CRDs as the CLI approach in Exercise 1.
+* The Coverage page is more than a dashboard. Drilling into a failing check gives you the description, rationale, affected resources, and specific remediation instructions.
+* A targeted triage workflow (filter by Fail, sort by count, drill into specifics) is more efficient than browsing the full check list.
+* *Manual* checks require human judgment and cannot be automated. They are flagged for review during audits.
 * Infrastructure compliance (Compliance Operator) and workload runtime security (RHACS policy engine) are complementary. Together they cover the full security posture from OS settings to container behaviour.
 
 [.verification]
 ****
-Can you open the Coverage page, select the `ocp4-cis` or `ocp4-cis-node` profile, and drill into at least one failing check to see which resources failed and what the remediation guidance says?
+Did you create a scan schedule via the RHACS UI, find a specific failing check, and read its remediation guidance to understand what needs to change?
 
 [.success]
-You can navigate compliance scan results and distinguish platform checks from workload security policies. Continue to Exercise 3.
+You can manage compliance scans through the RHACS UI and triage failing checks with remediation guidance. Continue to Exercise 3.
 
 [.fail]
-Confirm the scan from Exercise 1 reached `DONE` (`oc get compliancesuite -n openshift-compliance`). If Coverage is empty, wait a minute for RHACS Sensor to ingest the results, then refresh the page.
+Navigate to *Compliance > OpenShift Schedules* to create a schedule. If Coverage is empty, wait a minute for RHACS Sensor to ingest the results, then refresh the page. Ensure scans from Exercise 1 reached `DONE` (`oc get compliancesuite -n openshift-compliance`).
 ****

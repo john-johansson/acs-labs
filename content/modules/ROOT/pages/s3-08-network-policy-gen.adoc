@@ -12,7 +12,8 @@ The generated YAML can be committed to a Git repository and applied through a Gi
 
 In this exercise you use the RHACS Network Policy Generator to simulate, review, and apply a zero-trust `NetworkPolicy` for the `postgres` deployment in the `backend` namespace.
 
-*Persona: [Platform Operations]*
+The anomalous cross-namespace flow is confirmed.
+As *Platform Operations*, you generate and apply zero-trust network policies to block unauthorized paths while preserving the legitimate application flows.
 
 By the end of this exercise you will:
 

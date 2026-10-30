@@ -3,18 +3,33 @@
 
 include::partial$session3-ui.adoc[]
 
-In this session you explored RHACS compliance integration and network observability:
+In this session you worked through the full compliance and network security lifecycle in RHACS, following a scenario where a regulatory audit requires both compliance evidence and proof that network segmentation is enforced.
 
-* *Compliance scanning*: deployed a declarative `ScanSettingBinding` binding CIS profiles to cluster nodes, producing `ComplianceCheckResult` CRDs as continuous audit evidence (Exercise 1).
-* *Compliance results in RHACS*: navigated the Coverage page to review pass/fail controls, drilled into failing checks for remediation guidance, and distinguished infrastructure compliance from workload runtime security (Exercise 2).
-* *Audit evidence*: generated an on-demand compliance report for external auditors directly from the scan schedule (Exercise 3).
-* *Listening endpoints*: audited container processes at the binary path and PID level using RHACS Collector kernel-level data (Exercise 4).
-* *Network topology and baselines*: visualized the multi-tier application flow in the Network Graph and enabled baseline violation alerting (Exercise 5).
-* *Anomalous flow detection*: observed unapproved cross-namespace traffic from `operations/jump-host` to `payments/visa-processor`, representing lateral movement that bypasses the API gateway (Exercise 6).
-* *Network policy generation*: auto-generated standard Kubernetes `NetworkPolicy` manifests from observed baselines and applied them via CLI (Exercise 7).
-* *CLI verification*: confirmed kernel-level packet drops with dual TCP probes from unauthorized (`operations/jump-host`) and authorized (`backend/api-server`) sources (Exercise 8).
+== Compliance and Audit Evidence (Exercises 1-3)
 
-These capabilities form a continuous security loop: compliance scanning produces evidence, the Network Graph provides visibility, baselines detect anomalies, and auto-generated policies enforce zero-trust microsegmentation at the kernel level.
+* *Compliance scanning*: Deployed a declarative `ScanSettingBinding` binding CIS profiles to cluster nodes, producing `ComplianceCheckResult` CRDs as continuous audit evidence (Exercise 1).
+* *Working with compliance in RHACS*: Created a scan schedule through the RHACS UI, triaged failing checks by filtering and sorting, drilled into specific controls to read remediation guidance, and distinguished infrastructure compliance from workload runtime security (Exercise 2).
+* *Audit evidence and operations*: Edited scan schedule settings, generated an on-demand compliance report, cross-referenced failing checks between the CSV and the Coverage page, and reviewed how delivery destinations automate evidence distribution in production (Exercise 3).
+
+== Network Graph and Traffic Observability (Exercises 4-8)
+
+* *Listening endpoints*: Audited container processes at the binary path and PID level using RHACS Collector kernel-level data, then correlated the results with deployment manifests on the bastion to verify no unexpected processes are listening (Exercise 4).
+* *Network topology and baselines*: Visualized the multi-tier application flow in the Network Graph and enabled baseline violation alerting so that new, unexpected traffic triggers violations (Exercise 5).
+* *Anomalous flow detection*: Observed unapproved cross-namespace traffic from `operations/jump-host` to `payments/visa-processor` and `medical/patient-db`, then generated a manual probe to `backend/postgres` and watched it appear in the Network Graph in real time (Exercise 6).
+* *Network policy generation*: Auto-generated standard Kubernetes `NetworkPolicy` manifests from observed baselines and applied them via CLI (Exercise 7).
+* *CLI verification*: Confirmed kernel-level enforcement with dual TCP probes: the unauthorized probe from `operations/jump-host` timed out (packet dropped by CNI), while the authorized probe from `backend/api-server` connected (TCP handshake completed, connection reset by postgres) (Exercise 8).
+
+== How these capabilities connect
+
+These exercises form a continuous security loop:
+
+. *Compliance scanning* produces evidence that the cluster meets CIS benchmarks.
+. *Listening endpoints* verify that only authorized processes are on the network.
+. *Network baselines* detect when traffic deviates from the expected pattern.
+. *Auto-generated policies* enforce zero-trust microsegmentation at the kernel level.
+. *CLI verification* proves enforcement at the data plane, not just the management plane.
+
+In production, this loop runs continuously: scans catch configuration drift, baselines flag new connections, and policies prevent lateral movement, all without manual intervention.
 
 == Reset the environment
 

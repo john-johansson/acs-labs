@@ -6,9 +6,11 @@ set -euo pipefail
 
 echo "=== Session 3 cleanup ==="
 
-# Compliance resources (only the lab-created binding)
+# Compliance resources (lab-created bindings from Exercise 1 and Exercise 2)
 echo "Removing ScanSettingBinding cis-weekly-scan..."
 oc delete scansettingbinding cis-weekly-scan -n openshift-compliance --ignore-not-found
+echo "Removing ScanSettingBinding cis-audit-schedule..."
+oc delete scansettingbinding cis-audit-schedule -n openshift-compliance --ignore-not-found
 
 # Network policies generated during the lab
 echo "Removing generated NetworkPolicies in backend..."

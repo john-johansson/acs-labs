@@ -9,7 +9,8 @@ The RHACS Network Graph is three tools in one: a live traffic flow map, a firewa
 
 In this exercise you visualize the backend and payments application topology and enable baseline violation alerting so that any new, unexpected traffic will be flagged.
 
-*Persona: [Platform Operations]*
+Process-level visibility is confirmed.
+As *Platform Operations*, you now map the full network topology and lock baselines so that any new, unexpected traffic will be flagged automatically.
 
 By the end of this exercise you will:
 

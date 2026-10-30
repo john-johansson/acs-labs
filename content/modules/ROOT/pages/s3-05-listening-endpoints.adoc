@@ -9,15 +9,15 @@ Traditional firewall tools see IP addresses and port numbers.
 RHACS Collector operates at the Linux kernel layer (via eBPF or kernel modules) and goes deeper: it maps every open network socket to the exact container binary path and process ID that owns it.
 If a malicious process opens a port that matches a legitimate service, RHACS flags it because the binary path does not match the baseline.
 
-In this exercise you audit the listening endpoints for the `backend` namespace of the multi-tier medical application.
-
-*Persona: [Site Reliability Engineering]*
+Compliance posture is established, but the audit also requires proof that only authorized processes are listening on the network.
+As the *SRE* team, you now audit the process-level network footprint and verify it matches what the deployment manifests declare.
 
 By the end of this exercise you will:
 
 * Navigate the Listening Endpoints page in RHACS.
 * Filter by namespace to isolate the backend application stack.
 * Inspect process-level details (exec file path, PID, port, protocol) for each deployment.
+* Correlate what RHACS sees at the kernel level with what the deployment manifests declare.
 
 == Task 4.1: Open the Listening Endpoints page
 
@@ -66,26 +66,54 @@ The process tree confirms that port 9001 is owned by the netflow entrypoint bina
 +
 Port 5432 is the standard PostgreSQL port. The netflow binary simulates a database listener on this port.
 
-== Task 4.4: Inspect varnish
+== Task 4.4: Correlate with deployment manifests
 
-. Expand the `varnish` deployment row.
-. Confirm it listens on port `8080/TCP`.
+RHACS shows what is *actually running* at the kernel level. Now compare that with what the deployment *declares* it should run.
 
-TIP: Clicking a deployment name on this page takes you to the *Risk* view, where you can see risk indicators, policy violations, and additional deployment details.
+. On the bastion, check the container args for `api-server`:
++
+[source,bash]
+----
+oc get deploy api-server -n backend -o jsonpath='{.spec.template.spec.containers[0].args}' | tr ',' '\n'
+----
++
+Look for the `-listen` argument that declares the port. Confirm it matches the port RHACS reported in Task 4.2.
+
+. Check the container args for `postgres`:
++
+[source,bash]
+----
+oc get deploy postgres -n backend -o jsonpath='{.spec.template.spec.containers[0].args}' | tr ',' '\n'
+----
++
+Again, confirm the `-listen` port matches what RHACS sees.
+
+. Now check `varnish`:
++
+[source,bash]
+----
+oc get deploy varnish -n backend -o jsonpath='{.spec.template.spec.containers[0].args}' | tr ',' '\n'
+----
+
+This correlation matters in production: if a container listens on a port that is *not* declared in its deployment spec or container args, that is a red flag worth investigating.
+RHACS Collector sees the actual kernel-level state regardless of what the manifest says.
+
+TIP: Clicking a deployment name on the Listening Endpoints page takes you to the *Risk* view, where you can see risk indicators, policy violations, and additional deployment details.
 
 == Key takeaways
 
 * *Network > Listening Endpoints* provides process-level visibility into every open socket across your secured clusters.
 * Each entry shows: Exec file path, PID, Port, Protocol, Pod ID, and Container name.
 * This data comes from RHACS Collector, which operates at the kernel level. It captures what is actually running, not what the Deployment manifest declares.
+* Correlating RHACS kernel data with deployment manifests is a practical SRE verification step: mismatches indicate configuration drift or unauthorized processes.
 
 [.verification]
 ****
-Can you expand the `api-server` and `postgres` rows on the Listening Endpoints page and confirm the exec file path, port, and protocol for each?
+Can you expand the `api-server` and `postgres` rows on the Listening Endpoints page, confirm the exec file path and port for each, and verify they match the `-listen` args in the deployment manifests?
 
 [.success]
-You can audit listening processes at the binary and PID level. Continue to Exercise 5.
+You can audit listening processes at the binary level and correlate them with declared configuration. Continue to Exercise 5.
 
 [.fail]
-Navigate to *Network > Listening Endpoints*, type `backend` in the filter bar, and expand each deployment row to view the process details.
+Navigate to *Network > Listening Endpoints*, type `backend` in the filter bar, and expand each deployment row to view the process details. Then run the `oc get deploy` commands on the bastion to compare.
 ****

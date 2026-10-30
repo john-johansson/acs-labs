@@ -1,68 +1,129 @@
-= Exercise 3: Audit evidence generation
-:navtitle: Exercise 3: Audit evidence generation
+= Exercise 3: Audit evidence and compliance operations
+:navtitle: Exercise 3: Audit evidence and compliance operations
 
 include::partial$session3-ui.adoc[]
 
-Estimated time: 10 minutes.
+Estimated time: 15 minutes.
 
 Regulatory audits traditionally require teams to spend days aggregating spreadsheet data, zipping CSV files, and distributing them by email.
-RHACS replaces that manual workflow with on-demand and scheduled compliance report generation tied directly to scan results.
+RHACS replaces that manual workflow with scheduled compliance report generation, configurable delivery destinations, and on-demand evidence downloads tied directly to scan results.
 
-In this exercise you generate a downloadable compliance report from the scan schedule created in Exercise 1.
-
-*Persona: [Information Security]*
+With compliance gaps identified in Exercise 2, the *Information Security* team's next step is producing the evidence package that the auditor will receive: a time-stamped, machine-generated record of every compliance control evaluated against the cluster.
 
 By the end of this exercise you will:
 
-* Navigate to the compliance scan schedules page in RHACS.
+* Manage scan schedule settings (frequency, profiles, clusters).
 * Generate an on-demand compliance report.
-* Download the report and review its contents.
+* Download and review the report contents as audit evidence.
+* Understand how delivery destinations automate evidence distribution in production.
 
-== Task 3.1: Open the scan schedules page
+== Task 3.1: Open the scan schedule detail page
 
 . In the RHACS Console, navigate to *Compliance > OpenShift Schedules*.
-. Locate the scan schedule associated with `cis-weekly-scan`.
+. Click the `cis-audit-schedule` (created in Exercise 2) to open the detail view.
 +
-If the scan was created via `oc apply` in Exercise 1 (rather than through the RHACS UI), the schedule appears under the Compliance Operator's default settings. Select it to open the configuration details.
+If you did not create it in Exercise 2, select the `acs-catch-all` schedule or the `cis-weekly-scan` schedule from Exercise 1.
 
-== Task 3.2: Generate an on-demand report
+ifdef::env-site[]
+image::s3/s3-03-compliance-schedules.png[Compliance scan schedule list]
+endif::[]
 
-. From the *Actions* drop-down (upper right of the schedule detail page), select *Generate download*.
+== Task 3.2: Review and edit scan schedule settings
+
+Compliance requirements change over time. Explore how to modify a scan schedule.
+
+. On the schedule detail page, click the *Edit* button (pencil icon) or use *Actions > Edit scan schedule*.
+. Review the configurable settings:
+** *Name and description*: Rename for clarity as compliance programs evolve.
+** *Schedule frequency*: Change from weekly to daily, monthly, or a custom cron expression.
+** *Profiles*: Add or remove compliance profiles. For example, adding `ocp4-cis-node` to a schedule that only scanned `ocp4-cis`.
+** *Clusters*: Expand scope as new clusters join the fleet.
+. Make a small change (e.g., update the description to `Weekly CIS scan for Q4 audit`) and save.
++
+Changes take effect on the next scheduled scan. Running scans are not interrupted.
+
+. Navigate back to *Compliance > OpenShift Schedules* and verify the updated description appears.
+
+== Task 3.3: Generate an on-demand compliance report
+
+On-demand reports let you pull evidence at any time, outside the regular schedule.
+This is useful for ad-hoc audit requests or pre-audit preparation.
+
+. From the scan schedule detail page, open the *Actions* drop-down (upper right) and select *Generate download*.
 +
 You receive a confirmation that report generation has started.
+
 . Click the *All report jobs* tab.
-. Wait for the job status to change. The status progresses through:
-** *Waiting*: the job is queued.
-** *Preparing*: the system is processing.
-** *Report ready for download*: the report is complete.
+. Watch the job status progress through:
+** *Waiting*: The job is queued.
+** *Preparing*: The system is collecting and formatting compliance data.
+** *Report ready for download*: The report is complete.
 . Click *Ready for download* to save the file.
 
-NOTE: On this Showroom, use on-demand download (no SMTP is configured). In production, you would configure email delivery destinations under the scan schedule so that auditors receive reports automatically. Compliance reporting requires Compliance Operator version 1.6.0 or later.
+NOTE: Report generation typically completes in under a minute. If the job stays in *Preparing* for more than five minutes, verify that the underlying `ComplianceScan` resources have reached `DONE` (`oc get compliancescan -n openshift-compliance`).
 
-== Task 3.3: Review the report
+== Task 3.4: Review the report as audit evidence
 
-. Extract the downloaded file.
+. Extract the downloaded file (it is a ZIP archive).
 . Open the CSV report and review the contents. Key columns include:
-** Cluster name
-** Profile name and type
-** Check name and control reference
-** Compliance status (Pass, Fail, Manual, Not Applicable, Error)
+** *Cluster*: Which cluster was scanned.
+** *Profile*: Which compliance profile (e.g., `ocp4-cis`).
+** *Check name*: The specific control evaluated.
+** *Control reference*: The CIS benchmark section (e.g., 1.2.1).
+** *Status*: Pass, Fail, Manual, Not Applicable, Error, or Inconsistent.
+** *Rationale and remediation*: Why the control matters and how to fix failures.
 +
 This is the evidence an external auditor needs: a time-stamped, machine-generated record of every compliance control evaluated against the cluster.
 
+. Find the failing check you drilled into in Exercise 2. Confirm the same status and remediation text appear in the CSV. This demonstrates that the downloadable report contains the same detail you reviewed interactively.
+
+. Count the number of *Fail* entries and compare with the percentage shown on the Coverage page in Exercise 2. The numbers should match.
+
+== Task 3.5: Understand delivery destinations and automation
+
+In production, compliance reports are delivered automatically to auditors and security teams rather than downloaded manually.
+
+. On the scan schedule detail page, look for the delivery destination configuration.
+. Review how it works:
+** *Email delivery*: RHACS sends reports to a distribution list on the configured schedule. This requires an SMTP integration under *Platform Configuration > Integrations > Notifiers*.
+** *Download only*: Reports are generated but must be downloaded manually from the *All report jobs* tab.
++
+This Showroom does not have SMTP configured, so you used the on-demand download path.
+In a production environment, you would:
+
+.. Configure an SMTP notifier under *Platform Configuration > Integrations > Email*.
+.. Add the auditor distribution list (e.g., `compliance-team@example.com`) as a delivery destination on the scan schedule.
+.. Set the delivery cadence to match your audit requirements (weekly, monthly, quarterly).
+
+This eliminates the manual step entirely: auditors receive evidence automatically, and the compliance team only intervenes when failures need remediation.
+
+== Task 3.6: Operationalizing compliance (reflection)
+
+With scan schedules, delivery destinations, and on-demand reporting in place, consider how this fits into an ongoing compliance program:
+
+* *Continuous visibility*: Daily or weekly scans catch configuration drift before auditors do.
+* *Automated evidence delivery*: Email delivery eliminates the manual collection process entirely.
+* *Trend tracking*: Comparing reports over time shows whether the compliance posture is improving or degrading.
+* *Multi-cluster scale*: The same scan schedule can target multiple clusters, producing a single consolidated report.
+* *Separation of duties*: Platform Operations creates scan schedules and remediates failures. Information Security receives reports and reviews evidence. Neither team needs to access the other's tools.
+
+NOTE: Compliance reporting requires Compliance Operator version 1.6.0 or later. This environment runs version 1.10.0.
+
 == Key takeaways
 
-* Compliance reports are generated from *Compliance > OpenShift Schedules*, not from the vulnerability reporting path.
-* On-demand download works without SMTP. Adding an email delivery destination and a schedule automates recurring evidence delivery.
-* The CSV contains check-level detail per cluster and profile, suitable for regulatory evidence packages.
+* Scan schedules in RHACS manage the full compliance lifecycle: when to scan, what to scan, and who receives the results.
+* On-demand downloads handle ad-hoc audit requests. Adding email delivery destinations automates recurring evidence distribution.
+* Schedule settings (frequency, profiles, clusters) can be modified at any time without disrupting running scans.
+* The CSV report contains check-level detail per cluster and profile. Cross-referencing it with the Coverage page confirms that the downloadable evidence matches the interactive view.
+* Operationalizing compliance means continuous scanning, automated delivery, and trend tracking, not periodic fire drills.
 
 [.verification]
 ****
-Did you generate and download a compliance report from the scan schedule, and does the CSV contain check-level compliance status for the CIS profile?
+Did you edit a scan schedule setting, generate an on-demand report, and find the same failing check from Exercise 2 in the downloaded CSV?
 
 [.success]
-You can produce compliance audit evidence on demand. Continue to Exercise 4.
+You can manage the compliance operations lifecycle in RHACS. Continue to Exercise 4.
 
 [.fail]
-Return to *Compliance > OpenShift Schedules*, select the scan schedule, open *Actions > Generate download*, and wait for the job to reach *Ready for download* under the *All report jobs* tab.
+Return to *Compliance > OpenShift Schedules*, select a scan schedule, and use *Actions > Generate download*. Wait for the job to reach *Ready for download* under the *All report jobs* tab.
 ****

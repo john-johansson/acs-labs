@@ -8,34 +8,33 @@ Estimated time: 10 minutes.
 When an unapproved connection appears on the network, RHACS draws a red anomalous flow indicator across the Network Graph in real time.
 This visual alert bridges directly to the Violations view, where SRE teams can investigate the source, destination, protocol, and timing of the probe.
 
-In this exercise you observe an anomalous cross-namespace flow. The `jump-host` deployment in the `operations` namespace is already configured to connect to `visa-processor-service` in `payments` and `patient-db-service` in `medical`, simulating unapproved lateral movement.
-
-*Persona: [Site Reliability Engineering]*
+Baselines are locked.
+A cross-namespace flow has appeared outside the baseline, representing potential lateral movement from an operations host into the payment tier.
+As *SRE*, you investigate the flow and confirm it is unauthorized.
 
 By the end of this exercise you will:
 
-* Observe the cross-namespace flow from `operations/jump-host` to `payments/visa-processor` in the Network Graph.
-* Identify the anomalous flow indicator (red dotted line).
+* Verify the cross-namespace traffic source on the bastion.
+* Observe the anomalous flow from `operations/jump-host` to `payments/visa-processor` in the Network Graph.
+* Generate an additional anomalous probe and watch it appear in real time.
 * Optionally verify the baseline violation in the Violations view.
 
-== Task 6.1: Observe the cross-namespace flows
+== Task 6.1: Verify the cross-namespace traffic source
 
-The `jump-host` deployment in `operations` is already generating cross-namespace traffic to `payments/visa-processor` on port 8080 and `medical/patient-db` on port 8080. These flows are unapproved connections that bypass the legitimate API tier.
-
-Verify the jump-host configuration on the bastion:
+The `jump-host` deployment in `operations` is already configured to connect to services in other namespaces. Verify this on the bastion:
 
 [source,bash]
 ----
-oc get deploy jump-host -n operations -o jsonpath='{.spec.template.spec.containers[0].args}'
+oc get deploy jump-host -n operations -o jsonpath='{.spec.template.spec.containers[0].args}' | tr ',' '\n'
 ----
 
-The output shows `-connect` targets that include services in other namespaces: this is the lateral movement pattern.
+The output shows `-connect` targets that include services in the `payments` and `medical` namespaces.
+This is the lateral movement pattern: an operations host bypasses the legitimate API gateway tier and connects directly to backend services.
 
 == Task 6.2: Observe the anomalous flow in the Network Graph
 
 . In the RHACS Console, navigate to *Network Graph*.
-. Select your cluster and add the `payments` namespace.
-. Also add the `operations` namespace to the namespace filter.
+. Select your cluster and add the following namespaces to the filter: `backend`, `payments`, `operations`.
 +
 If the graph does not refresh automatically, look for an *Updates available* notification and click it.
 . Observe the connection from `operations/jump-host` to `payments/visa-processor`. If baselines flagged it as unknown, it appears as a red dotted line indicating an anomalous flow:
@@ -46,13 +45,34 @@ If the graph does not refresh automatically, look for an *Updates available* not
 +
 This connection crosses namespace boundaries without going through the legitimate `payments/gateway` entry point.
 
+. Also add the `medical` namespace to the filter and look for the flow from `jump-host` to `medical/patient-db`. This is a second lateral movement path.
+
 ifdef::env-site[]
 image::s3/s3-06-cross-namespace-flows.png[Cross-namespace anomalous flow from operations to payments]
 endif::[]
 
-== Task 6.3: Check for a baseline violation (optional)
+== Task 6.3: Generate an additional anomalous probe
 
-If you toggled *Alert on baseline violations* in Exercise 5 for deployments in `payments`:
+The pre-existing flows from `jump-host` demonstrate continuous lateral movement.
+Now generate a one-time probe to see a new anomalous flow appear in real time.
+
+. On the bastion, send a TCP probe from `jump-host` to the `postgres` service in `backend`:
++
+[source,bash]
+----
+oc exec -n operations deploy/jump-host -- bash -c 'timeout 3 bash -c "echo >/dev/tcp/postgres-service.backend.svc.cluster.local/5432" && echo "OPEN" || echo "TIMED OUT / BLOCKED"'
+----
++
+The probe may succeed or be blocked depending on whether a `NetworkPolicy` already exists (you will create one in Exercise 7).
+
+. Return to the Network Graph in the RHACS console. If needed, click the *Updates available* notification.
+. Look for a new flow line from `operations/jump-host` to `backend/postgres`. Since this target was not in the `jump-host` baseline, it should appear as an anomalous connection.
+
+This is the "I caused something to happen" moment: the Network Graph reflects your probe in near-real time because RHACS Collector captures flows at the kernel level and reports them to Central.
+
+== Task 6.4: Check for a baseline violation (optional)
+
+If you toggled *Alert on baseline violations* in Exercise 5 for deployments in `backend` or `payments`:
 
 . Navigate to *Violations* in the RHACS Console.
 . Look for a violation related to *Unauthorized Network Flow* or *Network Baseline*.
@@ -64,16 +84,16 @@ NOTE: If the violation does not appear immediately, wait 30 seconds and refresh.
 
 * Cross-namespace connections that bypass the expected API tier produce visible anomalous flow indicators in the Network Graph.
 * With *Alert on baseline violations* enabled (Exercise 5), anomalous flows also generate violation events that feed into alerting workflows.
-* In a real incident, clicking the flow line leads to the Risk timeline, showing which user, pod, or process initiated the connection.
-* The `operations/jump-host` pattern (lateral movement from an operations tool to payment services) is a common real-world attack vector.
+* The Network Graph updates in near-real time. You can generate a probe on the bastion and watch the flow appear in the console within seconds.
+* The `operations/jump-host` pattern (lateral movement from an operations tool to payment and medical services) is a common real-world attack vector.
 
 [.verification]
 ****
-Did you see a cross-namespace flow from `operations/jump-host` to `payments/visa-processor` in the Network Graph?
+Did you see a cross-namespace flow from `operations/jump-host` to `payments/visa-processor` in the Network Graph, and did your manual probe to `backend/postgres` appear as a new flow?
 
 [.success]
 Anomalous east-west traffic is visible in real time. Continue to Exercise 7.
 
 [.fail]
-Navigate to *Network Graph*, select both `operations` and `payments` namespaces, and look for the flow line between `jump-host` and `visa-processor`.
+Navigate to *Network Graph*, select `operations`, `payments`, and `backend` namespaces, and look for flow lines from `jump-host` to services in other namespaces.
 ****
