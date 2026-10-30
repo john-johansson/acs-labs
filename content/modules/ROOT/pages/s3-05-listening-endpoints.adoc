@@ -9,51 +9,49 @@ Traditional firewall tools see IP addresses and port numbers.
 RHACS Collector operates at the Linux kernel layer (via eBPF or kernel modules) and goes deeper: it maps every open network socket to the exact container binary path and process ID that owns it.
 If a malicious process opens a port that matches a legitimate service, RHACS flags it because the binary path does not match the baseline.
 
-In this exercise you audit the listening endpoints for the `qual-payments-ns` multi-tier application.
+In this exercise you audit the listening endpoints for the `backend` namespace of the multi-tier medical application.
 
 *Persona: [Site Reliability Engineering]*
 
 By the end of this exercise you will:
 
 * Navigate the Listening Endpoints page in RHACS.
-* Filter by namespace to isolate the payment application stack.
+* Filter by namespace to isolate the backend application stack.
 * Inspect process-level details (exec file path, PID, port, protocol) for each deployment.
 
 == Task 4.1: Open the Listening Endpoints page
 
 . In the RHACS Console, navigate to *Network > Listening Endpoints*.
-. In the filter bar, type `qual-payments-ns` and apply the namespace filter.
+. In the filter bar, type `backend` and apply the namespace filter.
 
-The filtered list shows only deployments in the `qual-payments-ns` namespace.
+The filtered list shows only deployments in the `backend` namespace.
 
-== Task 4.2: Inspect payment-api
+ifdef::env-site[]
+image::s3/s3-04-listening-endpoints.png[Listening Endpoints page filtered by backend namespace]
+endif::[]
 
-. Expand the `payment-api` deployment row.
-. Verify the following process details:
+== Task 4.2: Inspect api-server
+
+. Expand the `api-server` deployment row.
+. Review the process details:
 +
 [cols="1,2",options="header"]
 |===
 |Field |Expected value
 
 |Port
-|`8080/TCP`
-
-|Protocol
-|`HTTP`
+|`9001/TCP`
 
 |Exec file path
-|`/usr/bin/java`
-
-|PID
-|`17265`
+|`/bin/entrypoint`
 |===
 +
-The process tree confirms that port 8080 is owned by the Java/Quarkus API gateway binary, not by an unknown process.
+The process tree confirms that port 9001 is owned by the netflow entrypoint binary, which listens for and forwards traffic as part of the demo application.
 
-== Task 4.3: Inspect payment-db
+== Task 4.3: Inspect postgres
 
-. Expand the `payment-db` deployment row.
-. Verify the following process details:
+. Expand the `postgres` deployment row.
+. Review the process details:
 +
 [cols="1,2",options="header"]
 |===
@@ -62,14 +60,16 @@ The process tree confirms that port 8080 is owned by the Java/Quarkus API gatewa
 |Port
 |`5432/TCP`
 
-|Protocol
-|`PostgreSQL`
-
 |Exec file path
-|`/usr/bin/postgres`
+|`/bin/entrypoint`
 |===
 +
-The PostgreSQL binary is the only process listening on port 5432 in this container.
+Port 5432 is the standard PostgreSQL port. The netflow binary simulates a database listener on this port.
+
+== Task 4.4: Inspect varnish
+
+. Expand the `varnish` deployment row.
+. Confirm it listens on port `8080/TCP`.
 
 TIP: Clicking a deployment name on this page takes you to the *Risk* view, where you can see risk indicators, policy violations, and additional deployment details.
 
@@ -81,11 +81,11 @@ TIP: Clicking a deployment name on this page takes you to the *Risk* view, where
 
 [.verification]
 ****
-Can you expand the `payment-api` and `payment-db` rows on the Listening Endpoints page and confirm the exec file path, port, and protocol for each?
+Can you expand the `api-server` and `postgres` rows on the Listening Endpoints page and confirm the exec file path, port, and protocol for each?
 
 [.success]
 You can audit listening processes at the binary and PID level. Continue to Exercise 5.
 
 [.fail]
-Navigate to *Network > Listening Endpoints*, type `qual-payments-ns` in the filter bar, and expand each deployment row to view the process details.
+Navigate to *Network > Listening Endpoints*, type `backend` in the filter bar, and expand each deployment row to view the process details.
 ****

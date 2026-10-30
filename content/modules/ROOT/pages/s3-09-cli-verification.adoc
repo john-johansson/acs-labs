@@ -12,50 +12,45 @@ This exercise confirms enforcement at the kernel level: unauthorized packets are
 
 By the end of this exercise you will:
 
-* Execute a `netcat` TCP probe from an unauthorized source and confirm the connection times out.
-* Execute a `netcat` TCP probe from an authorized source and confirm the connection succeeds.
+* Execute a TCP probe from an unauthorized source and confirm the connection times out.
+* Execute a TCP probe from an authorized source and confirm the connection succeeds.
 * Understand the difference between management-plane visibility (RHACS UI) and data-plane enforcement (kernel packet drop).
 
 == Task 8.1: Test the unauthorized path
 
-The `curl-test` pod in `test-sandbox` has no label matching the `NetworkPolicy` ingress rule.
-Its connection attempt to `payment-db` should be dropped.
+The `jump-host` pod in `operations` has no label matching the `NetworkPolicy` ingress rule on `postgres`.
+Its connection attempt to `postgres` should be dropped after you applied the policy in Exercise 7.
 
-. Run the probe:
-+
+The `jump-host` container includes `bash` with `/dev/tcp` support for TCP probing:
+
 [source,bash]
 ----
-oc exec -n test-sandbox deploy/curl-test -- nc -z -v -w 3 payment-db.qual-payments-ns.svc 5432
+oc exec -n operations deploy/jump-host -- bash -c 'timeout 3 bash -c "echo >/dev/tcp/postgres-service.backend.svc.cluster.local/5432" && echo "OPEN" || echo "TIMED OUT / BLOCKED"'
 ----
-+
+
 Expected output:
-+
+
 [source,text]
 ----
-nc: connect to payment-db.qual-payments-ns.svc port 5432 (tcp) timed out
+TIMED OUT / BLOCKED
 ----
-+
-The `timed out` result confirms that OVN-Kubernetes dropped the SYN packet at the kernel level. The TCP handshake never completes.
+
+The timeout confirms that OVN-Kubernetes dropped the SYN packet at the kernel level. The TCP handshake never completes.
 
 == Task 8.2: Test the authorized path
 
-The `payment-api` deployment carries the `app: payment-api` label, which is explicitly allowed by the `stackrox-generated-payment-db` policy.
+The `api-server` deployment carries the `app: api-server` label, which is explicitly allowed by the `stackrox-generated-postgres` policy.
 
-. Run the probe:
-+
+The `api-server` container uses BusyBox `ash` without `/dev/tcp`, so use `wget` for the probe:
+
 [source,bash]
 ----
-oc exec -n qual-payments-ns deploy/payment-api -- nc -z -v -w 3 payment-db 5432
+oc exec -n backend deploy/api-server -- wget -q --spider -T 3 http://postgres-service.backend.svc.cluster.local:5432 2>&1; echo "Exit: $?"
 ----
-+
-Expected output:
-+
-[source,text]
-----
-payment-db (10.128.2.45:5432) open
-----
-+
-The `open` result (or `succeeded!` depending on the `nc` version) confirms that the authorized tier-to-tier connection works as expected. The IP address in your output will differ.
+
+Expected result: the connection reaches the port (you may see `Connection reset by peer` since port 5432 does not speak HTTP, but the key point is the connection was *established*, not timed out). A reset proves the TCP handshake completed and the `NetworkPolicy` allowed the traffic.
+
+TIP: If you prefer a cleaner output, verify from the `jump-host` before and after applying the `NetworkPolicy`. Before applying, the same `bash /dev/tcp` probe returns `OPEN`. After applying, it returns `TIMED OUT / BLOCKED`.
 
 == Task 8.3: Compare the two results
 
@@ -64,12 +59,12 @@ The `open` result (or `succeeded!` depending on the `nc` version) confirms that 
 |Test |Source |Result
 
 |Unauthorized
-|`test-sandbox/curl-test`
-|`timed out` (packet dropped)
+|`operations/jump-host`
+|`TIMED OUT / BLOCKED` (packet dropped)
 
 |Authorized
-|`qual-payments-ns/payment-api`
-|`open` / `succeeded!` (connection allowed)
+|`backend/api-server`
+|Connection reached (reset by peer, not timeout)
 |===
 
 Both tests confirm the same `NetworkPolicy`, but from opposite sides:
@@ -81,18 +76,18 @@ This dual-layer validation (RHACS UI anomalous flow in Exercise 6 plus CLI packe
 
 == Key takeaways
 
-* `nc -z -v -w 3` is a lightweight TCP probe: `-z` scans without sending data, `-v` enables verbose output, and `-w 3` sets a 3-second timeout.
-* A `timed out` result means the CNI dropped the packet at the kernel level before it reached the destination pod. This is data-plane enforcement.
-* An `open` or `succeeded!` result means the `NetworkPolicy` ingress rule matched and the TCP handshake completed.
+* `bash /dev/tcp` is a lightweight TCP probe available in containers that include bash. It opens a raw TCP socket without sending data.
+* A timeout result means the CNI dropped the packet at the kernel level before it reached the destination pod. This is data-plane enforcement.
+* A connection reset (or successful open) means the `NetworkPolicy` ingress rule matched and the TCP handshake completed.
 * Always verify network policies from both authorized and unauthorized sources. A policy that blocks everything (including legitimate traffic) is worse than no policy at all.
 
 [.verification]
 ****
-Did `nc` from `test-sandbox` time out, and did `nc` from `payment-api` succeed?
+Did the probe from `operations/jump-host` time out, and did the probe from `backend/api-server` connect?
 
 [.success]
 Network policies are enforced at the kernel level. Unauthorized traffic is dropped and authorized traffic flows. Continue to the lab summary.
 
 [.fail]
-Confirm the `NetworkPolicy` exists (`oc get networkpolicy -n qual-payments-ns`). If missing, re-apply from Exercise 7. Then re-run both `nc` commands.
+Confirm the `NetworkPolicy` exists (`oc get networkpolicy -n backend`). If missing, re-apply from Exercise 7. Then re-run both probes.
 ****

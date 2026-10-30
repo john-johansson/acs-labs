@@ -20,7 +20,7 @@ By the end of this exercise you will:
 
 == Task 3.1: Open the scan schedules page
 
-. In the RHACS Console, navigate to *Compliance > OpenShift > Schedules*.
+. In the RHACS Console, navigate to *Compliance > OpenShift Schedules*.
 . Locate the scan schedule associated with `cis-weekly-scan`.
 +
 If the scan was created via `oc apply` in Exercise 1 (rather than through the RHACS UI), the schedule appears under the Compliance Operator's default settings. Select it to open the configuration details.
@@ -52,7 +52,7 @@ This is the evidence an external auditor needs: a time-stamped, machine-generate
 
 == Key takeaways
 
-* Compliance reports are generated from *Compliance > OpenShift > Schedules*, not from the vulnerability reporting path.
+* Compliance reports are generated from *Compliance > OpenShift Schedules*, not from the vulnerability reporting path.
 * On-demand download works without SMTP. Adding an email delivery destination and a schedule automates recurring evidence delivery.
 * The CSV contains check-level detail per cluster and profile, suitable for regulatory evidence packages.
 
@@ -64,5 +64,5 @@ Did you generate and download a compliance report from the scan schedule, and do
 You can produce compliance audit evidence on demand. Continue to Exercise 4.
 
 [.fail]
-Return to *Compliance > OpenShift > Schedules*, select the scan schedule, open *Actions > Generate download*, and wait for the job to reach *Ready for download* under the *All report jobs* tab.
+Return to *Compliance > OpenShift Schedules*, select the scan schedule, open *Actions > Generate download*, and wait for the job to reach *Ready for download* under the *All report jobs* tab.
 ****

@@ -10,21 +10,21 @@ There are no proprietary sidecars, no custom CRDs, and no vendor lock-in.
 If RHACS were uninstalled tomorrow, OpenShift's OVN-Kubernetes CNI would continue enforcing these policies at the kernel level.
 The generated YAML can be committed to a Git repository and applied through a GitOps pipeline.
 
-In this exercise you use the RHACS Network Policy Generator to simulate, review, and apply a zero-trust `NetworkPolicy` for the `payment-db` deployment.
+In this exercise you use the RHACS Network Policy Generator to simulate, review, and apply a zero-trust `NetworkPolicy` for the `postgres` deployment in the `backend` namespace.
 
 *Persona: [Platform Operations]*
 
 By the end of this exercise you will:
 
 * Open the Network Policy Generator from the Network Graph.
-* Generate and simulate network policies for `qual-payments-ns`.
-* Review the auto-generated YAML for `payment-db`.
+* Generate and simulate network policies for the `backend` namespace.
+* Review the auto-generated YAML for `postgres`.
 * Apply the policy via CLI and confirm it exists on the cluster.
 
 == Task 7.1: Open the Network Policy Generator
 
 . In the RHACS Console, navigate to *Network Graph*.
-. Select your cluster and the `qual-payments-ns` namespace.
+. Select your cluster and the `backend` namespace.
 . In the graph header, click *Network policy generator*.
 
 == Task 7.2: Generate and simulate policies
@@ -40,15 +40,33 @@ NOTE: Deployments that already have a `NetworkPolicy` will not get a new one. RH
 
 == Task 7.3: Review the generated YAML
 
-. In the generated policies panel, scroll to the policy for `payment-db`. The policy name is `stackrox-generated-payment-db`.
-. Review the YAML:
+. In the generated policies panel, scroll to the policy for `postgres`. The policy name is `stackrox-generated-postgres`.
+. Review the YAML. Expect something similar to:
 +
 [source,yaml]
 ----
-include::example$stackrox-generated-payment-db.yaml[]
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: stackrox-generated-postgres
+  namespace: backend
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: api-server
+    ports:
+    - protocol: TCP
+      port: 5432
 ----
 +
-This policy allows ingress only from pods with label `app: payment-api` on port `5432/TCP`.
+This policy allows ingress only from pods with label `app: api-server` on port `5432/TCP`.
 All other ingress is denied by default once a `NetworkPolicy` exists for a pod selector.
 . Click the download icon to save the YAML to your local machine (or copy it to the clipboard).
 
@@ -56,29 +74,36 @@ TIP: To compare the generated policies with existing ones, click *Compare* in th
 
 == Task 7.4: Apply the policy via CLI
 
-. Transfer the downloaded YAML to the bastion (or use the copy from the lab repository).
+. Transfer the downloaded YAML to the bastion (or apply it directly).
 . Apply the policy:
 +
 [source,bash]
 ----
-oc apply -f content/modules/ROOT/examples/stackrox-generated-payment-db.yaml
+oc apply -f <downloaded-file>.yaml
+----
++
+Alternatively, apply the example from the lab repository:
++
+[source,bash]
+----
+oc apply -f content/modules/ROOT/examples/stackrox-generated-postgres.yaml
 ----
 . Verify the policy exists:
 +
 [source,bash]
 ----
-oc get networkpolicy -n qual-payments-ns
+oc get networkpolicy -n backend
 ----
 +
 Expected output includes:
 +
 [source,text]
 ----
-NAME                              POD-SELECTOR     AGE
-stackrox-generated-payment-db     app=payment-db   5s
+NAME                          POD-SELECTOR     AGE
+stackrox-generated-postgres   app=postgres     5s
 ----
 
-The OVN-Kubernetes CNI now enforces this policy at the kernel level. Only `payment-api` pods can reach `payment-db` on port 5432.
+The OVN-Kubernetes CNI now enforces this policy at the kernel level. Only `api-server` pods can reach `postgres` on port 5432.
 
 == Key takeaways
 
@@ -89,11 +114,11 @@ The OVN-Kubernetes CNI now enforces this policy at the kernel level. Only `payme
 
 [.verification]
 ****
-Did you generate network policies from the Network Graph, download the YAML, and confirm `stackrox-generated-payment-db` exists in `qual-payments-ns` via `oc get networkpolicy`?
+Did you generate network policies from the Network Graph, download the YAML, and confirm `stackrox-generated-postgres` exists in `backend` via `oc get networkpolicy`?
 
 [.success]
 A zero-trust NetworkPolicy is now enforced by the CNI. Continue to Exercise 8 to verify it at the packet level.
 
 [.fail]
-Run `oc apply -f content/modules/ROOT/examples/stackrox-generated-payment-db.yaml` and then `oc get networkpolicy -n qual-payments-ns` to confirm the policy exists.
+Run `oc apply -f content/modules/ROOT/examples/stackrox-generated-postgres.yaml` and then `oc get networkpolicy -n backend` to confirm the policy exists.
 ****

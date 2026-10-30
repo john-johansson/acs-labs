@@ -21,9 +21,32 @@ By completing this lab, participants will:
 . Generate on-demand compliance audit evidence for external auditors.
 . Audit container listening endpoints at the process and PID level using RHACS Collector data.
 . Visualize multi-tier network topology in the RHACS Network Graph and enable baseline violation alerts.
-. Detect anomalous east-west traffic crossing namespace boundaries.
+. Detect anomalous cross-namespace traffic from an operations jump host to payment services.
 . Auto-generate standard Kubernetes `NetworkPolicy` manifests from observed baselines using the RHACS Network Policy Generator.
-. Verify network policy enforcement at the kernel level using `netcat` TCP probes.
+. Verify network policy enforcement at the kernel level using TCP probes.
+
+== Demo application architecture
+
+This session uses the pre-deployed multi-tier medical application. The network exercises focus on three namespaces:
+
+....
+   [ frontend/tls-proxy ]
+            |
+            v
+     [ backend/varnish ]
+            |  (Port 9001)
+            v
+     [ backend/api-server ] -----> [ payments/gateway ] (Port 7777)
+       |         \                       |          \
+       v          v                      v           v
+  [ postgres ]  [ backend-atlas ]   [ visa-proc ]  [ mastercard-proc ]
+  (Port 5432)   (Port 8080)        (Port 8080)    (Port 8080)
+
+   [ operations/jump-host ] --X--> [ payments/visa-processor ] (ANOMALOUS)
+                            --X--> [ medical/patient-db ]      (ANOMALOUS)
+....
+
+The `operations/jump-host` represents an unapproved lateral movement source that bypasses the legitimate API gateway tier.
 
 == Session flow
 
@@ -72,14 +95,14 @@ Audit container processes, ports, and PIDs captured by RHACS Collector (~10 min)
 ****
 xref:s3-06-network-topology.adoc[Exercise 5: Network topology and baselines]
 
-Visualize the 3-tier stack and enable baseline violation alerts (~10 min).
+Visualize the multi-tier stack and enable baseline violation alerts (~10 min).
 ****
 
 [.tile]
 ****
 xref:s3-07-anomalous-flows.adoc[Exercise 6: Anomalous flow detection]
 
-Simulate an unapproved cross-namespace probe and observe the alert (~10 min).
+Observe unapproved cross-namespace traffic from the operations jump host (~10 min).
 ****
 
 [.tile]
@@ -93,7 +116,7 @@ Auto-generate and apply zero-trust NetworkPolicy manifests (~15 min).
 ****
 xref:s3-09-cli-verification.adoc[Exercise 8: CLI network verification]
 
-Confirm packet drops with dual `netcat` probes from authorized and unauthorized sources (~10 min).
+Confirm packet drops with dual TCP probes from authorized and unauthorized sources (~10 min).
 ****
 
 == Compliance and network workflow (reflection)

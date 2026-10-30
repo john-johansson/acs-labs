@@ -23,7 +23,7 @@ On the bastion, run:
 [source,bash]
 ----
 echo "OpenShift Console: https://$(oc get route console -n openshift-console -o jsonpath='{.spec.host}')"
-echo "RHACS Console:     https://$(oc get route central-reencrypt -n stackrox -o jsonpath='{.spec.host}')"
+echo "RHACS Console:     https://$(oc get route central -n stackrox -o jsonpath='{.spec.host}')"
 ----
 
 Open each URL in your browser. Credentials for this Showroom:
@@ -53,33 +53,43 @@ roxctl central whoami
 
 NOTE: Expected output includes an *Admin* (or equivalent) role. Do not pass `--token`; `roxctl` reads it from the environment.
 
-== Clone the lab repository
+== Verify the demo application namespaces
+
+This session uses the pre-deployed multi-tier medical application. Confirm the application namespaces exist:
 
 [source,bash]
 ----
-git clone https://github.com/john-johansson/acs-labs.git
-cd acs-labs
+oc get namespace backend payments operations
 ----
 
-== Verify lab namespaces
+Expected output shows all three namespaces with `Active` status.
 
-Confirm the multi-tier payment namespace and the test namespace exist:
+Confirm the backend tier (the primary focus for network exercises) is running:
 
 [source,bash]
 ----
-oc get namespace qual-payments-ns test-sandbox
+oc get deployment -n backend
 ----
 
-Expected output shows both namespaces with `Active` status.
+You should see `api-server`, `backend-atlas`, `varnish`, and `postgres` with available replicas.
 
-Confirm the 3-tier application is running:
+Confirm the payments tier:
 
 [source,bash]
 ----
-oc get deployment -n qual-payments-ns
+oc get deployment -n payments
 ----
 
-You should see `payment-frontend`, `payment-api`, and `payment-db` with available replicas.
+You should see `gateway`, `visa-processor`, and `mastercard-processor`.
+
+Confirm the operations namespace (used as an anomalous traffic source):
+
+[source,bash]
+----
+oc get deployment -n operations
+----
+
+You should see `jump-host` (and optionally `puppet-master`).
 
 == Verify the Compliance Operator
 
@@ -94,10 +104,18 @@ Expected output shows the Compliance Operator CSV in `Succeeded` phase.
 
 [source,bash]
 ----
-oc get profiles.compliance -n openshift-compliance | grep -E 'ocp4-cis$|ocp4-cis-node'
+oc get profiles.compliance -n openshift-compliance | grep -E 'ocp4-cis |ocp4-cis-node '
 ----
 
 You should see both `ocp4-cis` and `ocp4-cis-node` profiles listed.
+
+== Application architecture
+
+The demo environment deploys a medical application across five namespaces. This session focuses on three:
+
+* `backend` (4-tier: varnish :8080 -> api-server :9001 -> postgres :5432 + backend-atlas :8080). The api-server also connects cross-namespace to `payments/gateway`.
+* `payments` (gateway :7777 -> visa-processor :8080 + mastercard-processor :8080). Receives cross-namespace traffic from `backend/api-server`.
+* `operations` (jump-host :22). Connects cross-namespace to `payments/visa-processor` and `medical/patient-db`, representing unapproved lateral movement.
 
 == Full reset (optional)
 
@@ -108,15 +126,5 @@ If you have run these exercises before on this Showroom and want a clean startin
 bash scripts/s3-cleanup.sh
 ----
 
-The script removes all lab-created resources (`ScanSettingBinding`, `ComplianceSuite`, `NetworkPolicy` objects, and test pods). It is idempotent and safe to run multiple times.
+The script removes lab-created resources (`ScanSettingBinding` and generated `NetworkPolicy` objects). It is idempotent and safe to run multiple times.
 On a fresh Showroom you can skip this step.
-
-== Lab namespaces on this cluster
-
-These namespaces are used in Session 3:
-
-* `qual-payments-ns` (3-tier payment application: `payment-frontend`, `payment-api`, `payment-db`)
-* `test-sandbox` (unapproved traffic source: `curl-test`)
-* `openshift-compliance` (Compliance Operator)
-
-The ACS secured cluster name is `production`.

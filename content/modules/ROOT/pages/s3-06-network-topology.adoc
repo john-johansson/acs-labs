@@ -7,41 +7,44 @@ Estimated time: 10 minutes.
 
 The RHACS Network Graph is three tools in one: a live traffic flow map, a firewall visualizer showing active `NetworkPolicy` rules, and an automated firewall rule builder that generates zero-trust policies from observed baselines.
 
-In this exercise you visualize the 3-tier payment application topology and enable baseline violation alerting so that any new, unexpected traffic will be flagged.
+In this exercise you visualize the backend and payments application topology and enable baseline violation alerting so that any new, unexpected traffic will be flagged.
 
 *Persona: [Platform Operations]*
 
 By the end of this exercise you will:
 
-* Navigate the Network Graph and select the `qual-payments-ns` namespace.
-* Identify the 3-tier application flow (frontend, API, database).
+* Navigate the Network Graph and select the `backend` namespace.
+* Identify the multi-tier application flow and cross-namespace connections.
 * Open the baseline tab for a deployment and enable alerting on baseline violations.
 
-== Task 5.1: View the 3-tier topology
+== Task 5.1: View the backend topology
 
 . In the RHACS Console, navigate to *Network Graph*.
 . Select your cluster from the cluster dropdown.
-. In the *Namespaces* list, select `qual-payments-ns`.
+. In the *Namespaces* list, select `backend`.
 . Observe the visual graph. The expected topology is:
 +
 ....
-    [ OpenShift Router ]
-             | (Port 8080)
-             v
-     [ payment-frontend ]
-             | (Port 8080)
-             v
-       [ payment-api ]
-             | (Port 5432)
-             v
-        [ payment-db ]
+     [ varnish ]
+          | (Port 9001)
+          v
+     [ api-server ] -------> [ payments/gateway ] (cross-namespace, Port 7777)
+       |         \
+       |          \
+       v           v
+ [ postgres ]   [ backend-atlas ]
+ (Port 5432)    (Port 8080)
 ....
 +
-Each node represents a deployment. Lines between nodes indicate observed traffic flows.
+Each node represents a deployment. Lines between nodes indicate observed traffic flows. The connection from `api-server` to `payments/gateway` crosses namespace boundaries.
+
+ifdef::env-site[]
+image::s3/s3-05-network-graph-backend.png[Network Graph showing backend namespace topology]
+endif::[]
 
 == Task 5.2: Inspect deployment details
 
-. Click `payment-db` in the graph to open the side panel.
+. Click `postgres` in the graph to open the side panel.
 . On the *Details* tab, review the *Network security* section. It shows:
 ** How many network flows were observed.
 ** Whether network policies exist that regulate ingress or egress.
@@ -55,15 +58,15 @@ After the observation period, new flows that are not in the baseline appear as a
 By default, anomalous flows are visible in the graph but do not trigger violations.
 Toggling *Alert on baseline violations* promotes them to policy violations.
 
-. With `payment-db` selected, click the *Baseline* tab.
-. Review the listed baseline flows. You should see ingress from `payment-api` on port 5432.
+. With `postgres` selected, click the *Baseline* tab.
+. Review the listed baseline flows. You should see ingress from `api-server` on port 5432.
 . Toggle *Alert on baseline violations* to the *on* position.
-. Repeat for `payment-api` and `payment-frontend`:
-.. Click each deployment in the graph.
+. Repeat for `api-server`:
+.. Click `api-server` in the graph.
 .. Open the *Baseline* tab.
 .. Toggle *Alert on baseline violations* on.
 
-After enabling alerts, any traffic from a source not in the baseline (such as a direct probe from `test-sandbox`) will generate a violation.
+After enabling alerts, any traffic from a source not in the baseline (such as a direct probe from another namespace) will generate a violation.
 
 TIP: You can configure the baseline observation period by setting `ROX_NETWORK_BASELINE_OBSERVATION_PERIOD` on Central. The default is sufficient for this lab.
 
@@ -75,11 +78,11 @@ TIP: You can configure the baseline observation period by setting `ROX_NETWORK_B
 
 [.verification]
 ****
-Did you view the 3-tier topology in the Network Graph and toggle *Alert on baseline violations* on for at least `payment-db`?
+Did you view the backend topology in the Network Graph and toggle *Alert on baseline violations* on for at least `postgres`?
 
 [.success]
 Baselines are active and anomalous traffic will now trigger violations. Continue to Exercise 6.
 
 [.fail]
-Navigate to *Network Graph*, select `qual-payments-ns`, click `payment-db`, open the *Baseline* tab, and toggle *Alert on baseline violations* on.
+Navigate to *Network Graph*, select `backend`, click `postgres`, open the *Baseline* tab, and toggle *Alert on baseline violations* on.
 ****
