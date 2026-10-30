@@ -1,0 +1,99 @@
+= Exercise 7: Network policy generation
+:navtitle: Exercise 7: Network policy generation
+
+include::partial$session3-ui.adoc[]
+
+Estimated time: 15 minutes.
+
+RHACS generates 100% standard Kubernetes `NetworkPolicy` manifests from observed baselines.
+There are no proprietary sidecars, no custom CRDs, and no vendor lock-in.
+If RHACS were uninstalled tomorrow, OpenShift's OVN-Kubernetes CNI would continue enforcing these policies at the kernel level.
+The generated YAML can be committed to a Git repository and applied through a GitOps pipeline.
+
+In this exercise you use the RHACS Network Policy Generator to simulate, review, and apply a zero-trust `NetworkPolicy` for the `payment-db` deployment.
+
+*Persona: [Platform Operations]*
+
+By the end of this exercise you will:
+
+* Open the Network Policy Generator from the Network Graph.
+* Generate and simulate network policies for `qual-payments-ns`.
+* Review the auto-generated YAML for `payment-db`.
+* Apply the policy via CLI and confirm it exists on the cluster.
+
+== Task 7.1: Open the Network Policy Generator
+
+. In the RHACS Console, navigate to *Network Graph*.
+. Select your cluster and the `qual-payments-ns` namespace.
+. In the graph header, click *Network policy generator*.
+
+== Task 7.2: Generate and simulate policies
+
+. In the panel that opens, click *Generate and simulate network policies*.
++
+RHACS generates policies for all deployments in the selected scope based on their observed baseline traffic.
+. Review the simulation preview:
+** Allowed baseline flows are shown in green.
+** Flows that would be blocked by the generated policies are shown in red.
+
+NOTE: Deployments that already have a `NetworkPolicy` will not get a new one. RHACS does not overwrite existing policies.
+
+== Task 7.3: Review the generated YAML
+
+. In the generated policies panel, scroll to the policy for `payment-db`. The policy name is `stackrox-generated-payment-db`.
+. Review the YAML:
++
+[source,yaml]
+----
+include::example$stackrox-generated-payment-db.yaml[]
+----
++
+This policy allows ingress only from pods with label `app: payment-api` on port `5432/TCP`.
+All other ingress is denied by default once a `NetworkPolicy` exists for a pod selector.
+. Click the download icon to save the YAML to your local machine (or copy it to the clipboard).
+
+TIP: To compare the generated policies with existing ones, click *Compare* in the panel. A side-by-side view shows the YAML for current and generated policies.
+
+== Task 7.4: Apply the policy via CLI
+
+. Transfer the downloaded YAML to the bastion (or use the copy from the lab repository).
+. Apply the policy:
++
+[source,bash]
+----
+oc apply -f content/modules/ROOT/examples/stackrox-generated-payment-db.yaml
+----
+. Verify the policy exists:
++
+[source,bash]
+----
+oc get networkpolicy -n qual-payments-ns
+----
++
+Expected output includes:
++
+[source,text]
+----
+NAME                              POD-SELECTOR     AGE
+stackrox-generated-payment-db     app=payment-db   5s
+----
+
+The OVN-Kubernetes CNI now enforces this policy at the kernel level. Only `payment-api` pods can reach `payment-db` on port 5432.
+
+== Key takeaways
+
+* The Network Policy Generator produces standard `networking.k8s.io/v1` `NetworkPolicy` manifests, not proprietary resources. OpenShift enforces them natively.
+* Generated policies are prefixed with `stackrox-generated-` and labeled with `network-policy-generator.stackrox.io/generated=true` for easy identification and cleanup.
+* Policies cannot be applied directly from the RHACS UI. Download the YAML and apply via `oc apply` or commit to Git for GitOps deployment.
+* Once a `NetworkPolicy` selects a pod, all ingress not explicitly allowed is denied. This is the Kubernetes default-deny model.
+
+[.verification]
+****
+Did you generate network policies from the Network Graph, download the YAML, and confirm `stackrox-generated-payment-db` exists in `qual-payments-ns` via `oc get networkpolicy`?
+
+[.success]
+A zero-trust NetworkPolicy is now enforced by the CNI. Continue to Exercise 8 to verify it at the packet level.
+
+[.fail]
+Run `oc apply -f content/modules/ROOT/examples/stackrox-generated-payment-db.yaml` and then `oc get networkpolicy -n qual-payments-ns` to confirm the policy exists.
+****

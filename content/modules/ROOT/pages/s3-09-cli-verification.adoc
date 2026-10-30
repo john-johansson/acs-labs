@@ -1,0 +1,98 @@
+= Exercise 8: CLI network verification
+:navtitle: Exercise 8: CLI network verification
+
+include::partial$session3-ui.adoc[]
+
+Estimated time: 10 minutes.
+
+Visual indicators in the RHACS Network Graph prove that policies are configured, but production verification requires testing at the data plane.
+This exercise confirms enforcement at the kernel level: unauthorized packets are dropped by OVN-Kubernetes before they reach the destination pod, while authorized connections succeed instantly.
+
+*Persona: [Site Reliability Engineering]*
+
+By the end of this exercise you will:
+
+* Execute a `netcat` TCP probe from an unauthorized source and confirm the connection times out.
+* Execute a `netcat` TCP probe from an authorized source and confirm the connection succeeds.
+* Understand the difference between management-plane visibility (RHACS UI) and data-plane enforcement (kernel packet drop).
+
+== Task 8.1: Test the unauthorized path
+
+The `curl-test` pod in `test-sandbox` has no label matching the `NetworkPolicy` ingress rule.
+Its connection attempt to `payment-db` should be dropped.
+
+. Run the probe:
++
+[source,bash]
+----
+oc exec -n test-sandbox deploy/curl-test -- nc -z -v -w 3 payment-db.qual-payments-ns.svc 5432
+----
++
+Expected output:
++
+[source,text]
+----
+nc: connect to payment-db.qual-payments-ns.svc port 5432 (tcp) timed out
+----
++
+The `timed out` result confirms that OVN-Kubernetes dropped the SYN packet at the kernel level. The TCP handshake never completes.
+
+== Task 8.2: Test the authorized path
+
+The `payment-api` deployment carries the `app: payment-api` label, which is explicitly allowed by the `stackrox-generated-payment-db` policy.
+
+. Run the probe:
++
+[source,bash]
+----
+oc exec -n qual-payments-ns deploy/payment-api -- nc -z -v -w 3 payment-db 5432
+----
++
+Expected output:
++
+[source,text]
+----
+payment-db (10.128.2.45:5432) open
+----
++
+The `open` result (or `succeeded!` depending on the `nc` version) confirms that the authorized tier-to-tier connection works as expected. The IP address in your output will differ.
+
+== Task 8.3: Compare the two results
+
+[cols="1,2,2",options="header"]
+|===
+|Test |Source |Result
+
+|Unauthorized
+|`test-sandbox/curl-test`
+|`timed out` (packet dropped)
+
+|Authorized
+|`qual-payments-ns/payment-api`
+|`open` / `succeeded!` (connection allowed)
+|===
+
+Both tests confirm the same `NetworkPolicy`, but from opposite sides:
+
+* The unauthorized path proves that the policy *blocks* traffic not matching the ingress rule.
+* The authorized path proves that the policy *allows* the expected baseline communication.
+
+This dual-layer validation (RHACS UI anomalous flow in Exercise 6 plus CLI packet drop here) is the production pattern for verifying network microsegmentation.
+
+== Key takeaways
+
+* `nc -z -v -w 3` is a lightweight TCP probe: `-z` scans without sending data, `-v` enables verbose output, and `-w 3` sets a 3-second timeout.
+* A `timed out` result means the CNI dropped the packet at the kernel level before it reached the destination pod. This is data-plane enforcement.
+* An `open` or `succeeded!` result means the `NetworkPolicy` ingress rule matched and the TCP handshake completed.
+* Always verify network policies from both authorized and unauthorized sources. A policy that blocks everything (including legitimate traffic) is worse than no policy at all.
+
+[.verification]
+****
+Did `nc` from `test-sandbox` time out, and did `nc` from `payment-api` succeed?
+
+[.success]
+Network policies are enforced at the kernel level. Unauthorized traffic is dropped and authorized traffic flows. Continue to the lab summary.
+
+[.fail]
+Confirm the `NetworkPolicy` exists (`oc get networkpolicy -n qual-payments-ns`). If missing, re-apply from Exercise 7. Then re-run both `nc` commands.
+****

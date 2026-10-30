@@ -1,0 +1,72 @@
+= Exercise 6: Anomalous flow detection
+:navtitle: Exercise 6: Anomalous flow detection
+
+include::partial$session3-ui.adoc[]
+
+Estimated time: 10 minutes.
+
+When an unapproved connection appears on the network, RHACS draws a red anomalous flow indicator across the Network Graph in real time.
+This visual alert bridges directly to the Violations view, where SRE teams can investigate the source, destination, protocol, and timing of the probe.
+
+In this exercise you simulate an unauthorized cross-namespace probe from `test-sandbox` to `payment-db`, bypassing the approved `payment-api` tier.
+
+*Persona: [Site Reliability Engineering]*
+
+By the end of this exercise you will:
+
+* Execute a `netcat` probe from the `test-sandbox` namespace to `payment-db`.
+* Observe the anomalous flow indicator in the RHACS Network Graph.
+* Optionally verify the baseline violation in the Violations view.
+
+== Task 6.1: Simulate an unauthorized probe
+
+From the bastion, run a TCP connectivity check from the `curl-test` pod in `test-sandbox` directly to the database:
+
+[source,bash]
+----
+oc exec -n test-sandbox deploy/curl-test -- nc -z -v -w 3 payment-db.qual-payments-ns.svc 5432
+----
+
+The connection may succeed or time out depending on whether a `NetworkPolicy` is already in place.
+Either way, RHACS records the flow.
+
+== Task 6.2: Observe the anomalous flow in the Network Graph
+
+. In the RHACS Console, navigate to *Network Graph*.
+. Select your cluster and the `qual-payments-ns` namespace.
++
+If the graph does not refresh automatically, look for an *Updates available* notification and click it.
+. Observe the connection from `test-sandbox` to `payment-db`. It appears as a red dotted line indicating an anomalous flow:
++
+....
+[ test-sandbox / curl-test ] --- (UNAPPROVED RED FLOW) ---> [ payment-db ] (ALERT)
+....
++
+This connection bypasses the approved 3-tier path (`payment-frontend` to `payment-api` to `payment-db`).
+
+== Task 6.3: Check for a baseline violation (optional)
+
+If you toggled *Alert on baseline violations* in Exercise 5:
+
+. Navigate to *Violations* in the RHACS Console.
+. Look for a violation related to *Unauthorized Network Flow* or *Network Baseline*.
+. Open the violation to see the source deployment, destination, port, and protocol.
+
+NOTE: If the violation does not appear immediately, wait 30 seconds and refresh. RHACS processes network flow data in short intervals.
+
+== Key takeaways
+
+* An unapproved cross-namespace connection produces a visible red anomalous flow in the Network Graph within seconds.
+* With *Alert on baseline violations* enabled (Exercise 5), the anomalous flow also generates a violation event that feeds into alerting workflows.
+* In a real incident, clicking the red flow line leads to the Risk timeline, showing which user, pod, or process initiated the probe.
+
+[.verification]
+****
+Did you see a red anomalous flow line from `test-sandbox` to `payment-db` in the Network Graph after running the `nc` probe?
+
+[.success]
+Anomalous east-west traffic is visible in real time. Continue to Exercise 7.
+
+[.fail]
+Run `oc exec -n test-sandbox deploy/curl-test -- nc -z -v -w 3 payment-db.qual-payments-ns.svc 5432` again, then refresh the Network Graph (click the *Updates available* badge if shown) and look for the red flow to `payment-db`.
+****

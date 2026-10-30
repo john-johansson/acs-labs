@@ -18,6 +18,10 @@ This site uses the same Antora + Red Hat Demo Platform Showroom theme as other R
 |xref:operations-day2.adoc[Operations & Day-2]
 |90 min
 |{rhacs-version}
+
+|xref:s3-compliance-network.adoc[Compliance & Network Observability]
+|90 min
+|{rhacs-version}
 |===
 
 Working YAML for each session lives in the Antora `examples/` directory.

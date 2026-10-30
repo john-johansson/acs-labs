@@ -1,0 +1,73 @@
+= Exercise 2: Compliance results in RHACS
+:navtitle: Exercise 2: Compliance results in RHACS
+
+include::partial$session3-ui.adoc[]
+
+Estimated time: 10 minutes.
+
+The Compliance Operator evaluates infrastructure and platform controls, but the raw `ComplianceCheckResult` CRDs are spread across the cluster.
+RHACS Sensor ingests those CRDs and presents them in a unified compliance view.
+When a control fails, RHACS acts as a "pointer to the fix," linking directly to the specific resource that needs remediation rather than just reporting a pass/fail verdict.
+
+This exercise explores the RHACS *Compliance > OpenShift > Coverage* page to review scan results, drill into failing checks, and understand the distinction between platform compliance (Compliance Operator) and workload runtime security (RHACS policy engine).
+
+*Persona: [Information Security]*
+
+By the end of this exercise you will:
+
+* Navigate the RHACS compliance Coverage page and select a CIS profile.
+* Review the pass/fail/manual breakdown for individual checks.
+* Drill into a failing check to see which nodes or platform resources failed.
+* Understand the boundary between Compliance Operator checks and RHACS policy engine checks.
+
+== Task 2.1: Open the compliance Coverage page
+
+. In the RHACS Console, navigate to *Compliance > OpenShift > Coverage*.
+. If a scan schedule filter is shown, select *All scan schedules* (or the schedule matching `cis-weekly-scan`).
+
+== Task 2.2: Select a profile and review checks
+
+. Use the benchmark toggle group to select *ocp4-cis* (platform checks) or *ocp4-cis-node* (node-level checks).
+. Review the *Checks* view. Each row shows:
+** *Check*: the name of the compliance control.
+** *Controls*: the CIS benchmark reference (e.g., 1.2.1).
+** *Fail*, *Pass*, *Manual*, *Other*: status counts across clusters.
+** *Compliance*: the overall compliance percentage.
+. Note the compliance percentage for the selected profile. Most default clusters show below 100%.
+
+== Task 2.3: Drill into a failing check
+
+. Sort or filter the checks to find one with a *Fail* count greater than zero.
+. Click the check name to open the detail view.
+. Review which cluster nodes or platform resources failed the control.
+. Read the remediation context provided for the check. This is the "pointer to the fix" that tells an administrator what to change.
+
+== Task 2.4: Understand platform vs workload compliance
+
+The Coverage page shows *infrastructure and platform compliance* evaluated by the Compliance Operator:
+
+* Node-level controls (e.g., kernel parameters, file permissions, kubelet configuration) use the `ocp4-cis-node` profile.
+* Platform controls (e.g., API server flags, etcd encryption, RBAC settings) use the `ocp4-cis` profile.
+
+RHACS also evaluates *workload runtime security* through its policy engine (e.g., non-root container execution, privilege escalation prevention, resource limits).
+These workload checks are not part of the Compliance Operator profiles and do not appear on the Coverage page.
+They are visible under *Violations* and *Policy Management* in the RHACS console.
+
+NOTE: The Coverage page filters by scan schedule, profile, cluster, and compliance status. Namespace-level workload compliance filtering is not available here because the Compliance Operator evaluates cluster-wide infrastructure, not per-namespace workload posture.
+
+== Key takeaways
+
+* *Compliance > OpenShift > Coverage* is the unified view for Compliance Operator scan results in RHACS.
+* Drilling into a failing check shows exactly which nodes or platform resources need attention, along with remediation guidance.
+* Infrastructure compliance (Compliance Operator) and workload runtime security (RHACS policy engine) are complementary. Together they cover the full security posture from OS settings to container behaviour.
+
+[.verification]
+****
+Can you open the Coverage page, select the `ocp4-cis` or `ocp4-cis-node` profile, and drill into at least one failing check to see which resources failed and what the remediation guidance says?
+
+[.success]
+You can navigate compliance scan results and distinguish platform checks from workload security policies. Continue to Exercise 3.
+
+[.fail]
+Confirm the scan from Exercise 1 reached `DONE` (`oc get compliancesuite -n openshift-compliance`). If Coverage is empty, wait a minute for RHACS Sensor to ingest the results, then refresh the page.
+****

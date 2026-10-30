@@ -1,0 +1,115 @@
+= Exercise 1: Deploying compliance profiles
+:navtitle: Exercise 1: Deploying compliance profiles
+
+include::partial$session3-ui.adoc[]
+
+Estimated time: 10 minutes.
+
+Most organizations treat compliance as a periodic event: a scramble before an audit to collect evidence, run manual checks, and compile spreadsheets.
+The Red Hat Compliance Operator shifts that model to continuous, automated scanning.
+It runs natively on OpenShift to evaluate core OS node configurations and platform control plane settings against industry benchmarks, without external agents.
+
+In this exercise you bind the CIS Red Hat OpenShift benchmarks to the cluster so that compliance checks run automatically and produce native Kubernetes CRDs as audit evidence.
+
+*Persona: [Platform Operations]*
+
+By the end of this exercise you will:
+
+* List the compliance profiles available on the cluster.
+* Deploy a declarative `ScanSettingBinding` that binds the `ocp4-cis` and `ocp4-cis-node` profiles to the default scan settings.
+* Monitor scan progress and confirm that `ComplianceCheckResult` CRDs are created.
+
+== Task 1.1: List available compliance profiles
+
+The Compliance Operator ships with several built-in profiles.
+Confirm that the CIS profiles are present:
+
+. List installed profiles:
++
+[source,bash]
+----
+oc get profiles.compliance -n openshift-compliance
+----
++
+Look for `ocp4-cis` (platform controls) and `ocp4-cis-node` (node-level controls) in the output.
+
+== Task 1.2: Deploy the CIS scan binding
+
+A `ScanSettingBinding` connects one or more compliance profiles to a `ScanSetting` (which defines schedule, storage, and tolerations).
+The `default` ScanSetting runs scans immediately and then on a daily schedule.
+
+. Review the manifest:
++
+[source,yaml]
+----
+include::example$cis-weekly-scan.yaml[]
+----
++
+NOTE: Each profile entry and the `settingsRef` include `apiGroup: compliance.openshift.io/v1alpha1` as required by the Compliance Operator CRD schema.
+
+. Apply the binding:
++
+[source,bash]
+----
+oc apply -f content/modules/ROOT/examples/cis-weekly-scan.yaml
+----
+
+== Task 1.3: Monitor scan progress
+
+The Compliance Operator creates a `ComplianceSuite` and individual `ComplianceScan` resources.
+Watch the scans transition through their phases:
+
+. Watch per-scan progress:
++
+[source,bash]
+----
+oc get compliancescan -w -n openshift-compliance
+----
++
+Wait until all scans reach `DONE`. Press `Ctrl+C` to stop watching.
+
+. Check suite-level status:
++
+[source,bash]
+----
+oc get compliancesuite -n openshift-compliance
+----
++
+Expected output (abbreviated):
++
+[source,text]
+----
+NAME             PHASE   RESULT
+cis-weekly-scan  DONE    NON-COMPLIANT
+----
++
+`NON-COMPLIANT` is normal for a default cluster. The next exercise reviews which controls passed and which failed.
+
+. Verify that individual check results were created:
++
+[source,bash]
+----
+oc get compliancecheckresults -n openshift-compliance --no-headers | wc -l
+----
++
+A non-zero count confirms that the Compliance Operator evaluated every applicable control.
+
+NOTE: RHACS can also create `ScanSettingBinding` resources automatically when you create a scan schedule via *Compliance > OpenShift > Schedules* in the RHACS portal.
+The manual approach used here shows the underlying Compliance Operator mechanism.
+
+== Key takeaways
+
+* A `ScanSettingBinding` is the declarative link between compliance profiles and scan settings. Applying it triggers scans immediately.
+* The Compliance Operator produces `ComplianceScan`, `ComplianceSuite`, and `ComplianceCheckResult` CRDs that capture audit evidence as native Kubernetes resources.
+* `NON-COMPLIANT` is the expected result for a default cluster. The value of continuous scanning is identifying and tracking those gaps, not achieving 100% compliance on day one.
+
+[.verification]
+****
+Did `oc get compliancesuite` show `cis-weekly-scan` in `DONE` phase, and does `oc get compliancecheckresults` return a non-zero count?
+
+[.success]
+The Compliance Operator scanned the cluster against CIS benchmarks and produced check results. Continue to Exercise 2.
+
+[.fail]
+Verify the Compliance Operator is installed (`oc get csv -n openshift-compliance`), re-apply the `ScanSettingBinding`, and watch `oc get compliancescan -w -n openshift-compliance` until all scans reach `DONE`.
+****

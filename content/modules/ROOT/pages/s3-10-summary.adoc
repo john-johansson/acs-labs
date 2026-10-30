@@ -1,0 +1,28 @@
+= Lab summary
+:navtitle: Lab summary
+
+include::partial$session3-ui.adoc[]
+
+In this session you explored RHACS compliance integration and network observability:
+
+* *Compliance scanning*: deployed a declarative `ScanSettingBinding` binding CIS profiles to cluster nodes, producing `ComplianceCheckResult` CRDs as continuous audit evidence (Exercise 1).
+* *Compliance results in RHACS*: navigated the Coverage page to review pass/fail controls, drilled into failing checks for remediation guidance, and distinguished infrastructure compliance from workload runtime security (Exercise 2).
+* *Audit evidence*: generated an on-demand compliance report for external auditors directly from the scan schedule (Exercise 3).
+* *Listening endpoints*: audited container processes at the binary path and PID level using RHACS Collector kernel-level data (Exercise 4).
+* *Network topology and baselines*: visualized the 3-tier application flow in the Network Graph and enabled baseline violation alerting (Exercise 5).
+* *Anomalous flow detection*: simulated an unauthorized cross-namespace probe and observed the real-time red anomalous flow indicator (Exercise 6).
+* *Network policy generation*: auto-generated standard Kubernetes `NetworkPolicy` manifests from observed baselines and applied them via CLI (Exercise 7).
+* *CLI verification*: confirmed kernel-level packet drops with dual `netcat` probes from unauthorized and authorized sources (Exercise 8).
+
+These capabilities form a continuous security loop: compliance scanning produces evidence, the Network Graph provides visibility, baselines detect anomalies, and auto-generated policies enforce zero-trust microsegmentation at the kernel level.
+
+== Reset the environment
+
+To remove all resources created during this session and return the environment to its starting state, run the cleanup script on the bastion:
+
+[source,bash]
+----
+bash scripts/s3-cleanup.sh
+----
+
+The script removes the `ScanSettingBinding`, `ComplianceSuite`, generated `NetworkPolicy` objects, and test pods. It is idempotent and safe to run multiple times.

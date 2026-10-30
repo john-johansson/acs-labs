@@ -1,0 +1,85 @@
+= Exercise 5: Network topology and baselines
+:navtitle: Exercise 5: Network topology and baselines
+
+include::partial$session3-ui.adoc[]
+
+Estimated time: 10 minutes.
+
+The RHACS Network Graph is three tools in one: a live traffic flow map, a firewall visualizer showing active `NetworkPolicy` rules, and an automated firewall rule builder that generates zero-trust policies from observed baselines.
+
+In this exercise you visualize the 3-tier payment application topology and enable baseline violation alerting so that any new, unexpected traffic will be flagged.
+
+*Persona: [Platform Operations]*
+
+By the end of this exercise you will:
+
+* Navigate the Network Graph and select the `qual-payments-ns` namespace.
+* Identify the 3-tier application flow (frontend, API, database).
+* Open the baseline tab for a deployment and enable alerting on baseline violations.
+
+== Task 5.1: View the 3-tier topology
+
+. In the RHACS Console, navigate to *Network Graph*.
+. Select your cluster from the cluster dropdown.
+. In the *Namespaces* list, select `qual-payments-ns`.
+. Observe the visual graph. The expected topology is:
++
+....
+    [ OpenShift Router ]
+             | (Port 8080)
+             v
+     [ payment-frontend ]
+             | (Port 8080)
+             v
+       [ payment-api ]
+             | (Port 5432)
+             v
+        [ payment-db ]
+....
++
+Each node represents a deployment. Lines between nodes indicate observed traffic flows.
+
+== Task 5.2: Inspect deployment details
+
+. Click `payment-db` in the graph to open the side panel.
+. On the *Details* tab, review the *Network security* section. It shows:
+** How many network flows were observed.
+** Whether network policies exist that regulate ingress or egress.
+** Listening ports for this deployment.
+. Click the *Flows* tab to see the list of observed connections (both ingress and egress) with protocol and port details.
+
+== Task 5.3: Enable baseline violation alerting
+
+RHACS automatically discovers network flows during an observation period and adds them to the baseline.
+After the observation period, new flows that are not in the baseline appear as anomalous.
+By default, anomalous flows are visible in the graph but do not trigger violations.
+Toggling *Alert on baseline violations* promotes them to policy violations.
+
+. With `payment-db` selected, click the *Baseline* tab.
+. Review the listed baseline flows. You should see ingress from `payment-api` on port 5432.
+. Toggle *Alert on baseline violations* to the *on* position.
+. Repeat for `payment-api` and `payment-frontend`:
+.. Click each deployment in the graph.
+.. Open the *Baseline* tab.
+.. Toggle *Alert on baseline violations* on.
+
+After enabling alerts, any traffic from a source not in the baseline (such as a direct probe from `test-sandbox`) will generate a violation.
+
+TIP: You can configure the baseline observation period by setting `ROX_NETWORK_BASELINE_OBSERVATION_PERIOD` on Central. The default is sufficient for this lab.
+
+== Key takeaways
+
+* The Network Graph visualizes real-time traffic flows, existing `NetworkPolicy` rules, and auto-discovered baselines in a single view.
+* RHACS builds baselines automatically during the observation period. After that, unknown traffic appears as anomalous.
+* Toggling *Alert on baseline violations* on the *Baseline* tab converts anomalous flows into violations, bridging from visibility to enforcement.
+
+[.verification]
+****
+Did you view the 3-tier topology in the Network Graph and toggle *Alert on baseline violations* on for at least `payment-db`?
+
+[.success]
+Baselines are active and anomalous traffic will now trigger violations. Continue to Exercise 6.
+
+[.fail]
+Navigate to *Network Graph*, select `qual-payments-ns`, click `payment-db`, open the *Baseline* tab, and toggle *Alert on baseline violations* on.
+****

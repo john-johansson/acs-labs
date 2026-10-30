@@ -1,0 +1,91 @@
+= Exercise 4: Listening endpoints
+:navtitle: Exercise 4: Listening endpoints
+
+include::partial$session3-ui.adoc[]
+
+Estimated time: 10 minutes.
+
+Traditional firewall tools see IP addresses and port numbers.
+RHACS Collector operates at the Linux kernel layer (via eBPF or kernel modules) and goes deeper: it maps every open network socket to the exact container binary path and process ID that owns it.
+If a malicious process opens a port that matches a legitimate service, RHACS flags it because the binary path does not match the baseline.
+
+In this exercise you audit the listening endpoints for the `qual-payments-ns` multi-tier application.
+
+*Persona: [Site Reliability Engineering]*
+
+By the end of this exercise you will:
+
+* Navigate the Listening Endpoints page in RHACS.
+* Filter by namespace to isolate the payment application stack.
+* Inspect process-level details (exec file path, PID, port, protocol) for each deployment.
+
+== Task 4.1: Open the Listening Endpoints page
+
+. In the RHACS Console, navigate to *Network > Listening Endpoints*.
+. In the filter bar, type `qual-payments-ns` and apply the namespace filter.
+
+The filtered list shows only deployments in the `qual-payments-ns` namespace.
+
+== Task 4.2: Inspect payment-api
+
+. Expand the `payment-api` deployment row.
+. Verify the following process details:
++
+[cols="1,2",options="header"]
+|===
+|Field |Expected value
+
+|Port
+|`8080/TCP`
+
+|Protocol
+|`HTTP`
+
+|Exec file path
+|`/usr/bin/java`
+
+|PID
+|`17265`
+|===
++
+The process tree confirms that port 8080 is owned by the Java/Quarkus API gateway binary, not by an unknown process.
+
+== Task 4.3: Inspect payment-db
+
+. Expand the `payment-db` deployment row.
+. Verify the following process details:
++
+[cols="1,2",options="header"]
+|===
+|Field |Expected value
+
+|Port
+|`5432/TCP`
+
+|Protocol
+|`PostgreSQL`
+
+|Exec file path
+|`/usr/bin/postgres`
+|===
++
+The PostgreSQL binary is the only process listening on port 5432 in this container.
+
+TIP: Clicking a deployment name on this page takes you to the *Risk* view, where you can see risk indicators, policy violations, and additional deployment details.
+
+== Key takeaways
+
+* *Network > Listening Endpoints* provides process-level visibility into every open socket across your secured clusters.
+* Each entry shows: Exec file path, PID, Port, Protocol, Pod ID, and Container name.
+* This data comes from RHACS Collector, which operates at the kernel level. It captures what is actually running, not what the Deployment manifest declares.
+
+[.verification]
+****
+Can you expand the `payment-api` and `payment-db` rows on the Listening Endpoints page and confirm the exec file path, port, and protocol for each?
+
+[.success]
+You can audit listening processes at the binary and PID level. Continue to Exercise 5.
+
+[.fail]
+Navigate to *Network > Listening Endpoints*, type `qual-payments-ns` in the filter bar, and expand each deployment row to view the process details.
+****

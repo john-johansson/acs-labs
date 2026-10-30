@@ -1,0 +1,68 @@
+= Exercise 3: Audit evidence generation
+:navtitle: Exercise 3: Audit evidence generation
+
+include::partial$session3-ui.adoc[]
+
+Estimated time: 10 minutes.
+
+Regulatory audits traditionally require teams to spend days aggregating spreadsheet data, zipping CSV files, and distributing them by email.
+RHACS replaces that manual workflow with on-demand and scheduled compliance report generation tied directly to scan results.
+
+In this exercise you generate a downloadable compliance report from the scan schedule created in Exercise 1.
+
+*Persona: [Information Security]*
+
+By the end of this exercise you will:
+
+* Navigate to the compliance scan schedules page in RHACS.
+* Generate an on-demand compliance report.
+* Download the report and review its contents.
+
+== Task 3.1: Open the scan schedules page
+
+. In the RHACS Console, navigate to *Compliance > OpenShift > Schedules*.
+. Locate the scan schedule associated with `cis-weekly-scan`.
++
+If the scan was created via `oc apply` in Exercise 1 (rather than through the RHACS UI), the schedule appears under the Compliance Operator's default settings. Select it to open the configuration details.
+
+== Task 3.2: Generate an on-demand report
+
+. From the *Actions* drop-down (upper right of the schedule detail page), select *Generate download*.
++
+You receive a confirmation that report generation has started.
+. Click the *All report jobs* tab.
+. Wait for the job status to change. The status progresses through:
+** *Waiting*: the job is queued.
+** *Preparing*: the system is processing.
+** *Report ready for download*: the report is complete.
+. Click *Ready for download* to save the file.
+
+NOTE: On this Showroom, use on-demand download (no SMTP is configured). In production, you would configure email delivery destinations under the scan schedule so that auditors receive reports automatically. Compliance reporting requires Compliance Operator version 1.6.0 or later.
+
+== Task 3.3: Review the report
+
+. Extract the downloaded file.
+. Open the CSV report and review the contents. Key columns include:
+** Cluster name
+** Profile name and type
+** Check name and control reference
+** Compliance status (Pass, Fail, Manual, Not Applicable, Error)
++
+This is the evidence an external auditor needs: a time-stamped, machine-generated record of every compliance control evaluated against the cluster.
+
+== Key takeaways
+
+* Compliance reports are generated from *Compliance > OpenShift > Schedules*, not from the vulnerability reporting path.
+* On-demand download works without SMTP. Adding an email delivery destination and a schedule automates recurring evidence delivery.
+* The CSV contains check-level detail per cluster and profile, suitable for regulatory evidence packages.
+
+[.verification]
+****
+Did you generate and download a compliance report from the scan schedule, and does the CSV contain check-level compliance status for the CIS profile?
+
+[.success]
+You can produce compliance audit evidence on demand. Continue to Exercise 4.
+
+[.fail]
+Return to *Compliance > OpenShift > Schedules*, select the scan schedule, open *Actions > Generate download*, and wait for the job to reach *Ready for download* under the *All report jobs* tab.
+****

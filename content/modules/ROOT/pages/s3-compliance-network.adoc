@@ -1,0 +1,106 @@
+= Compliance and Network Observability
+:navtitle: Overview
+
+include::partial$session3-ui.adoc[]
+
+A hands-on lab for platform, infrastructure, security, and SRE teams.
+
+[cols="1,3"]
+|===
+|Session date |TBD
+|Duration |~90 minutes (5 min prereqs + eight exercises)
+|Environment |Red Hat Showroom / RHACS {rhacs-version}
+|===
+
+== Lab objectives
+
+By completing this lab, participants will:
+
+. Deploy declarative CIS compliance profiles via the Compliance Operator and observe scan results as native Kubernetes CRDs.
+. Review compliance posture in RHACS and distinguish infrastructure checks (Compliance Operator) from workload runtime checks (RHACS policy engine).
+. Generate on-demand compliance audit evidence for external auditors.
+. Audit container listening endpoints at the process and PID level using RHACS Collector data.
+. Visualize multi-tier network topology in the RHACS Network Graph and enable baseline violation alerts.
+. Detect anomalous east-west traffic crossing namespace boundaries.
+. Auto-generate standard Kubernetes `NetworkPolicy` manifests from observed baselines using the RHACS Network Policy Generator.
+. Verify network policy enforcement at the kernel level using `netcat` TCP probes.
+
+== Session flow
+
+TIP: For the best experience, follow the exercises in order. Each one builds on the previous concepts. You can also jump to a specific exercise below.
+
+=== Compliance and Automated Audit Evidence
+
+[.tile]
+****
+xref:s3-01-prerequisites.adoc[Prerequisites]
+
+Bastion access, console URLs, and namespace verification (~5 min).
+****
+
+[.tile]
+****
+xref:s3-02-compliance-profiles.adoc[Exercise 1: Deploying compliance profiles]
+
+Bind CIS profiles to cluster nodes via the Compliance Operator (~10 min).
+****
+
+[.tile]
+****
+xref:s3-03-compliance-rhacs.adoc[Exercise 2: Compliance results in RHACS]
+
+Review scan results on the Coverage page and distinguish platform from workload checks (~10 min).
+****
+
+[.tile]
+****
+xref:s3-04-audit-evidence.adoc[Exercise 3: Audit evidence generation]
+
+Generate an on-demand compliance report for external auditors (~10 min).
+****
+
+=== Network Graph and Traffic Observability
+
+[.tile]
+****
+xref:s3-05-listening-endpoints.adoc[Exercise 4: Listening endpoints]
+
+Audit container processes, ports, and PIDs captured by RHACS Collector (~10 min).
+****
+
+[.tile]
+****
+xref:s3-06-network-topology.adoc[Exercise 5: Network topology and baselines]
+
+Visualize the 3-tier stack and enable baseline violation alerts (~10 min).
+****
+
+[.tile]
+****
+xref:s3-07-anomalous-flows.adoc[Exercise 6: Anomalous flow detection]
+
+Simulate an unapproved cross-namespace probe and observe the alert (~10 min).
+****
+
+[.tile]
+****
+xref:s3-08-network-policy-gen.adoc[Exercise 7: Network policy generation]
+
+Auto-generate and apply zero-trust NetworkPolicy manifests (~15 min).
+****
+
+[.tile]
+****
+xref:s3-09-cli-verification.adoc[Exercise 8: CLI network verification]
+
+Confirm packet drops with dual `netcat` probes from authorized and unauthorized sources (~10 min).
+****
+
+== Compliance and network workflow (reflection)
+
+In production, these exercises chain together:
+
+. The Compliance Operator continuously evaluates CIS benchmarks (Exercise 1). RHACS aggregates the results and links failing controls to remediable resources (Exercise 2).
+. Scheduled compliance reports replace manual CSV evidence packs for auditors (Exercise 3).
+. RHACS Collector maps every open port to an exact process binary (Exercise 4). The Network Graph visualizes active traffic and locks baselines (Exercise 5).
+. Anomalous cross-namespace traffic triggers real-time alerts (Exercise 6). Auto-generated `NetworkPolicy` manifests enforce zero-trust microsegmentation at the kernel level (Exercises 7 and 8).
