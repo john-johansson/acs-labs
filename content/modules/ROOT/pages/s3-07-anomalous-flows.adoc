@@ -16,7 +16,7 @@ By the end of this exercise you will:
 
 * Verify the cross-namespace traffic source on the bastion.
 * Observe the anomalous flow from `operations/jump-host` to `payments/visa-processor` in the Network Graph.
-* Generate an additional anomalous probe and watch it appear in real time.
+* Generate an additional anomalous probe (to `backend-atlas`, not `postgres`) and watch it appear in real time.
 * Optionally verify the baseline violation in the Violations view.
 
 == Task 6.1: Verify the cross-namespace traffic source
@@ -45,28 +45,32 @@ If the graph does not refresh automatically, look for an *Updates available* not
 +
 This connection crosses namespace boundaries without going through the legitimate `payments/gateway` entry point.
 
-. Also add the `medical` namespace to the filter and look for the flow from `jump-host` to `medical/patient-db`. This is a second lateral movement path.
+. Optional: also add the `medical` namespace to the filter and look for a flow from `jump-host` to `medical/patient-db`.
+That path is configured in the jump-host args, but it is not always visible in the graph depending on timing and active flow windows.
+Treat `payments/visa-processor` as the required observation for this exercise.
 
-ifdef::env-site[]
 image::s3/s3-06-cross-namespace-flows.png[Cross-namespace anomalous flow from operations to payments]
-endif::[]
 
 == Task 6.3: Generate an additional anomalous probe
 
 The pre-existing flows from `jump-host` demonstrate continuous lateral movement.
 Now generate a one-time probe to see a new anomalous flow appear in real time.
 
-. On the bastion, send a TCP probe from `jump-host` to the `postgres` service in `backend`:
+IMPORTANT: Probe `backend-atlas`, not `postgres`.
+Exercise 7 generates a NetworkPolicy for `postgres` from observed ingress.
+If you probe `postgres` here, the generator may treat `jump-host` as legitimate ingress and produce a policy that allows the anomalous path.
+
+. On the bastion, send a TCP probe from `jump-host` to the `backend-atlas` service in `backend`:
 +
 [source,bash]
 ----
-oc exec -n operations deploy/jump-host -- bash -c 'timeout 3 bash -c "echo >/dev/tcp/postgres-service.backend.svc.cluster.local/5432" && echo "OPEN" || echo "TIMED OUT / BLOCKED"'
+oc exec -n operations deploy/jump-host -- bash -c 'timeout 3 bash -c "echo >/dev/tcp/backend-atlas-service.backend.svc.cluster.local/8080" && echo "OPEN" || echo "TIMED OUT / BLOCKED"'
 ----
 +
-The probe may succeed or be blocked depending on whether a `NetworkPolicy` already exists (you will create one in Exercise 7).
+Expect `OPEN` unless a NetworkPolicy already blocks that path.
 
 . Return to the Network Graph in the RHACS console. If needed, click the *Updates available* notification.
-. Look for a new flow line from `operations/jump-host` to `backend/postgres`. Since this target was not in the `jump-host` baseline, it should appear as an anomalous connection.
+. Look for a new flow line from `operations/jump-host` to `backend/backend-atlas`. Since this target was not in the `jump-host` baseline, it should appear as an anomalous connection.
 
 This is the "I caused something to happen" moment: the Network Graph reflects your probe in near-real time because RHACS Collector captures flows at the kernel level and reports them to Central.
 
@@ -85,11 +89,12 @@ NOTE: If the violation does not appear immediately, wait 30 seconds and refresh.
 * Cross-namespace connections that bypass the expected API tier produce visible anomalous flow indicators in the Network Graph.
 * With *Alert on baseline violations* enabled (Exercise 5), anomalous flows also generate violation events that feed into alerting workflows.
 * The Network Graph updates in near-real time. You can generate a probe on the bastion and watch the flow appear in the console within seconds.
-* The `operations/jump-host` pattern (lateral movement from an operations tool to payment and medical services) is a common real-world attack vector.
+* Avoid probing the deployment you will later lock down with a generated NetworkPolicy, or the generator may treat the anomalous flow as allowed ingress.
+* The `operations/jump-host` pattern (lateral movement from an operations tool to payment services) is a common real-world attack vector.
 
 [.verification]
 ****
-Did you see a cross-namespace flow from `operations/jump-host` to `payments/visa-processor` in the Network Graph, and did your manual probe to `backend/postgres` appear as a new flow?
+Did you see a cross-namespace flow from `operations/jump-host` to `payments/visa-processor` in the Network Graph, and did your manual probe to `backend/backend-atlas` appear as a new flow?
 
 [.success]
 Anomalous east-west traffic is visible in real time. Continue to Exercise 7.

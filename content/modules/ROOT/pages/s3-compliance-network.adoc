@@ -17,7 +17,7 @@ A hands-on lab for platform, infrastructure, security, and SRE teams.
 By completing this lab, participants will:
 
 . Deploy declarative CIS compliance profiles via the Compliance Operator and observe scan results as native Kubernetes CRDs.
-. Create scan schedules in the RHACS UI, triage failing checks, and work with remediation guidance to prepare for an audit.
+. Create a CIS scan schedule in the RHACS UI, triage failing checks, work with remediation guidance, and distinguish platform compliance from runtime policies in the same console.
 . Generate on-demand compliance audit evidence and understand how delivery destinations automate evidence distribution.
 . Audit container listening endpoints at the process and PID level, then correlate them with deployment manifests.
 . Visualize multi-tier network topology in the RHACS Network Graph and enable baseline violation alerts.
@@ -27,24 +27,9 @@ By completing this lab, participants will:
 
 == Demo application architecture
 
-This session uses the pre-deployed multi-tier medical application. The network exercises focus on three namespaces:
+This session uses the pre-deployed multi-tier medical application. The network exercises focus on three namespaces: `backend`, `payments`, and `operations`.
 
-....
-   [ frontend/tls-proxy ]
-            |
-            v
-     [ backend/varnish ]
-            |  (Port 9001)
-            v
-     [ backend/api-server ] -----> [ payments/gateway ] (Port 7777)
-       |         \                       |          \
-       v          v                      v           v
-  [ postgres ]  [ backend-atlas ]   [ visa-proc ]  [ mastercard-proc ]
-  (Port 5432)   (Port 8080)        (Port 8080)    (Port 8080)
-
-   [ operations/jump-host ] --X--> [ payments/visa-processor ] (ANOMALOUS)
-                            --X--> [ medical/patient-db ]      (ANOMALOUS)
-....
+image::s3/s3-00-architecture.svg[alt="Demo application architecture with approved and anomalous traffic flows",width=720]
 
 The `operations/jump-host` represents an unapproved lateral movement source that bypasses the legitimate API gateway tier.
 
@@ -72,14 +57,14 @@ Bind CIS profiles to cluster nodes via the Compliance Operator (~10 min).
 ****
 xref:s3-03-compliance-rhacs.adoc[Exercise 2: Working with compliance in RHACS]
 
-Create scan schedules, explore profile coverage, drill into failing checks, and work with remediation guidance (~15 min).
+Delete the CLI binding, create a CIS scan schedule, triage failing checks, and glance at runtime policies in the same console (~15 min).
 ****
 
 [.tile]
 ****
 xref:s3-04-audit-evidence.adoc[Exercise 3: Audit evidence and compliance operations]
 
-Configure delivery destinations, manage scan schedules, and generate on-demand audit reports (~15 min).
+Edit schedule settings, generate on-demand audit reports, and review delivery destinations (~15 min).
 ****
 
 === Network Graph and Traffic Observability
@@ -104,14 +89,14 @@ Visualize the multi-tier stack and enable baseline violation alerts (~10 min).
 ****
 xref:s3-07-anomalous-flows.adoc[Exercise 6: Anomalous flow detection]
 
-Investigate unapproved cross-namespace traffic and generate your own anomalous probe (~10 min).
+Investigate unapproved cross-namespace traffic and probe backend-atlas to watch a new flow appear (~10 min).
 ****
 
 [.tile]
 ****
 xref:s3-08-network-policy-gen.adoc[Exercise 7: Network policy generation]
 
-Auto-generate and apply zero-trust NetworkPolicy manifests (~15 min).
+Generate NetworkPolicy YAML, apply the curated postgres policy, and keep anomalous ingress out (~15 min).
 ****
 
 [.tile]
@@ -125,7 +110,7 @@ Confirm packet drops with dual TCP probes from authorized and unauthorized sourc
 
 In production, these exercises chain together:
 
-. The Compliance Operator continuously evaluates CIS benchmarks (Exercise 1). RHACS provides both UI and CLI workflows for managing scans, and links failing controls to specific remediation guidance (Exercise 2).
+. The Compliance Operator evaluates CIS benchmarks from a declarative binding (Exercise 1). Students then recreate that CIS schedule in the RHACS UI, triage failing controls with remediation guidance, and distinguish platform compliance from runtime policies in the same console (Exercise 2).
 . Scan schedules with delivery destinations automate evidence distribution. On-demand downloads handle ad-hoc audit requests (Exercise 3).
 . RHACS Collector maps every open port to an exact process binary (Exercise 4). The Network Graph visualizes active traffic and locks baselines (Exercise 5).
-. Anomalous cross-namespace traffic triggers real-time alerts (Exercise 6). Auto-generated `NetworkPolicy` manifests enforce zero-trust microsegmentation at the kernel level (Exercises 7 and 8).
+. Anomalous cross-namespace traffic triggers real-time alerts (Exercise 6). Curated or edited `NetworkPolicy` manifests enforce zero-trust microsegmentation at the kernel level (Exercises 7 and 8).

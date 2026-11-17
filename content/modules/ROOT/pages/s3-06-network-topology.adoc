@@ -39,9 +39,8 @@ By the end of this exercise you will:
 +
 Each node represents a deployment. Lines between nodes indicate observed traffic flows. The connection from `api-server` to `payments/gateway` crosses namespace boundaries.
 
-ifdef::env-site[]
 image::s3/s3-05-network-graph-backend.png[Network Graph showing backend namespace topology]
-endif::[]
+
 
 == Task 5.2: Inspect deployment details
 

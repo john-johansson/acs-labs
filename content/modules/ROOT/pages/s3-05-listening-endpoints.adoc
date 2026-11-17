@@ -26,9 +26,8 @@ By the end of this exercise you will:
 
 The filtered list shows only deployments in the `backend` namespace.
 
-ifdef::env-site[]
 image::s3/s3-04-listening-endpoints.png[Listening Endpoints page filtered by backend namespace]
-endif::[]
+
 
 == Task 4.2: Inspect api-server
 
