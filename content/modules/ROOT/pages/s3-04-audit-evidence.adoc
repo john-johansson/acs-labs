@@ -12,7 +12,7 @@ With compliance gaps identified in Exercise 2, the *Information Security* team's
 
 By the end of this exercise you will:
 
-* Manage scan schedule settings (frequency, profiles, clusters).
+* Edit scan schedule settings that are mutable after create (description, frequency, profiles, clusters).
 * Generate an on-demand compliance report.
 * Download and review the report contents as audit evidence.
 * Understand how delivery destinations automate evidence distribution in production.
@@ -20,13 +20,11 @@ By the end of this exercise you will:
 == Task 3.1: Open the scan schedule detail page
 
 . In the RHACS Console, navigate to *Compliance > OpenShift Schedules*.
-. Click the `cis-audit-schedule` (created in Exercise 2) to open the detail view.
+. Click `cis-audit-schedule` (created in Exercise 2) to open the detail view.
 +
-If you did not create it in Exercise 2, select the `acs-catch-all` schedule or the `cis-weekly-scan` schedule from Exercise 1.
+If that schedule is not listed, open `acs-catch-all` instead.
 
-ifdef::env-site[]
 image::s3/s3-03-compliance-schedules.png[Compliance scan schedule list]
-endif::[]
 
 == Task 3.2: Review and edit scan schedule settings
 
@@ -34,9 +32,10 @@ Compliance requirements change over time. Explore how to modify a scan schedule.
 
 . On the schedule detail page, click the *Edit* button (pencil icon) or use *Actions > Edit scan schedule*.
 . Review the configurable settings:
-** *Name and description*: Rename for clarity as compliance programs evolve.
+** *Name*: Immutable after create. You cannot rename an existing schedule.
+** *Description*: Editable. Use this for clarity as compliance programs evolve.
 ** *Schedule frequency*: Change from weekly to daily, monthly, or a custom cron expression.
-** *Profiles*: Add or remove compliance profiles. For example, adding `ocp4-cis-node` to a schedule that only scanned `ocp4-cis`.
+** *Profiles*: Add or remove compliance profiles that are not already bound by another schedule on the same cluster.
 ** *Clusters*: Expand scope as new clusters join the fleet.
 . Make a small change (e.g., update the description to `Weekly CIS scan for Q4 audit`) and save.
 +
@@ -49,29 +48,33 @@ Changes take effect on the next scheduled scan. Running scans are not interrupte
 On-demand reports let you pull evidence at any time, outside the regular schedule.
 This is useful for ad-hoc audit requests or pre-audit preparation.
 
-. From the scan schedule detail page, open the *Actions* drop-down (upper right) and select *Generate download*.
+. From the schedule *detail* page (not only the Schedules list), open the *Actions* drop-down (upper right) and select *Generate download*.
 +
 You receive a confirmation that report generation has started.
 
-. Click the *All report jobs* tab.
+. Stay on the detail page and click the *All report jobs* tab.
 . Watch the job status progress through:
 ** *Waiting*: The job is queued.
 ** *Preparing*: The system is collecting and formatting compliance data.
 ** *Report ready for download*: The report is complete.
 . Click *Ready for download* to save the file.
++
+NOTE: The Schedules *list* page may also show a *Report ready for download* action after generation completes. Either the detail *All report jobs* tab or that list action works. Prefer the detail page so you can watch status transitions.
 
 NOTE: Report generation typically completes in under a minute. If the job stays in *Preparing* for more than five minutes, verify that the underlying `ComplianceScan` resources have reached `DONE` (`oc get compliancescan -n openshift-compliance`).
 
 == Task 3.4: Review the report as audit evidence
 
 . Extract the downloaded file (it is a ZIP archive).
-. Open the CSV report and review the contents. Key columns include:
-** *Cluster*: Which cluster was scanned.
-** *Profile*: Which compliance profile (e.g., `ocp4-cis`).
-** *Check name*: The specific control evaluated.
-** *Control reference*: The CIS benchmark section (e.g., 1.2.1).
-** *Status*: Pass, Fail, Manual, Not Applicable, Error, or Inconsistent.
-** *Rationale and remediation*: Why the control matters and how to fix failures.
++
+On a single-cluster lab you typically get one CSV per download (or one CSV per cluster when multiple clusters are in scope). The cluster name may appear in the ZIP/CSV filename or inside the rows, rather than as a standalone *Cluster* column.
+
+. Open the CSV report and review the contents. Expect fields such as:
+** Profile name (e.g., `ocp4-cis`)
+** Check name
+** Control reference (CIS benchmark section, e.g., 1.2.1)
+** Status (Pass, Fail, Manual, Not Applicable, Error, or Inconsistent)
+** Rationale and remediation text when present
 +
 This is the evidence an external auditor needs: a time-stamped, machine-generated record of every compliance control evaluated against the cluster.
 
@@ -86,7 +89,7 @@ In production, compliance reports are delivered automatically to auditors and se
 . On the scan schedule detail page, look for the delivery destination configuration.
 . Review how it works:
 ** *Email delivery*: RHACS sends reports to a distribution list on the configured schedule. This requires an SMTP integration under *Platform Configuration > Integrations > Notifiers*.
-** *Download only*: Reports are generated but must be downloaded manually from the *All report jobs* tab.
+** *Download only*: Reports are generated but must be downloaded manually from the *All report jobs* tab (or the Schedules list when a job is ready).
 +
 This Showroom does not have SMTP configured, so you used the on-demand download path.
 In a production environment, you would:
@@ -104,26 +107,26 @@ With scan schedules, delivery destinations, and on-demand reporting in place, co
 * *Continuous visibility*: Daily or weekly scans catch configuration drift before auditors do.
 * *Automated evidence delivery*: Email delivery eliminates the manual collection process entirely.
 * *Trend tracking*: Comparing reports over time shows whether the compliance posture is improving or degrading.
-* *Multi-cluster scale*: The same scan schedule can target multiple clusters, producing a single consolidated report.
-* *Separation of duties*: Platform Operations creates scan schedules and remediates failures. Information Security receives reports and reviews evidence. Neither team needs to access the other's tools.
+* *Multi-cluster scale*: The same scan schedule can target multiple clusters, producing consolidated evidence packages.
+* *Separation of duties*: Platform Operations remediates infrastructure gaps. Information Security owns schedules and evidence review. Auditors consume the reports. All of that uses RHACS and Compliance Operator results in one system, with role separation rather than separate toolchains.
 
-NOTE: Compliance reporting requires Compliance Operator version 1.6.0 or later. This environment runs version 1.10.0.
+NOTE: Compliance reporting requires Compliance Operator version 1.6.0 or later. This environment runs version 1.10.0 or newer.
 
 == Key takeaways
 
 * Scan schedules in RHACS manage the full compliance lifecycle: when to scan, what to scan, and who receives the results.
+* After create, the schedule *name* is fixed. Description, frequency, profiles, and clusters remain editable.
 * On-demand downloads handle ad-hoc audit requests. Adding email delivery destinations automates recurring evidence distribution.
-* Schedule settings (frequency, profiles, clusters) can be modified at any time without disrupting running scans.
-* The CSV report contains check-level detail per cluster and profile. Cross-referencing it with the Coverage page confirms that the downloadable evidence matches the interactive view.
+* The CSV contains check-level detail suitable for regulatory evidence packages. Cross-referencing it with the Coverage page confirms that the downloadable evidence matches the interactive view.
 * Operationalizing compliance means continuous scanning, automated delivery, and trend tracking, not periodic fire drills.
 
 [.verification]
 ****
-Did you edit a scan schedule setting, generate an on-demand report, and find the same failing check from Exercise 2 in the downloaded CSV?
+Did you update a schedule description, generate an on-demand report, and find the same failing check from Exercise 2 in the downloaded CSV?
 
 [.success]
 You can manage the compliance operations lifecycle in RHACS. Continue to Exercise 4.
 
 [.fail]
-Return to *Compliance > OpenShift Schedules*, select a scan schedule, and use *Actions > Generate download*. Wait for the job to reach *Ready for download* under the *All report jobs* tab.
+Return to *Compliance > OpenShift Schedules*, open a schedule detail page, and use *Actions > Generate download*. Wait for *Ready for download* under *All report jobs* (or on the Schedules list).
 ****
