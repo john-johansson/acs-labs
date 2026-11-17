@@ -112,7 +112,9 @@ oc get compliancecheckresults -n openshift-compliance --no-headers | wc -l
 +
 A non-zero count confirms that the Compliance Operator evaluated every applicable control.
 
-TIP: If scans are still running, you can proceed to Exercise 2 while they complete. The pre-deployed `acs-catch-all` scan schedule has already produced results on the Coverage page, so Exercise 2 will work even before your new scan finishes.
+TIP: If scans are still running, you can proceed to Exercise 2 while they complete.
+The pre-deployed `acs-catch-all` schedule still produces Coverage results for non-CIS profiles.
+CIS results for this lab come from the `cis-weekly-scan` binding you just applied (and from the UI schedule you create in Exercise 2).
 
 == Key takeaways
 

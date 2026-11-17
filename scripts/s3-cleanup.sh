@@ -6,7 +6,8 @@ set -euo pipefail
 
 echo "=== Session 3 cleanup ==="
 
-# Compliance resources (lab-created bindings from Exercise 1 and Exercise 2)
+# Compliance resources (lab-created bindings from Exercises 1 and 2)
+# Does not restore CIS profiles into acs-catch-all (instructor prep owns that).
 echo "Removing ScanSettingBinding cis-weekly-scan..."
 oc delete scansettingbinding cis-weekly-scan -n openshift-compliance --ignore-not-found
 echo "Removing ScanSettingBinding cis-audit-schedule..."

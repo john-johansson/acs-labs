@@ -53,6 +53,18 @@ roxctl central whoami
 
 NOTE: Expected output includes an *Admin* (or equivalent) role. Do not pass `--token`; `roxctl` reads it from the environment.
 
+== Clone the lab repository
+
+[source,bash]
+----
+git clone https://github.com/john-johansson/acs-labs.git
+cd acs-labs
+----
+
+This repository contains the Session 3 cleanup script, the instructor prep script, and the example manifests used later in the exercises.
+
+NOTE: *Instructors only:* Before students start Session 3, clone this repository on the bastion (or reuse an existing clone) and run `bash scripts/s3-instructor-prep.sh`. That script frees the CIS profiles from the demo `acs-catch-all` schedule so Exercises 1 and 2 can own them. Students do not run the instructor prep script.
+
 == Verify the demo application namespaces
 
 This session uses the pre-deployed multi-tier medical application. Confirm the application namespaces exist:
@@ -119,10 +131,11 @@ The demo environment deploys a medical application across five namespaces. This 
 
 == Full reset (optional)
 
-If you have run these exercises before on this Showroom and want a clean starting point, run the cleanup script from the cloned repository:
+If you have run these exercises before on this Showroom and want a clean starting point, run the cleanup script from the repository you cloned above:
 
 [source,bash]
 ----
+cd ~/acs-labs
 bash scripts/s3-cleanup.sh
 ----
 

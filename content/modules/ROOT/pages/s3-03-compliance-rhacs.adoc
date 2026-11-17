@@ -7,80 +7,81 @@ Estimated time: 15 minutes.
 
 In Exercise 1 you deployed scans from the CLI using a `ScanSettingBinding`.
 That approach works well for GitOps pipelines, but RHACS also provides a full UI workflow for creating scan schedules, selecting profiles, and managing compliance operations.
-In this exercise you create a scan schedule through the RHACS console, triage the compliance results, and work with the remediation guidance to identify what needs to change before the audit.
+In this exercise you hand ownership of the CIS profiles to RHACS by creating a scan schedule in the console, then triage failing checks and work with remediation guidance before the audit.
 
 Platform Operations has deployed the scans.
-Switching to the *Information Security* perspective, your job is now to verify whether the cluster meets CIS requirements and identify the gaps that need remediation before the auditor arrives.
+Switching to the *Information Security* perspective, your job is now to recreate the CIS schedule in RHACS, verify whether the cluster meets CIS requirements, and identify the gaps that need remediation before the auditor arrives.
 
 By the end of this exercise you will:
 
+* Delete the Exercise 1 CLI binding so the UI can own the CIS profiles.
 * Create a compliance scan schedule through the RHACS UI.
-* Configure scan settings: profile selection, cluster scope, and schedule frequency.
 * Navigate the Coverage page and compare profile coverage.
 * Find a specific failing check, read its remediation guidance, and understand what needs to change.
+* Glance at *Violations* (or *Policy Management*) to see runtime guardrails in the same RHACS console.
 
-== Task 2.1: Create a scan schedule via the RHACS UI
+== Task 2.1: Hand off from CLI to the RHACS UI
 
-Exercise 1 used `oc apply` to create a `ScanSettingBinding` directly.
-RHACS provides the same capability through its console, which is how most Information Security teams manage compliance day-to-day.
+Exercise 1 created `cis-weekly-scan` with `oc apply`.
+RHACS cannot bind the same Compliance Operator profile twice on one cluster, so you must remove that CLI binding before creating the UI schedule.
+
+. On the bastion, delete the Exercise 1 binding:
++
+[source,bash]
+----
+oc delete scansettingbinding cis-weekly-scan -n openshift-compliance
+----
 
 . In the RHACS Console, navigate to *Compliance > OpenShift Schedules*.
 +
-You should see the `acs-catch-all` schedule (or any schedule the Compliance Operator created automatically).
+You should still see `acs-catch-all` (non-CIS profiles). `cis-weekly-scan` should no longer appear after RHACS refreshes.
+
+NOTE: The instructor prep for this session removed `ocp4-cis` and `ocp4-cis-node` from `acs-catch-all` so the lab can own those profiles.
+If Create fails with a profile conflict, ask the instructor to re-run `scripts/s3-instructor-prep.sh`.
+
+== Task 2.2: Create a scan schedule via the RHACS UI
 
 . Click *Create scan schedule*.
-. Configure the schedule:
+. Walk through the wizard (RHACS 5 selects clusters before profiles):
+.. *Clusters*: Select `production` (or the single available cluster).
+.. *Profiles*: Select `ocp4-cis` and `ocp4-cis-node`.
+.. *Schedule*: Select *Weekly* and pick a day (e.g., Monday).
 .. *Name*: `cis-audit-schedule`
 .. *Description*: `Weekly CIS scan for Q4 audit evidence`
-.. *Schedule*: Select *Weekly* and pick a day (e.g., Monday).
-.. *Profiles*: Select `ocp4-cis` and `ocp4-cis-node` from the profile list.
-.. *Clusters*: Select `production` (or all clusters).
 . Click *Create* to save the schedule.
 +
 RHACS creates the underlying `ScanSettingBinding` on the cluster automatically.
-This is the equivalent of the `oc apply` step in Exercise 1, but managed entirely through the UI.
+This is the UI equivalent of the `oc apply` step in Exercise 1.
 
-. Verify the new schedule appears in the list alongside any existing schedules.
+. Verify `cis-audit-schedule` appears in the Schedules list.
+. Click `cis-audit-schedule` to open the detail view and confirm clusters, profiles, and schedule frequency.
 
-NOTE: Both the CLI-created `cis-weekly-scan` and the UI-created `cis-audit-schedule` produce `ComplianceCheckResult` CRDs on the cluster. RHACS aggregates results from all schedules on the Coverage page.
+== Task 2.3: Explore profile coverage
 
-== Task 2.2: Explore profile coverage and scan settings
-
-Before reviewing results, explore what each profile covers.
-
-. On the *Compliance > OpenShift Schedules* page, click your `cis-audit-schedule` to open the detail view.
-. Review the *Configuration* tab:
-** *Profiles*: Which CIS benchmarks are included.
-** *Clusters*: Which clusters the scan targets.
-** *Schedule*: The recurrence pattern.
-+
-These settings can be edited at any time by clicking the *Edit* button (pencil icon).
+Before reviewing individual checks, compare what each CIS profile covers.
 
 . Navigate to *Compliance > OpenShift Coverage*.
-. Use the *Profile* dropdown to switch between `ocp4-cis` and `ocp4-cis-node`:
+. Use the profile toggle to switch between `ocp4-cis` and `ocp4-cis-node`:
 ** `ocp4-cis`: Platform-level controls (API server flags, etcd encryption, RBAC settings). These are cluster-wide checks.
 ** `ocp4-cis-node`: Node-level controls (kernel parameters, file permissions, kubelet configuration). These run on every node.
 . Compare the check counts and compliance percentages between the two profiles.
 +
 Most clusters show a lower compliance percentage for `ocp4-cis-node` because it covers a larger number of OS-level hardening controls.
 
-ifdef::env-site[]
 image::s3/s3-02-compliance-coverage.png[Compliance Coverage page showing CIS-OCP profile selection]
-endif::[]
 
-== Task 2.3: Find and triage a specific failing check
+== Task 2.4: Find and triage a specific failing check
 
 Rather than browsing the full list, work through a targeted triage workflow.
 
 . On the Coverage page, ensure the *Checks* view is selected.
 . Use the *Status* filter to show only *Fail* checks. This narrows the view to controls that need attention before the audit.
-. Sort by *Fail* count (descending) to prioritize checks that affect the most resources.
 . Find the CIS check for *API server TLS certificates* (look for a check name containing `api-server` and `tls` or `cert`, or browse the 1.2.x control references).
 +
 If that specific check is not failing, select any check with a *Fail* count greater than zero.
 . Click the check name to open the detail view.
 
-== Task 2.4: Work with remediation guidance
+== Task 2.5: Work with remediation guidance
 
 This is where RHACS goes beyond a simple pass/fail report.
 Each failing check includes remediation guidance that tells an administrator exactly what to change.
@@ -103,7 +104,7 @@ This is the "pointer to the fix" concept: RHACS does not just report failures, i
 
 NOTE: Some checks show a *Manual* status. These are controls that require human judgment (e.g., reviewing organizational policies). They cannot be evaluated automatically and are flagged for manual review during audits.
 
-== Task 2.5: Understand platform vs workload compliance
+== Task 2.6: Understand platform vs workload compliance
 
 The Coverage page shows *infrastructure and platform compliance* evaluated by the Compliance Operator:
 
@@ -114,24 +115,30 @@ RHACS also evaluates *workload runtime security* through its policy engine (e.g.
 These workload checks are not part of the Compliance Operator profiles and do not appear on the Coverage page.
 They are visible under *Violations* and *Policy Management* in the RHACS console.
 
+. Open *Violations* (or *Policy Management*) in the same RHACS console.
+. Confirm that runtime guardrails live here, separate from CIS Coverage. The list may be empty or unrelated to the CIS fails you just reviewed. That is expected.
+. Navigate back to *Compliance > OpenShift Coverage*.
+
+Platform Operations, Information Security, and auditors align on the same system: Platform Operations enables Operator and CLI scanning (Exercise 1), Information Security owns the RHACS schedule, triage, and runtime policies (this exercise), and auditors receive evidence from those same scan results (Exercise 3).
+
 NOTE: The Coverage page filters by scan schedule, profile, cluster, and compliance status. Namespace-level workload compliance filtering is not available here because the Compliance Operator evaluates cluster-wide infrastructure, not per-namespace workload posture.
 
 == Key takeaways
 
-* RHACS provides both UI and CLI workflows for managing compliance scans. The UI approach (*Compliance > OpenShift Schedules*) is how most teams manage compliance day-to-day.
-* Creating a scan schedule in the RHACS UI generates the same `ScanSettingBinding` CRDs as the CLI approach in Exercise 1.
+* RHACS provides both UI and CLI workflows for managing compliance scans. Day-2 teams typically create and edit schedules in the UI.
+* A Compliance Operator profile can only be bound once per cluster. Delete the CLI binding before recreating the same profiles in RHACS.
+* Creating a scan schedule in the RHACS UI generates the same `ScanSettingBinding` CRDs as `oc apply`.
 * The Coverage page is more than a dashboard. Drilling into a failing check gives you the description, rationale, affected resources, and specific remediation instructions.
-* A targeted triage workflow (filter by Fail, sort by count, drill into specifics) is more efficient than browsing the full check list.
-* *Manual* checks require human judgment and cannot be automated. They are flagged for review during audits.
-* Infrastructure compliance (Compliance Operator) and workload runtime security (RHACS policy engine) are complementary. Together they cover the full security posture from OS settings to container behaviour.
+* A targeted triage workflow (filter by Fail, then drill into specifics) is more efficient than browsing the full check list.
+* Infrastructure compliance (Compliance Operator) and workload runtime security (RHACS policy engine) are complementary and visible in one console.
 
 [.verification]
 ****
-Did you create a scan schedule via the RHACS UI, find a specific failing check, and read its remediation guidance to understand what needs to change?
+Did you delete `cis-weekly-scan`, create `cis-audit-schedule` in the RHACS UI with `ocp4-cis` and `ocp4-cis-node`, and drill into at least one failing check?
 
 [.success]
-You can manage compliance scans through the RHACS UI and triage failing checks with remediation guidance. Continue to Exercise 3.
+You can hand off CIS scanning from CLI to the RHACS UI and triage failing checks with remediation guidance. Continue to Exercise 3.
 
 [.fail]
-Navigate to *Compliance > OpenShift Schedules* to create a schedule. If Coverage is empty, wait a minute for RHACS Sensor to ingest the results, then refresh the page. Ensure scans from Exercise 1 reached `DONE` (`oc get compliancesuite -n openshift-compliance`).
+Confirm `oc delete scansettingbinding cis-weekly-scan -n openshift-compliance` succeeded, then create the schedule under *Compliance > OpenShift Schedules*. If Create fails with a profile conflict, ask the instructor to re-run `scripts/s3-instructor-prep.sh`. If Coverage is empty for CIS, wait for the new schedule scan to finish and refresh.
 ****
