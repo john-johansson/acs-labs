@@ -8,7 +8,7 @@ asciidoc:
   attributes:
     experimental: true
     lab_name: "ACS Hands-On Labs"
-    rhacs-version: "4.11.4"
+    rhacs-version: "5.0.0"
     page-pagination: true
     page-links:
       - url: https://github.com/john-johansson/acs-labs
