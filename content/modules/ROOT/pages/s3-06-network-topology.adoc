@@ -46,12 +46,11 @@ image::s3/s3-05-network-graph-backend.png[Network Graph showing backend namespac
 == Task 5.2: Inspect deployment details
 
 . Click `postgres` in the graph to open the side panel.
-. On the *Details* tab, review the *Network security* section. It shows:
-** How many network flows were observed.
-** Whether network policies exist that regulate ingress or egress.
-** Listening ports for this deployment.
-. Click the *Flows* tab to see the list of observed connections (both ingress and egress) with protocol and port details.
-. The *Baseline* tab (used next) lists the flows RHACS treats as expected for this deployment.
+. Navigate the different tabs. Across them you can see:
+** *Details*: deployment metadata, exposed or listening ports, and a *Network security* summary of whether ingress or egress policies exist (or are missing).
+** *Flows*: observed ingress and egress connections with protocol and port details.
+** *Baseline*: the flows RHACS treats as expected for this deployment (used in the next task).
+** *Network policies*: any `NetworkPolicy` objects that currently select this deployment.
 
 == Task 5.3: Enable baseline violation alerting
 
