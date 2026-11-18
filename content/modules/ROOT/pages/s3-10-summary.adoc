@@ -7,9 +7,9 @@ In this session you worked through the full compliance and network security life
 
 == Compliance and Audit Evidence (Exercises 1-3)
 
-* *Compliance scanning*: Deployed a declarative `ScanSettingBinding` binding CIS profiles to cluster nodes, producing `ComplianceCheckResult` CRDs as continuous audit evidence (Exercise 1).
-* *Working with compliance in RHACS*: Deleted the CLI CIS binding, created `cis-audit-schedule` in the RHACS UI, triaged failing checks, drilled into remediation guidance, and glanced at *Violations* or *Policy Management* to distinguish infrastructure compliance from workload runtime security in the same console (Exercise 2).
-* *Audit evidence and operations*: Edited the `cis-audit-schedule` description, generated an on-demand compliance report, cross-referenced failing checks between the CSV and the Coverage page, and reviewed how delivery destinations automate evidence distribution in production (Exercise 3).
+* *Compliance scanning*: Deployed a declarative `ScanSettingBinding` from the lab repository, listed bindings, and confirmed `ComplianceCheckResult` CRDs as continuous audit evidence (Exercise 1).
+* *Working with compliance in RHACS*: Deleted the CLI CIS binding, created `cis-audit-schedule` in the RHACS UI, compared Coverage with CLI status counts, triaged Fail or Inconsistent findings into a ticket note, and confirmed runtime guardrails under *Violations* or *Policy Management* (Exercise 2).
+* *Audit evidence and operations*: Generated an on-demand compliance report in the UI, fetched the ZIP from Central with the bastion API, and cross-referenced Fail or Inconsistent CSV rows with Exercise 2 findings (Exercise 3).
 
 == Network Graph and Traffic Observability (Exercises 4-8)
 

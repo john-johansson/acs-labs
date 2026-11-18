@@ -12,38 +12,27 @@ With compliance gaps identified in Exercise 2, the *Information Security* team's
 
 By the end of this exercise you will:
 
-* Edit scan schedule settings that are mutable after create (description, frequency, profiles, clusters).
-* Generate an on-demand compliance report.
-* Download and review the report contents as audit evidence.
-* Understand how delivery destinations automate evidence distribution in production.
+* Open the CIS scan schedule created in Exercise 2 and confirm what remains editable after create.
+* Generate an on-demand compliance report in the RHACS UI.
+* Fetch the report ZIP from Central on the bastion with the RHACS API and review the CSV as audit evidence.
 
 == Task 3.1: Open the scan schedule detail page
 
 . In the RHACS Console, navigate to *Compliance > OpenShift Schedules*.
-. Click `cis-audit-schedule` (created in Exercise 2) to open the detail view.
+. Confirm `cis-audit-schedule` is listed (created in Exercise 2).
 +
-If that schedule is not listed, open `acs-catch-all` instead.
+You may also still see `acs-catch-all` for non-CIS profiles. Use `cis-audit-schedule` for this exercise.
+If `cis-audit-schedule` is missing, return to Exercise 2 and create it before continuing.
 
-image::s3/s3-03-compliance-schedules.png[Compliance scan schedule list]
+image::s3/s3-03-compliance-schedules.png[Compliance Schedules list showing cis-audit-schedule and acs-catch-all]
 
-== Task 3.2: Review and edit scan schedule settings
-
-Compliance requirements change over time. Explore how to modify a scan schedule.
-
-. On the schedule detail page, click the *Edit* button (pencil icon) or use *Actions > Edit scan schedule*.
-. Review the configurable settings:
-** *Name*: Immutable after create. You cannot rename an existing schedule.
-** *Description*: Editable. Use this for clarity as compliance programs evolve.
-** *Schedule frequency*: Change from weekly to daily, monthly, or a custom cron expression.
-** *Profiles*: Add or remove compliance profiles that are not already bound by another schedule on the same cluster.
-** *Clusters*: Expand scope as new clusters join the fleet.
-. Make a small change (e.g., update the description to `Weekly CIS scan for Q4 audit`) and save.
+. Click `cis-audit-schedule` to open the detail view.
+. On the detail page, note which fields remain editable after create (description, frequency, profiles, clusters).
+The schedule *name* is immutable.
 +
-Changes take effect on the next scheduled scan. Running scans are not interrupted.
+NOTE: You do not need to change settings for this lab. Editing is optional if you want to update the description for clarity.
 
-. Navigate back to *Compliance > OpenShift Schedules* and verify the updated description appears.
-
-== Task 3.3: Generate an on-demand compliance report
+== Task 3.2: Generate an on-demand compliance report
 
 On-demand reports let you pull evidence at any time, outside the regular schedule.
 This is useful for ad-hoc audit requests or pre-audit preparation.
@@ -51,56 +40,100 @@ This is useful for ad-hoc audit requests or pre-audit preparation.
 . From the schedule *detail* page (not only the Schedules list), open the *Actions* drop-down (upper right) and select *Generate download*.
 +
 You receive a confirmation that report generation has started.
+The toast alone is easy to miss. Stay on the detail page and use the jobs tab below.
 
-. Stay on the detail page and click the *All report jobs* tab.
+. Click the *All report jobs* tab on the detail page.
 . Watch the job status progress through:
 ** *Waiting*: The job is queued.
 ** *Preparing*: The system is collecting and formatting compliance data.
 ** *Report ready for download*: The report is complete.
-. Click *Ready for download* to save the file.
+. Optional: click *Ready for download* in the UI to save the file in your browser.
+The next task fetches the same kind of ZIP from the bastion with the API, which is the automation-friendly path.
 +
-NOTE: The Schedules *list* page may also show a *Report ready for download* action after generation completes. Either the detail *All report jobs* tab or that list action works. Prefer the detail page so you can watch status transitions.
+NOTE: The Schedules *list* page may also show a *Report ready for download* action after generation completes. Prefer the detail *All report jobs* tab so you can watch status transitions. If you leave the detail page, go back to the Schedules list or reopen `cis-audit-schedule` to find the ready job.
 
 NOTE: Report generation typically completes in under a minute. If the job stays in *Preparing* for more than five minutes, verify that the underlying `ComplianceScan` resources have reached `DONE` (`oc get compliancescan -n openshift-compliance`).
 
-== Task 3.4: Review the report as audit evidence
+== Task 3.3: Fetch and review the report from the bastion
 
-. Extract the downloaded file (it is a ZIP archive).
+There is no `roxctl` subcommand for Compliance v2 report ZIP download.
+Use the Central HTTP API with the bastion's existing `ROX_API_TOKEN` and `ROX_CENTRAL_ADDRESS`.
+Generate the downloadable job with the *same* API token identity (do not rely on a browser-generated job here, because downloads are scoped to the requesting user).
+
+. On the bastion, resolve the `cis-audit-schedule` configuration id, request a DOWNLOAD report, wait until it is ready, then save the ZIP:
 +
-On a single-cluster lab you typically get one CSV per download (or one CSV per cluster when multiple clusters are in scope). The cluster name may appear in the ZIP/CSV filename or inside the rows, rather than as a standalone *Cluster* column.
+[source,bash]
+----
+AUTH_H="Authorization: Bearer ${ROX_API_TOKEN}"
+BASE="${ROX_CENTRAL_ADDRESS}"
 
-. Open the CSV report and review the contents. Expect fields such as:
-** Profile name (e.g., `ocp4-cis`)
-** Check name
-** Control reference (CIS benchmark section, e.g., 1.2.1)
-** Status (Pass, Fail, Manual, Not Applicable, Error, or Inconsistent)
-** Rationale and remediation text when present
+CFG_ID=$(curl -sk -H "${AUTH_H}" "${BASE}/v2/compliance/scan/configurations" \
+  | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(c["id"] for c in d["configurations"] if c.get("scanName")=="cis-audit-schedule"))')
+echo "CFG_ID=${CFG_ID}"
+
+curl -sk -H "${AUTH_H}" -H "Content-Type: application/json" -X POST \
+  --data "{\"scanConfigId\":\"${CFG_ID}\",\"reportNotificationMethod\":\"DOWNLOAD\"}" \
+  "${BASE}/v2/compliance/scan/configurations/reports/run"
+echo
+
+JOB_ID=""
+for i in $(seq 1 24); do
+  HIST=$(curl -sk -H "${AUTH_H}" \
+    "${BASE}/v2/compliance/scan/configurations/${CFG_ID}/reports/my-history?reportParamQuery.pagination.limit=5")
+  JOB_ID=$(python3 -c 'import json,sys; d=json.load(sys.stdin); s=(d.get("complianceReportSnapshots") or [None])[0];
+print("" if not s else s.get("reportJobId",""))' <<<"${HIST}")
+  STATE=$(python3 -c 'import json,sys; d=json.load(sys.stdin); s=(d.get("complianceReportSnapshots") or [None])[0];
+print("" if not s else (s.get("reportStatus") or {}).get("runState",""))' <<<"${HIST}")
+  echo "poll ${i}: job=${JOB_ID} state=${STATE}"
+  [[ "${STATE}" == "GENERATED" || "${STATE}" == "DELIVERED" ]] && break
+  sleep 5
+done
+
+curl -sk -H "${AUTH_H}" -o ~/compliance-report.zip \
+  "${BASE}/v2/compliance/scan/configurations/reports/download?id=${JOB_ID}"
+unzip -l ~/compliance-report.zip
+rm -rf ~/compliance-report && mkdir -p ~/compliance-report
+unzip -o ~/compliance-report.zip -d ~/compliance-report
+CSV=$(find ~/compliance-report -name '*.csv' | head -1)
+echo "CSV=${CSV}"
+----
 +
-This is the evidence an external auditor needs: a time-stamped, machine-generated record of every compliance control evaluated against the cluster.
+On a single-cluster lab you typically get one CSV (for example `cluster_production_YYYY-MM-DD.csv`).
+HTML compliance reports are not part of this lab workflow. The downloadable evidence is ZIP containing CSV.
 
-. Find the failing check you drilled into in Exercise 2. Confirm the same status and remediation text appear in the CSV. This demonstrates that the downloadable report contains the same detail you reviewed interactively.
-
-. Count the number of *Fail* entries and compare with the percentage shown on the Coverage page in Exercise 2. The numbers should match.
-
-== Task 3.5: Understand delivery destinations and automation
-
-In production, compliance reports are delivered automatically to auditors and security teams rather than downloaded manually.
-
-. On the scan schedule detail page, look for the delivery destination configuration.
-. Review how it works:
-** *Email delivery*: RHACS sends reports to a distribution list on the configured schedule. This requires an SMTP integration under *Platform Configuration > Integrations > Notifiers*.
-** *Download only*: Reports are generated but must be downloaded manually from the *All report jobs* tab (or the Schedules list when a job is ready).
+. Inspect the CSV columns and status counts:
 +
-This Showroom does not have SMTP configured, so you used the on-demand download path.
-In a production environment, you would:
+[source,bash]
+----
+python3 - <<'PY'
+import csv, glob
+from collections import Counter
+path = glob.glob(__import__("os").path.expanduser("~/compliance-report/*.csv"))[0]
+with open(path, newline="", encoding="utf-8", errors="replace") as f:
+    rows = list(csv.DictReader(f))
+print("columns:", list(rows[0].keys()))
+print("rows:", len(rows))
+print("Status counts:", Counter(r["Status"] for r in rows))
+print("Fail rows:", sum(1 for r in rows if r["Status"] == "FAIL"))
+# Show a few FAIL or INCONSISTENT checks for triage cross-check
+for status in ("FAIL", "INCONSISTENT"):
+    hits = [r for r in rows if r["Status"] == status][:3]
+    for r in hits:
+        print(f"{status}: {r['Check(CCR)']} | {r['Profile(version)']}")
+PY
+----
++
+Expect columns such as `Control Reference`, `Check(CCR)`, `Profile(version)`, `Cluster`, `Status`, `Remediation`, and `Rationale`.
+`Status` values include `PASS`, `FAIL`, `INCONSISTENT`, `MANUAL`, and related states.
 
-.. Configure an SMTP notifier under *Platform Configuration > Integrations > Email*.
-.. Add the auditor distribution list (e.g., `compliance-team@example.com`) as a delivery destination on the scan schedule.
-.. Set the delivery cadence to match your audit requirements (weekly, monthly, quarterly).
+. Cross-check one finding from Exercise 2: confirm the same check name and status appear in the CSV.
+Count `FAIL` rows and compare with the Fail findings you saw on Coverage (or the CLI status counts from Exercise 2).
 
-This eliminates the manual step entirely: auditors receive evidence automatically, and the compliance team only intervenes when failures need remediation.
+NOTE: Email delivery destinations automate recurring evidence distribution in production (SMTP notifier under *Platform Configuration > Integrations*).
+This Showroom does not have SMTP configured, so you used on-demand DOWNLOAD.
+In production you would add an auditor distribution list as a delivery destination on the scan schedule and let RHACS email the ZIP on cadence.
 
-== Task 3.6: Operationalizing compliance (reflection)
+== Task 3.4: Operationalizing compliance (reflection)
 
 With scan schedules, delivery destinations, and on-demand reporting in place, consider how this fits into an ongoing compliance program:
 
@@ -116,17 +149,17 @@ NOTE: Compliance reporting requires Compliance Operator version 1.6.0 or later. 
 
 * Scan schedules in RHACS manage the full compliance lifecycle: when to scan, what to scan, and who receives the results.
 * After create, the schedule *name* is fixed. Description, frequency, profiles, and clusters remain editable.
-* On-demand downloads handle ad-hoc audit requests. Adding email delivery destinations automates recurring evidence distribution.
-* The CSV contains check-level detail suitable for regulatory evidence packages. Cross-referencing it with the Coverage page confirms that the downloadable evidence matches the interactive view.
+* The UI *Generate download* path teaches the product workflow. The Central API download path is what automation and bastion CLI workflows use.
+* The CSV contains check-level detail suitable for regulatory evidence packages. Cross-referencing it with Coverage or `compliancecheckresults` confirms the downloadable evidence matches the interactive view.
 * Operationalizing compliance means continuous scanning, automated delivery, and trend tracking, not periodic fire drills.
 
 [.verification]
 ****
-Did you update a schedule description, generate an on-demand report, and find the same failing check from Exercise 2 in the downloaded CSV?
+Did you open `cis-audit-schedule`, start an on-demand report, and fetch a CSV from Central on the bastion that shows Fail or Inconsistent rows matching Exercise 2?
 
 [.success]
 You can manage the compliance operations lifecycle in RHACS. Continue to Exercise 4.
 
 [.fail]
-Return to *Compliance > OpenShift Schedules*, open a schedule detail page, and use *Actions > Generate download*. Wait for *Ready for download* under *All report jobs* (or on the Schedules list).
+Return to *Compliance > OpenShift Schedules*, open `cis-audit-schedule`, and use *Actions > Generate download* to learn the UI path. Then re-run the bastion API commands in Task 3.3 (token identity must match the job that requested DOWNLOAD).
 ****

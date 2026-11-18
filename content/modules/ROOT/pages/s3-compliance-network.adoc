@@ -16,9 +16,9 @@ A hands-on lab for platform, infrastructure, security, and SRE teams.
 
 By completing this lab, participants will:
 
-. Deploy declarative CIS compliance profiles via the Compliance Operator and observe scan results as native Kubernetes CRDs.
-. Create a CIS scan schedule in the RHACS UI, triage failing checks, work with remediation guidance, and distinguish platform compliance from runtime policies in the same console.
-. Generate on-demand compliance audit evidence and understand how delivery destinations automate evidence distribution.
+. Deploy declarative CIS compliance profiles via the Compliance Operator (apply from the lab repository) and observe scan results as native Kubernetes CRDs.
+. Create a CIS scan schedule in the RHACS UI, compare Coverage with CLI status counts, triage Fail or Inconsistent findings with remediation guidance, and distinguish platform compliance from runtime policies in the same console.
+. Generate on-demand compliance audit evidence in the UI and fetch the CSV evidence package from Central on the bastion.
 . Audit container listening endpoints at the process and PID level, then correlate them with deployment manifests.
 . Visualize multi-tier network topology in the RHACS Network Graph and enable baseline violation alerts.
 . Detect anomalous cross-namespace traffic from an operations jump host and generate your own anomalous probe to watch it appear in real time.
@@ -43,28 +43,28 @@ TIP: For the best experience, follow the exercises in order. Each one builds on 
 ****
 xref:s3-01-prerequisites.adoc[Prerequisites]
 
-Bastion access, console URLs, and namespace verification (~5 min).
+Bastion access, console URLs, Compliance Operator checks, and architecture overview (~5 min).
 ****
 
 [.tile]
 ****
 xref:s3-02-compliance-profiles.adoc[Exercise 1: Deploying compliance profiles]
 
-Bind CIS profiles to cluster nodes via the Compliance Operator (~10 min).
+Apply a CIS `ScanSettingBinding` from the repo, list bindings, and monitor suite results (~10 min).
 ****
 
 [.tile]
 ****
 xref:s3-03-compliance-rhacs.adoc[Exercise 2: Working with compliance in RHACS]
 
-Delete the CLI binding, create a CIS scan schedule, triage failing checks, and glance at runtime policies in the same console (~15 min).
+Hand off CIS to an RHACS schedule, compare coverage with CLI status counts, and triage Fail or Inconsistent findings (~15 min).
 ****
 
 [.tile]
 ****
 xref:s3-04-audit-evidence.adoc[Exercise 3: Audit evidence and compliance operations]
 
-Edit schedule settings, generate on-demand audit reports, and review delivery destinations (~15 min).
+Generate an on-demand report in the UI, then fetch and parse the CSV from Central on the bastion (~15 min).
 ****
 
 === Network Graph and Traffic Observability
