@@ -12,6 +12,10 @@ It runs natively on OpenShift to evaluate core OS node configurations and platfo
 A regulatory audit is scheduled for next quarter.
 As the *Platform Operations* team, your first task is to enable continuous CIS benchmark scanning on the cluster so that compliance evidence is generated automatically from this point forward.
 
+You will do that the platform way: apply a YAML `ScanSettingBinding` from the repository with `oc apply`.
+That same file-based workflow is what GitOps and CI pipelines use (commit the manifest, let automation apply it).
+Exercise 2 shows the RHACS UI alternative for the same profiles.
+
 By the end of this exercise you will:
 
 * List the compliance profiles available on the cluster.
@@ -53,6 +57,8 @@ NOTE: Each profile entry and the `settingsRef` include `apiGroup: compliance.ope
 cd ~/acs-labs
 oc apply -f content/modules/ROOT/examples/cis-weekly-scan.yaml
 ----
++
+NOTE: In production, this file would typically live in Git and be applied by a pipeline or GitOps controller. Here you apply it once by hand so you can see the Operator react immediately.
 
 . Confirm the binding exists:
 +
@@ -92,19 +98,21 @@ TIP: Optional console view (same data, visual status):
 oc get compliancesuite -n openshift-compliance
 ----
 +
-Expected output shape (abbreviated):
+Example (names and RESULT values vary by cluster):
 +
 [source,text]
 ----
-NAME             PHASE   RESULT
-cis-weekly-scan  DONE    NON-COMPLIANT
+NAME              PHASE   RESULT
+acs-catch-all     DONE    ERROR
+cis-weekly-scan   DONE    INCONSISTENT
 ----
 +
-Read both columns. `PHASE` should be `DONE` when scanning finished.
-`RESULT` is often `NON-COMPLIANT` on a default cluster (gaps are expected).
-You may also see `INCONSISTENT` (nodes disagreed) or `ERROR` (one or more underlying scans could not complete cleanly).
-Any of those suite results is fine for this lab as long as check results exist.
-The value of continuous scanning is identifying and tracking gaps, not achieving 100% compliance on day one.
+What to check:
++
+* Your lab suite is `cis-weekly-scan`. `acs-catch-all` is the pre-deployed demo schedule; ignore its RESULT for this exercise.
+* `PHASE` must be `DONE` for `cis-weekly-scan`.
+* `RESULT` is a high-level summary only. On this lab cluster it is commonly `INCONSISTENT`, `NON-COMPLIANT`, or `ERROR`. That is expected. Do not try to make it `COMPLIANT`.
+* The next step confirms the real evidence: individual check results.
 
 . Verify that individual check results were created:
 +
@@ -129,8 +137,9 @@ CIS results for this lab come from the `cis-weekly-scan` binding you just applie
 == Key takeaways
 
 * A `ScanSettingBinding` is the declarative link between compliance profiles and scan settings. Applying it triggers scans immediately.
+* Applying YAML from a repository is the GitOps and pipeline-friendly path. The RHACS UI (Exercise 2) creates the same kind of binding without writing manifests by hand.
 * The Compliance Operator produces `ComplianceScan`, `ComplianceSuite`, and `ComplianceCheckResult` CRDs that capture audit evidence as native Kubernetes resources.
-* Suite `RESULT` is often `NON-COMPLIANT` on a default cluster. Treat check-result counts and statuses as the detailed evidence, not a single summary string alone.
+* Suite `RESULT` is a coarse summary (`INCONSISTENT`, `NON-COMPLIANT`, or `ERROR` are all normal here). Treat check-result counts and statuses as the detailed evidence.
 
 [.verification]
 ****

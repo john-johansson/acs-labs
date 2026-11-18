@@ -5,8 +5,8 @@ include::partial$session3-ui.adoc[]
 
 Estimated time: 15 minutes.
 
-In Exercise 1 you deployed scans from the CLI using a `ScanSettingBinding`.
-That approach works well for GitOps pipelines, but RHACS also provides a full UI workflow for creating scan schedules, selecting profiles, and managing compliance operations.
+In Exercise 1 you deployed scans from the CLI by applying a repository YAML `ScanSettingBinding` (the same pattern GitOps and CI pipelines use).
+RHACS also provides a full UI workflow for creating scan schedules, selecting profiles, and managing compliance operations.
 In this exercise you hand ownership of the CIS profiles to RHACS by creating a scan schedule in the console, then triage findings with remediation guidance before the audit.
 
 Platform Operations has deployed the scans.
@@ -68,19 +68,15 @@ Wait for the new schedule's scan to finish if Coverage is still empty for CIS.
 . Use the profile toggle to switch between `ocp4-cis` and `ocp4-cis-node`:
 ** `ocp4-cis`: Platform-level controls (API server flags, etcd encryption, RBAC settings). These are cluster-wide checks.
 ** `ocp4-cis-node`: Node-level controls (kernel parameters, file permissions, kubelet configuration). These run on every node.
-. Record the check counts and compliance percentages for both profiles on *your* cluster.
-Either profile can show the lower percentage depending on how the cluster is hardened. Do not assume node coverage is always worse.
+. Record the check counts and compliance percentages for both profiles on your cluster.
+Either profile can show the lower percentage depending on how the cluster is hardened.
 
 image::s3/s3-02-compliance-coverage.png[Compliance Coverage page showing CIS-OCP profile selection]
 
-. On the bastion, aggregate Compliance Operator check statuses (CLI evidence alongside the UI):
+. On the bastion, show Compliance Operator status counts for each profile (same split as the Coverage profile toggle):
 +
 [source,bash]
 ----
-echo "=== All CIS-related check statuses ==="
-oc get compliancecheckresults -n openshift-compliance --no-headers \
-  | awk '$1 ~ /^ocp4-cis/ {print $2}' | sort | uniq -c | sort -rn
-
 echo "=== ocp4-cis (platform) ==="
 oc get compliancecheckresults -n openshift-compliance --no-headers \
   | awk '$1 ~ /^ocp4-cis-/ && $1 !~ /^ocp4-cis-node/ {print $2}' | sort | uniq -c | sort -rn
@@ -91,7 +87,7 @@ oc get compliancecheckresults -n openshift-compliance --no-headers \
 ----
 +
 Statuses you may see include `PASS`, `FAIL`, `INCONSISTENT`, `MANUAL`, `ERROR`, and `NOT-APPLICABLE`.
-Compare these counts with what Coverage shows.
+These per-profile counts should match what Coverage shows for that profile.
 
 == Task 2.4: Find and triage a finding
 
