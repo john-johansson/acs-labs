@@ -17,33 +17,43 @@ As *Platform Operations*, you generate and apply zero-trust network policies to 
 
 By the end of this exercise you will:
 
+* Mark any Exercise 5 `jump-host` → `postgres` probe as anomalous so it stays out of generated policy.
 * Open the Network Policy Generator from the Network Graph.
 * Generate and simulate network policies for the `backend` namespace.
 * Review the auto-generated YAML for `postgres` and confirm it allows only the intended ingress.
-* Apply a curated (or edited) policy via CLI and confirm it exists on the cluster.
+* Apply the generated (or fallback example) policy via CLI and confirm it exists on the cluster.
 
-== Task 7.1: Open the Network Policy Generator
+== Task 7.1: Mark the postgres probe as anomalous
 
-. In the RHACS Console, navigate to *Network Graph*.
-. Select your cluster and the `backend` namespace.
+Exercise 5 probed `postgres` from `jump-host` to prove baseline alerting.
+The Network Policy Generator builds from **baselines**, not from every anomalous flow.
+If that probe was added to the baseline, mark it anomalous before you generate.
+
+. In the RHACS Console, navigate to *Network > Network Graph*.
+. Select the `production` cluster and the `backend` namespace.
+. Click `postgres`, then open the *Baseline* tab.
+. If `operations/jump-host` (or `jump-host`) appears in the baseline list, use the overflow / bulk actions to *Mark as anomalous*.
+. If the flow already shows as anomalous (or is absent from the baseline list), leave it.
+
+== Task 7.2: Open the Network Policy Generator
+
+. Still in *Network > Network Graph* with `backend` selected.
 . In the graph header, click *Network policy generator*.
 
-== Task 7.2: Generate and simulate policies
+== Task 7.3: Generate and simulate policies
 
 . In the panel that opens, click *Generate and simulate network policies*.
 +
-RHACS generates policies for all deployments in the selected scope based on their observed traffic.
+RHACS generates policies for all deployments in the selected scope based on their baselines.
 . Review the simulation preview:
 ** Allowed baseline flows are shown in green.
 ** Flows that would be blocked by the generated policies are shown in red.
 
 NOTE: Deployments that already have a `NetworkPolicy` will not get a new one. RHACS does not overwrite existing policies.
 
-IMPORTANT: The generator includes *all observed* ingress, including anomalous probes.
-If `jump-host` previously reached `postgres`, the generated YAML may allow that path.
-For this lab, apply the curated api-server-only example in Task 7.4 (or edit the download to remove any `operations` / `jump-host` ingress) so Exercise 8 can prove the block.
+IMPORTANT: Anomalous flows are excluded from generation. If `jump-host` still appears in the `postgres` YAML, return to Task 7.1, mark it anomalous, and generate again.
 
-== Task 7.3: Review the generated YAML
+== Task 7.4: Review the generated YAML
 
 . In the generated policies panel, scroll to the policy for `postgres`. The policy name is typically `stackrox-generated-postgres`.
 . Review the YAML. The intended zero-trust policy for this lab looks like:
@@ -74,24 +84,23 @@ spec:
 This policy allows ingress only from pods with label `app: api-server` on port `5432/TCP`.
 All other ingress is denied by default once a `NetworkPolicy` exists for a pod selector.
 
-. If the downloaded generator output also includes ingress from `operations` / `jump-host` (or any other unexpected source), either:
-** Delete those extra `from` entries before applying, or
-** Prefer the curated lab example in Task 7.4.
-
-. Optionally click the download icon to save the YAML for comparison.
+. Confirm the YAML does **not** allow `operations` / `jump-host`.
+. Click the download icon to save the YAML for apply in the next task.
 
 TIP: To compare the generated policies with existing ones, click *Compare* in the panel. A side-by-side view shows the YAML for current and generated policies.
 
-== Task 7.4: Apply the curated policy via CLI
+== Task 7.5: Apply the policy via CLI
 
-Use the curated example so the policy matches the Exercise 8 verification (api-server allowed, jump-host blocked):
+Apply the YAML you downloaded from the generator.
+If the download is missing or still includes unexpected ingress, use the example from Task 7.4 (same content as the lab repository file below):
 
 [source,bash]
 ----
 oc apply -f content/modules/ROOT/examples/stackrox-generated-postgres.yaml
 ----
 
-If the lab repository path is not available on the bastion, paste or create the same YAML from Task 7.3 and apply it with `oc apply -f -`.
+If you downloaded the generator output to the bastion, apply that file instead (for example `oc apply -f ~/stackrox-generated-postgres.yaml`).
+If neither path is available, paste or create the YAML from Task 7.4 and apply it with `oc apply -f -`.
 
 . Verify the policy exists:
 +
@@ -120,18 +129,18 @@ The OVN-Kubernetes CNI now enforces this policy at the kernel level. Only `api-s
 == Key takeaways
 
 * The Network Policy Generator produces standard `networking.k8s.io/v1` `NetworkPolicy` manifests, not proprietary resources. OpenShift enforces them natively.
-* Generated policies reflect observed traffic. Anomalous flows that were probed earlier can appear as allowed ingress until you edit them out.
+* Generation uses baselines. Mark unexpected peers as anomalous before generate so they are not allowed in the YAML.
 * Generated policies are prefixed with `stackrox-generated-` and labeled with `network-policy-generator.stackrox.io/generated=true` for easy identification and cleanup.
 * Policies cannot be applied directly from the RHACS UI. Download the YAML and apply via `oc apply` or commit to Git for GitOps deployment.
 * Once a `NetworkPolicy` selects a pod, all ingress not explicitly allowed is denied. This is the Kubernetes default-deny model.
 
 [.verification]
 ****
-Did you generate network policies from the Network Graph, apply the curated api-server-only `stackrox-generated-postgres` policy, and confirm it exists in `backend` via `oc get networkpolicy`?
+Did you mark `jump-host` as anomalous on the `postgres` Baseline if needed, generate network policies from the Network Graph, apply an api-server-only `stackrox-generated-postgres` policy, and confirm it exists in `backend` via `oc get networkpolicy`?
 
 [.success]
 A zero-trust NetworkPolicy is now enforced by the CNI. Continue to Exercise 8 to verify it at the packet level.
 
 [.fail]
-Run `oc apply -f content/modules/ROOT/examples/stackrox-generated-postgres.yaml` and then `oc get networkpolicy -n backend` to confirm the policy exists. Ensure the YAML does not allow `jump-host`.
+On `postgres` Baseline, *Mark as anomalous* any `jump-host` peer, regenerate, then apply the downloaded YAML (or `content/modules/ROOT/examples/stackrox-generated-postgres.yaml`) and run `oc get networkpolicy -n backend`.
 ****

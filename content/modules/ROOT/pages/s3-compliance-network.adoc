@@ -8,7 +8,7 @@ A hands-on lab for platform, infrastructure, security, and SRE teams.
 [cols="1,3"]
 |===
 |Session date |TBD
-|Duration |~100 minutes (5 min prereqs + eight exercises)
+|Duration |~110 minutes (5 min prereqs + eight exercises)
 |Environment |Red Hat Showroom / RHACS {rhacs-version}
 |===
 
@@ -20,9 +20,9 @@ By completing this lab, participants will:
 . Create a CIS scan schedule in the RHACS UI, compare Coverage with CLI status counts, triage Fail or Inconsistent findings with remediation guidance, and distinguish platform compliance from runtime policies in the same console.
 . Generate on-demand compliance audit evidence in the UI and fetch the CSV evidence package from Central on the bastion.
 . Audit container listening endpoints at the process and PID level, then correlate them with deployment manifests.
-. Visualize multi-tier network topology in the RHACS Network Graph and enable baseline violation alerts.
-. Detect anomalous cross-namespace traffic from an operations jump host and generate your own anomalous probe to watch it appear in real time.
-. Auto-generate standard Kubernetes `NetworkPolicy` manifests from observed baselines using the RHACS Network Policy Generator.
+. Visualize multi-tier network topology in the RHACS Network Graph, enable baseline violation alerts, and prove *Unauthorized Network Flow* with controlled probes.
+. Detect anomalous cross-namespace traffic from an operations jump host to the payment tier.
+. Auto-generate standard Kubernetes `NetworkPolicy` manifests from baselines (after marking unexpected peers anomalous) using the RHACS Network Policy Generator.
 . Verify network policy enforcement at the kernel level using TCP probes.
 
 == Demo application architecture
@@ -82,21 +82,21 @@ Audit container processes, ports, and PIDs, then correlate them with deployment 
 ****
 xref:s3-06-network-topology.adoc[Exercise 5: Network topology and baselines]
 
-Visualize the multi-tier stack and enable baseline violation alerts (~10 min).
+Visualize the multi-tier stack, enable baseline violation alerts, and prove them with probes (~20 min).
 ****
 
 [.tile]
 ****
 xref:s3-07-anomalous-flows.adoc[Exercise 6: Anomalous flow detection]
 
-Investigate unapproved cross-namespace traffic and probe backend-atlas to watch a new flow appear (~10 min).
+Investigate unapproved cross-namespace traffic from jump-host to the payment tier (~10 min).
 ****
 
 [.tile]
 ****
 xref:s3-08-network-policy-gen.adoc[Exercise 7: Network policy generation]
 
-Generate NetworkPolicy YAML, apply the curated postgres policy, and keep anomalous ingress out (~15 min).
+Mark unexpected peers anomalous, generate NetworkPolicy YAML, and apply it (~15 min).
 ****
 
 [.tile]
@@ -112,5 +112,5 @@ In production, these exercises chain together:
 
 . The Compliance Operator evaluates CIS benchmarks from a declarative binding (Exercise 1). Students then recreate that CIS schedule in the RHACS UI, triage failing controls with remediation guidance, and distinguish platform compliance from runtime policies in the same console (Exercise 2).
 . Scan schedules with delivery destinations automate evidence distribution. On-demand downloads handle ad-hoc audit requests (Exercise 3).
-. RHACS Collector maps every open port to an exact process binary (Exercise 4). The Network Graph visualizes active traffic and locks baselines (Exercise 5).
-. Anomalous cross-namespace traffic triggers real-time alerts (Exercise 6). Curated or edited `NetworkPolicy` manifests enforce zero-trust microsegmentation at the kernel level (Exercises 7 and 8).
+. RHACS Collector maps every open port to an exact process binary (Exercise 4). The Network Graph visualizes active traffic, locks baselines, and proves *Unauthorized Network Flow* alerts (Exercise 5).
+. Anomalous cross-namespace traffic is visible in the graph (Exercise 6). Baseline-aware generated `NetworkPolicy` manifests enforce zero-trust microsegmentation at the kernel level (Exercises 7 and 8).

@@ -14,9 +14,9 @@ In this session you worked through the full compliance and network security life
 == Network Graph and Traffic Observability (Exercises 4-8)
 
 * *Listening endpoints*: Audited container processes at the binary path and PID level using RHACS Collector kernel-level data, then correlated the results with deployment manifests on the bastion to verify no unexpected processes are listening (Exercise 4).
-* *Network topology and baselines*: Visualized the multi-tier application flow in the Network Graph and enabled baseline violation alerting so that new, unexpected traffic triggers violations (Exercise 5).
-* *Anomalous flow detection*: Observed unapproved cross-namespace traffic from `operations/jump-host` to `payments/visa-processor`, then generated a manual probe to `backend/backend-atlas` and watched it appear in the Network Graph in real time (Exercise 6).
-* *Network policy generation*: Reviewed generated NetworkPolicy YAML, applied a curated api-server-only policy for `postgres`, and confirmed anomalous ingress was not allowed (Exercise 7).
+* *Network topology and baselines*: Visualized the multi-tier application flow in *Network > Network Graph*, enabled baseline violation alerting, and proved *Unauthorized Network Flow* with negative (`backend-atlas`) and positive (`api-server`, `postgres`) probes (Exercise 5).
+* *Anomalous flow detection*: Observed unapproved cross-namespace traffic from `operations/jump-host` to `payments/visa-processor` in the Network Graph (Exercise 6).
+* *Network policy generation*: Marked unexpected `jump-host` peers as anomalous on the `postgres` baseline, generated NetworkPolicy YAML, applied an api-server-only policy for `postgres`, and confirmed anomalous ingress was not allowed (Exercise 7).
 * *CLI verification*: Confirmed kernel-level enforcement with dual TCP probes: the unauthorized probe from `operations/jump-host` timed out (packet dropped by CNI), while the authorized probe from `backend/api-server` connected (TCP handshake completed, connection reset by postgres) (Exercise 8).
 
 == How these capabilities connect

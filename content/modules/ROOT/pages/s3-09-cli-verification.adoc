@@ -92,7 +92,7 @@ Both tests confirm the same `NetworkPolicy`, but from opposite sides:
 * The unauthorized path proves that the policy *blocks* traffic not matching the ingress rule.
 * The authorized path proves that the policy *allows* the expected baseline communication.
 
-This dual-layer validation (RHACS UI anomalous flow in Exercise 6 plus CLI packet drop here) is the production pattern for verifying network microsegmentation.
+This dual-layer validation (RHACS UI anomalous flow and violations in Exercise 5 plus CLI packet drop here) is the production pattern for verifying network microsegmentation.
 
 TIP: For a cleaner before/after comparison, try the `jump-host` probe *before* applying the `NetworkPolicy` (it returns `OPEN`) and *after* (it returns `TIMED OUT / BLOCKED`). If you already applied the policy in Exercise 7, you can delete it temporarily with `oc delete networkpolicy stackrox-generated-postgres -n backend`, test, then re-apply.
 

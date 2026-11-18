@@ -3,25 +3,26 @@
 
 include::partial$session3-ui.adoc[]
 
-Estimated time: 10 minutes.
+Estimated time: 20 minutes.
 
 The RHACS Network Graph is three tools in one: a live traffic flow map, a firewall visualizer showing active `NetworkPolicy` rules, and an automated firewall rule builder that generates zero-trust policies from observed baselines.
 
-In this exercise you visualize the backend and payments application topology and enable baseline violation alerting so that any new, unexpected traffic will be flagged.
+In this exercise you visualize the backend and payments application topology, enable baseline violation alerting, and prove that the toggle creates *Unauthorized Network Flow* violations for unexpected probes.
 
 Process-level visibility is confirmed.
 As *Platform Operations*, you now map the full network topology and lock baselines so that any new, unexpected traffic will be flagged automatically.
 
 By the end of this exercise you will:
 
-* Navigate the Network Graph and select the `backend` namespace.
+* Navigate *Network > Network Graph* and select the `backend` namespace on cluster `production`.
 * Identify the multi-tier application flow and cross-namespace connections.
 * Open the baseline tab for a deployment and enable alerting on baseline violations.
+* Prove the toggle with a negative control (`backend-atlas`) and positive controls (`api-server` and `postgres`).
 
 == Task 5.1: View the backend topology
 
-. In the RHACS Console, navigate to *Network Graph*.
-. Select your cluster from the cluster dropdown.
+. In the RHACS Console, navigate to *Network > Network Graph*.
+. Select the `production` cluster from the cluster dropdown.
 . In the *Namespaces* list, select `backend`.
 . Observe the visual graph. The expected topology is:
 +
@@ -50,6 +51,7 @@ image::s3/s3-05-network-graph-backend.png[Network Graph showing backend namespac
 ** Whether network policies exist that regulate ingress or egress.
 ** Listening ports for this deployment.
 . Click the *Flows* tab to see the list of observed connections (both ingress and egress) with protocol and port details.
+. The *Baseline* tab (used next) lists the flows RHACS treats as expected for this deployment.
 
 == Task 5.3: Enable baseline violation alerting
 
@@ -66,23 +68,96 @@ Toggling *Alert on baseline violations* promotes them to policy violations.
 .. Open the *Baseline* tab.
 .. Toggle *Alert on baseline violations* on.
 
+Leave *Alert on baseline violations* **off** for `backend-atlas`. That deployment is the negative control in the next task.
+
 After enabling alerts, any traffic from a source not in the baseline (such as a direct probe from another namespace) will generate a violation.
 
 TIP: You can configure the baseline observation period by setting `ROX_NETWORK_BASELINE_OBSERVATION_PERIOD` on Central. The default is sufficient for this lab.
 
+== Task 5.4: Prove baseline alerting
+
+You toggled alerting on. Now prove what it does with controlled probes from `operations/jump-host`.
+
+=== Confirm baselines do not already contain jump-host
+
+. Still in *Network > Network Graph*, with cluster `production` and namespace `backend` selected.
+. Open the *Baseline* tab for `postgres` and for `api-server`.
+. Confirm that `operations/jump-host` is absent from both baseline lists.
+. `postgres` should list ingress from `api-server` on port 5432.
+. `api-server` should list its normal peers (for example `varnish` on 9001, `postgres` on 5432, `backend-atlas` on 8080, and `payments/gateway` on 7777).
+
+If a probe you send in the next steps shows up *inside* the Baseline tab (not as anomalous), discovery is still open and *Unauthorized Network Flow* will not fire. Wait until the flow stays off the baseline, then continue with a source that remains absent from the baseline.
+
+=== Negative control: backend-atlas (toggle off)
+
+`backend-atlas` has the toggle off, so this probe should be visible and should not raise the policy.
+
+. On the bastion, probe from `jump-host` to `backend-atlas`:
++
+[source,bash]
+----
+oc exec -n operations deploy/jump-host -- bash -c 'timeout 3 bash -c "echo >/dev/tcp/backend-atlas-service.backend.svc.cluster.local/8080" && echo "OPEN" || echo "BLOCKED"'
+----
++
+Expect `OPEN`.
+
+. In the RHACS Console, open *Violations*.
+. Filter on policy *Unauthorized Network Flow* and deployment `backend-atlas`.
+. There should be no new violation for this probe.
+
+=== Prove the api-server toggle
+
+This peer is not part of the `postgres` baseline, so it does not change the policy Exercise 7 generates for `postgres`.
+
+. On the bastion, resolve the Service that exposes port 9001, then probe it:
++
+[source,bash]
+----
+API_SVC=$(oc get svc -n backend -o jsonpath='{range .items[*]}{.metadata.name}{" "}{range .spec.ports[*]}{.port}{"\n"}{end}{end}' | awk '$2==9001 {print $1; exit}')
+echo "api-server service: ${API_SVC}"
+oc exec -n operations deploy/jump-host -- bash -c "timeout 3 bash -c \"echo >/dev/tcp/${API_SVC}.backend.svc.cluster.local/9001\" && echo OPEN || echo BLOCKED"
+----
++
+Expect `OPEN`.
+
+. Wait about 30 seconds. In *Network > Network Graph*, click *Updates available* if shown, and select `api-server`.
+. On the *Flows* tab, `operations/jump-host` to port 9001 should show as an anomalous flow. It should stay off the *Baseline* tab.
+. Open *Violations* and filter:
+** Policy: *Unauthorized Network Flow*
+** Deployment: `api-server`
++
+The violation should name `api-server` as the entity, with `operations/jump-host` as the peer on `9001/TCP`. The violation is attached to the deployment that has the toggle, so it is not filed against `jump-host`.
+
+=== Prove the postgres toggle
+
+. On the bastion, probe `postgres` (no `NetworkPolicy` exists yet):
++
+[source,bash]
+----
+oc exec -n operations deploy/jump-host -- bash -c 'timeout 3 bash -c "echo >/dev/tcp/postgres-service.backend.svc.cluster.local/5432" && echo "OPEN" || echo "BLOCKED"'
+----
++
+Expect `OPEN`.
+
+. After the same short wait, select `postgres` in the Network Graph.
+. Confirm an anomalous flow from `operations/jump-host` on `5432/TCP`, and a new *Unauthorized Network Flow* violation whose deployment is `postgres`.
+
+IMPORTANT: This probe is intentional for the toggle demo. Exercise 7 must *Mark as anomalous* any `jump-host` entry on the `postgres` Baseline (or fall back to the curated example YAML) before you apply a NetworkPolicy, so Exercise 8 can prove the block.
+
 == Key takeaways
 
-* The Network Graph visualizes real-time traffic flows, existing `NetworkPolicy` rules, and auto-discovered baselines in a single view.
+* *Network > Network Graph* visualizes real-time traffic flows, existing `NetworkPolicy` rules, and auto-discovered baselines in a single view.
 * RHACS builds baselines automatically during the observation period. After that, unknown traffic appears as anomalous.
-* Toggling *Alert on baseline violations* on the *Baseline* tab converts anomalous flows into violations, bridging from visibility to enforcement.
+* Toggling *Alert on baseline violations* on the *Baseline* tab converts anomalous flows into *Unauthorized Network Flow* violations.
+* A deployment with the toggle off can still show the flow without raising a violation (negative control).
 
 [.verification]
 ****
-Did you view the backend topology in the Network Graph and toggle *Alert on baseline violations* on for at least `postgres`?
+Did you view the backend topology in *Network > Network Graph*, toggle *Alert on baseline violations* on for `postgres` and `api-server`, confirm no violation for the `backend-atlas` probe, and see *Unauthorized Network Flow* violations for the `api-server` and `postgres` probes?
 
 [.success]
-Baselines are active and anomalous traffic will now trigger violations. Continue to Exercise 6.
+Baselines are active and anomalous traffic triggers violations where the toggle is on. Continue to Exercise 6.
 
 [.fail]
-Navigate to *Network Graph*, select `backend`, click `postgres`, open the *Baseline* tab, and toggle *Alert on baseline violations* on.
+Navigate to *Network > Network Graph*, select `production` and `backend`, enable the toggle on `postgres` and `api-server` (leave `backend-atlas` off), then re-run the Task 5.4 probes and check *Violations*.
 ****
