@@ -1,0 +1,115 @@
+= Exercise 8: CLI network verification
+:navtitle: Exercise 8: CLI network verification
+
+include::partial$session3-ui.adoc[]
+
+Estimated time: 10 minutes.
+
+Visual indicators in the RHACS Network Graph prove that policies are configured, but production verification requires testing at the data plane.
+This exercise confirms enforcement at the kernel level: unauthorized packets are dropped by OVN-Kubernetes before they reach the destination pod, while authorized connections succeed instantly.
+
+Policies are applied.
+As *SRE*, you now verify enforcement at the kernel level with dual TCP probes to confirm that the `NetworkPolicy` actually blocks unauthorized traffic while allowing legitimate flows.
+
+By the end of this exercise you will:
+
+* Execute a TCP probe from an unauthorized source and confirm the connection times out.
+* Execute a TCP probe from an authorized source and confirm the connection succeeds.
+* Understand the difference between management-plane visibility (RHACS UI) and data-plane enforcement (kernel packet drop).
+
+== Task 8.1: Test the unauthorized path
+
+The `jump-host` pod in `operations` has no label matching the `NetworkPolicy` ingress rule on `postgres`.
+Its connection attempt to `postgres` should be dropped after you applied the policy in Exercise 7.
+
+The `jump-host` container includes `bash` with `/dev/tcp` support for TCP probing:
+
+[source,bash]
+----
+oc exec -n operations deploy/jump-host -- bash -c 'timeout 3 bash -c "echo >/dev/tcp/postgres-service.backend.svc.cluster.local/5432" && echo "OPEN" || echo "TIMED OUT / BLOCKED"'
+----
+
+Expected output:
+
+[source,text]
+----
+TIMED OUT / BLOCKED
+----
+
+*What this means:* The `bash /dev/tcp` built-in opens a raw TCP socket. The 3-second `timeout` wrapper kills it if the TCP handshake does not complete. Because the `NetworkPolicy` denies ingress from `jump-host`, OVN-Kubernetes drops the SYN packet at the kernel level. The TCP handshake never starts, so the timeout fires and the probe reports `TIMED OUT / BLOCKED`.
+
+== Task 8.2: Test the authorized path
+
+The `api-server` deployment carries the `app: api-server` label, which is explicitly allowed by the `stackrox-generated-postgres` policy.
+
+The `api-server` container uses BusyBox `ash` and does not have `bash /dev/tcp`. Use `wget` instead:
+
+[source,bash]
+----
+oc exec -n backend deploy/api-server -- wget -q --spider -T 3 http://postgres-service.backend.svc.cluster.local:5432 2>&1; echo "Exit: $?"
+----
+
+Expected output (approximate):
+
+[source,text]
+----
+wget: error getting response: Connection reset by peer
+Exit: 1
+----
+
+*What this means:* The key detail is `Connection reset by peer`, not `Connection timed out`. A *reset* means the TCP three-way handshake *completed* (SYN, SYN-ACK, ACK) and the `NetworkPolicy` allowed the traffic through. The reset happens because port 5432 does not speak HTTP, so the postgres listener rejects the HTTP request after connecting. A *timeout* would mean the `NetworkPolicy` blocked the packet entirely (as in Task 8.1).
+
+[cols="1,1,1",options="header"]
+|===
+|TCP outcome |Meaning |What it proves
+
+|`Connection timed out`
+|SYN packet dropped, no response
+|`NetworkPolicy` *blocked* the traffic
+
+|`Connection reset by peer`
+|TCP handshake completed, then closed
+|`NetworkPolicy` *allowed* the traffic
+|===
+
+== Task 8.3: Compare the two results
+
+[cols="1,2,2",options="header"]
+|===
+|Test |Source |Result
+
+|Unauthorized
+|`operations/jump-host`
+|`TIMED OUT / BLOCKED` (packet dropped by CNI)
+
+|Authorized
+|`backend/api-server`
+|`Connection reset by peer` (TCP handshake completed)
+|===
+
+Both tests confirm the same `NetworkPolicy`, but from opposite sides:
+
+* The unauthorized path proves that the policy *blocks* traffic not matching the ingress rule.
+* The authorized path proves that the policy *allows* the expected baseline communication.
+
+This dual-layer validation (RHACS UI anomalous flow and violations in Exercise 5 plus CLI packet drop here) is the production pattern for verifying network microsegmentation.
+
+The Exercise 5 probe from `jump-host` to `postgres` returned `OPEN` before this policy existed. The same probe now times out.
+
+== Key takeaways
+
+* `bash /dev/tcp` is a lightweight TCP probe available in containers that include bash. It opens a raw TCP socket without sending application data.
+* A *timeout* result means the CNI dropped the packet at the kernel level before it reached the destination pod. This is data-plane enforcement.
+* A *connection reset* means the `NetworkPolicy` ingress rule matched and the TCP handshake completed. The reset comes from the application layer, not the network layer.
+* Always verify network policies from both authorized and unauthorized sources. A policy that blocks everything (including legitimate traffic) is worse than no policy at all.
+
+[.verification]
+****
+Did the probe from `operations/jump-host` time out, and did the probe from `backend/api-server` produce a connection reset (not a timeout)?
+
+[.success]
+Network policies are enforced at the kernel level. Unauthorized traffic is dropped and authorized traffic flows. Continue to the lab summary.
+
+[.fail]
+Confirm the `NetworkPolicy` exists (`oc get networkpolicy -n backend`). If missing, re-apply from Exercise 7. Then re-run both probes.
+****

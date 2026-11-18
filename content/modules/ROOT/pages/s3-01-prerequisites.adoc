@@ -1,0 +1,122 @@
+= Prerequisites and environment verification
+:navtitle: Prerequisites
+
+include::partial$session3-ui.adoc[]
+
+Estimated time: 5 minutes.
+
+== Access the bastion host
+
+SSH into the bastion host using the credentials from the Showroom dashboard:
+
+[source,bash]
+----
+ssh lab-user@<bastion-host> -p <port>
+----
+
+NOTE: Replace `<bastion-host>` and `<port>` with the values shown on your Showroom dashboard under *Bastion Host*.
+
+== Discover your console URLs
+
+On the bastion, run:
+
+[source,bash]
+----
+echo "OpenShift Console: https://$(oc get route console -n openshift-console -o jsonpath='{.spec.host}')"
+echo "RHACS Console:     https://$(oc get route central -n stackrox -o jsonpath='{.spec.host}')"
+----
+
+Open each URL in your browser. Credentials for this Showroom:
+
+[cols="1,1,1",options="header"]
+|===
+|Console |Username |Password
+
+|OpenShift
+|`admin`
+|_(see Showroom provisioning email)_
+
+|RHACS
+|`admin`
+|_(see Showroom provisioning email)_
+|===
+
+NOTE: For RHACS, choose the standard username and password option, not the monitoring login path.
+
+== Verify RHACS CLI access
+
+`ROX_CENTRAL_ADDRESS` and `ROX_API_TOKEN` are already set on the bastion.
+
+[source,bash]
+----
+export ROX_ENDPOINT="$ROX_CENTRAL_ADDRESS"
+roxctl central whoami
+----
+
+NOTE: Expected output includes an *Admin* (or equivalent) role. Do not pass `--token`; `roxctl` reads it from the environment.
+
+== Clone the lab repository
+
+[source,bash]
+----
+git clone https://github.com/john-johansson/acs-labs.git
+cd acs-labs
+----
+
+This repository contains the Session 3 cleanup script, the instructor prep script, and the example manifests used later in the exercises.
+
+NOTE: *Instructors only:* Before students start Session 3, clone this repository on the bastion (or reuse an existing clone) and run `bash scripts/s3-instructor-prep.sh`. That script deletes the demo `acs-catch-all` schedule so Exercises 1 and 2 can own the CIS profiles. Students: do not run this script.
+
+== Verify the Compliance Operator
+
+Confirm the Compliance Operator is installed and the CIS profiles are available:
+
+[source,bash]
+----
+oc get csv -n openshift-compliance | grep compliance
+----
+
+Expected output shows the Compliance Operator CSV in `Succeeded` phase.
+
+[source,bash]
+----
+oc get profiles.compliance -n openshift-compliance | grep -E 'ocp4-cis |ocp4-cis-node '
+----
+
+You should see both `ocp4-cis` and `ocp4-cis-node` profiles listed.
+
+== Demo application namespaces
+
+The namespaces `backend`, `payments`, and `operations` are required before Exercise 1. The internal ownership check looks for the label `org.example/owner` on them, and Exercises 4 through 8 use the same application.
+
+Confirm the application namespaces exist:
+
+[source,bash]
+----
+oc get namespace backend payments operations
+----
+
+Expected output shows all three namespaces with `Active` status.
+
+== Application architecture
+
+The demo environment deploys a medical application across five namespaces. This session focuses on three for the network labs: `backend`, `payments`, and `operations`.
+
+image::s3/s3-00-architecture.svg[alt="Demo application architecture with approved and anomalous traffic flows",width=720]
+
+* `backend` (4-tier: varnish :8080 -> api-server :9001 -> postgres :5432 + backend-atlas :8080). The api-server also connects cross-namespace to `payments/gateway`.
+* `payments` (gateway :7777 -> visa-processor :8080 + mastercard-processor :8080). Receives cross-namespace traffic from `backend/api-server`.
+* `operations` (jump-host :22). Connects cross-namespace to `payments/visa-processor` and `medical/patient-db`, representing unapproved lateral movement.
+
+== Full reset (optional)
+
+If you have run these exercises before on this Showroom and want a clean starting point, run the cleanup script from the repository you cloned above:
+
+[source,bash]
+----
+cd ~/acs-labs
+bash scripts/s3-cleanup.sh
+----
+
+The script removes the demo `acs-catch-all` schedule, lab-created RHACS scan schedules (`cis-audit-schedule`), cluster `ScanSettingBinding` objects, the lab `TailoredProfile` and `CustomRule`, generated `NetworkPolicy` objects, and local compliance report files on the bastion. It does not recreate `acs-catch-all`. It is idempotent and safe to run multiple times.
+On a fresh Showroom you can skip this step.

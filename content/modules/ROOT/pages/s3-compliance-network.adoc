@@ -1,0 +1,116 @@
+= Compliance and Network Observability
+:navtitle: Overview
+
+include::partial$session3-ui.adoc[]
+
+A hands-on lab for platform, infrastructure, security, and SRE teams.
+
+[cols="1,3"]
+|===
+|Session date |November 19, 2026
+|Duration |~110 minutes (5 min prereqs + eight exercises)
+|Environment |Red Hat Showroom / RHACS {rhacs-version}
+|===
+
+== Lab objectives
+
+By completing this lab, participants will:
+
+. Deploy declarative CIS compliance profiles via the Compliance Operator (apply from the lab repository), apply an unbound internal tailored profile, and continue once the CIS scans are running.
+. Create a CIS scan schedule in the RHACS UI that also includes the internal profile, compare Coverage with CLI status counts, triage Fail or Inconsistent findings with remediation guidance, and distinguish platform compliance from runtime policies in the same console.
+. Generate on-demand compliance audit evidence in the UI and fetch the CSV evidence package from Central on the bastion.
+. Audit container listening endpoints at the process and PID level, then correlate them with deployment manifests.
+. Visualize multi-tier network topology in the RHACS Network Graph, enable baseline violation alerts, and prove *Unauthorized Network Flow* with controlled probes.
+. Confirm the unapproved jump-host connection into the payment tier.
+. Auto-generate standard Kubernetes `NetworkPolicy` manifests from baselines (after marking unexpected peers anomalous) using the RHACS Network Policy Generator.
+. Verify network policy enforcement at the kernel level using TCP probes.
+
+== Demo application architecture
+
+This session uses the pre-deployed multi-tier medical application. The network exercises focus on three namespaces: `backend`, `payments`, and `operations`.
+
+image::s3/s3-00-architecture.svg[alt="Demo application architecture with approved and anomalous traffic flows",width=720]
+
+The `operations/jump-host` represents an unapproved lateral movement source that bypasses the legitimate API gateway tier.
+
+== Session flow
+
+TIP: For the best experience, follow the exercises in order. Each one builds on the previous concepts. You can also jump to a specific exercise below.
+
+=== Compliance and Automated Audit Evidence
+
+[.tile]
+****
+xref:s3-01-prerequisites.adoc[Prerequisites]
+
+Bastion access, console URLs, Compliance Operator checks, and architecture overview (~5 min).
+****
+
+[.tile]
+****
+xref:s3-02-compliance-profiles.adoc[Exercise 1: Deploying compliance profiles]
+
+Apply a CIS `ScanSettingBinding` and an unbound internal tailored profile from the repo, then monitor suite results (~10 min).
+****
+
+[.tile]
+****
+xref:s3-03-compliance-rhacs.adoc[Exercise 2: Working with compliance in RHACS]
+
+Hand off CIS to an RHACS schedule, include the internal tailored profile, compare coverage with CLI status counts, and triage Fail or Inconsistent findings (~15 min).
+****
+
+[.tile]
+****
+xref:s3-04-audit-evidence.adoc[Exercise 3: Audit evidence and compliance operations]
+
+Generate an on-demand report in the UI, then fetch and parse the CSV from Central on the bastion (~15 min).
+****
+
+=== Network Graph and Traffic Observability
+
+With compliance posture verified and evidence ready for auditors, the next concern is: what is actually running on the network, and does it match what should be running?
+
+[.tile]
+****
+xref:s3-05-listening-endpoints.adoc[Exercise 4: Listening endpoints]
+
+Audit container processes, ports, and PIDs, then correlate them with deployment manifests (~10 min).
+****
+
+[.tile]
+****
+xref:s3-06-network-topology.adoc[Exercise 5: Network topology and baselines]
+
+Visualize the multi-tier stack, enable baseline violation alerts, and prove them with probes (~20 min).
+****
+
+[.tile]
+****
+xref:s3-07-anomalous-flows.adoc[Exercise 6: Unapproved cross-namespace flow]
+
+Investigate unapproved cross-namespace traffic from jump-host to the payment tier (~10 min).
+****
+
+[.tile]
+****
+xref:s3-08-network-policy-gen.adoc[Exercise 7: Network policy generation]
+
+Mark unexpected peers anomalous, generate NetworkPolicy YAML, and apply it (~15 min).
+****
+
+[.tile]
+****
+xref:s3-09-cli-verification.adoc[Exercise 8: CLI network verification]
+
+Confirm packet drops with dual TCP probes from authorized and unauthorized sources (~10 min).
+****
+
+== Compliance and network workflow (reflection)
+
+In production, these exercises chain together:
+
+. The Compliance Operator evaluates CIS benchmarks from a declarative binding, and an unbound tailored profile carries one internal ownership check (Exercise 1). Students then schedule both in the RHACS UI, triage failing controls with remediation guidance, and distinguish platform compliance from runtime policies in the same console (Exercise 2).
+. Scan schedules with delivery destinations automate evidence distribution. On-demand downloads handle ad-hoc audit requests (Exercise 3).
+. RHACS Collector maps every open port to an exact process binary (Exercise 4). The Network Graph visualizes active traffic, locks baselines, and proves *Unauthorized Network Flow* alerts (Exercise 5).
+. The `operations/jump-host` flow into the payment tier is visible in the graph (Exercise 6). The generated `NetworkPolicy` for `postgres` is a default-deny ingress policy. Exercise 8 proves which packets the CNI drops (Exercises 7 and 8).

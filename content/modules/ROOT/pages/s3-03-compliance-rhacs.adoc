@@ -1,0 +1,175 @@
+= Exercise 2: Working with compliance in RHACS
+:navtitle: Exercise 2: Working with compliance in RHACS
+
+include::partial$session3-ui.adoc[]
+
+Estimated time: 15 minutes.
+
+In Exercise 1 you deployed scans from the CLI by applying a repository YAML `ScanSettingBinding` (the same pattern GitOps and CI pipelines use).
+RHACS also provides a full UI workflow for creating scan schedules, selecting profiles, and managing compliance operations.
+In this exercise you hand ownership of the CIS profiles to RHACS by creating a scan schedule in the console, include the internal profile from Exercise 1, then triage findings with remediation guidance before the audit.
+
+Platform Operations has deployed the scans.
+Switching to the *Information Security* perspective, your job is now to recreate the CIS schedule in RHACS, verify whether the cluster meets CIS requirements, and identify the gaps that need remediation before the auditor arrives.
+
+By the end of this exercise you will:
+
+* Delete the Exercise 1 CLI binding so the UI can own the CIS profiles.
+* Create a compliance scan schedule through the RHACS UI, including the internal tailored profile.
+* Compare profile coverage in the UI and with CLI status counts.
+* Triage findings (Fail or Inconsistent), read remediation guidance, and draft a short ticket note.
+* Confirm runtime guardrails live under *Violations* / *Policy Management*, separate from Coverage.
+
+== Task 2.1: Hand off from CLI to the RHACS UI
+
+Exercise 1 created `cis-weekly-scan` with `oc apply`.
+RHACS cannot bind the same Compliance Operator profile twice on one cluster, so you must remove that CLI binding before creating the UI schedule.
+
+. On the bastion, delete the Exercise 1 binding:
++
+[source,bash]
+----
+oc delete scansettingbinding cis-weekly-scan -n openshift-compliance
+----
+
+. In the RHACS Console, navigate to *Compliance > OpenShift Schedules*.
++
+`cis-weekly-scan` should no longer appear after RHACS refreshes. `acs-catch-all` should not be listed. Instructor prep deletes that demo schedule before class.
+
+NOTE: If Create fails with a profile conflict, ask the instructor to re-run `scripts/s3-instructor-prep.sh`.
+
+== Task 2.2: Create a scan schedule via the RHACS UI
+
+. Click *Create scan schedule*.
+. Walk through the wizard page by page (RHACS opens *Parameters* first):
+.. *Parameters*:
+*** *Name*: `cis-audit-schedule`
+*** *Description*: `Weekly CIS scan for Q4 audit evidence`
+*** *Schedule*: Select *Weekly*, pick a day (for example Monday), and set a time.
+.. *Clusters*: Select `production` (or the single available cluster).
+.. *Profiles*: Select `ocp4-cis`, `ocp4-cis-node`, and `Application namespace owner` (type *Tailored*, profile name `org-namespace-owner`).
+.. *Delivery*: Leave email destinations empty for this lab (download-only evidence comes in Exercise 3).
+.. *Review*: Confirm name, clusters, profiles, and schedule, then create.
+. Click *Create* (or the wizard's final create action) to save the schedule.
++
+RHACS creates the underlying `ScanSettingBinding` on the cluster automatically.
+This is the UI equivalent of the `oc apply` step in Exercise 1.
+
+. Verify `cis-audit-schedule` appears in the Schedules list.
+. Click `cis-audit-schedule` to open the detail view and confirm clusters, profiles, and schedule frequency.
+
+== Task 2.3: Explore profile coverage
+
+Before reviewing individual checks, compare what each CIS profile covers.
+Wait for the new schedule's scan to finish if Coverage is still empty for CIS. That wait is the scan this schedule starts. Exercise 1 already explained it.
+
+NOTE: The left-nav *Dashboard* is the RHACS home page. OpenShift CIS results are not there. The older Compliance dashboard, including its PDF and CSV export, is deprecated and may still be available in the console. For this lab use *Compliance > OpenShift Coverage* and *Compliance > OpenShift Schedules*.
+
+. Navigate to *Compliance > OpenShift Coverage*.
+. Use the profile toggle to switch between `ocp4-cis` and `ocp4-cis-node`:
+** `ocp4-cis`: Platform-level controls (API server flags, etcd encryption, RBAC settings). These are cluster-wide checks.
+** `ocp4-cis-node`: Node-level controls (kernel parameters, file permissions, kubelet configuration). These run on every node.
+. Record the check counts and compliance percentages for both profiles on your cluster.
+Either profile can show the lower percentage depending on how the cluster is hardened.
+
+image::s3/s3-02-compliance-coverage.png[Compliance Coverage page showing CIS-OCP profile selection]
+
+. On the bastion, show Compliance Operator status counts for each profile (same split as the Coverage profile toggle):
++
+[source,bash]
+----
+echo "=== ocp4-cis (platform) ==="
+oc get compliancecheckresults -n openshift-compliance --no-headers \
+  | awk '$1 ~ /^ocp4-cis-/ && $1 !~ /^ocp4-cis-node/ {print $2}' | sort | uniq -c | sort -rn
+
+echo "=== ocp4-cis-node ==="
+oc get compliancecheckresults -n openshift-compliance --no-headers \
+  | awk '$1 ~ /^ocp4-cis-node/ {print $2}' | sort | uniq -c | sort -rn
+----
++
+Statuses you may see include `PASS`, `FAIL`, `INCONSISTENT`, `MANUAL`, `ERROR`, and `NOT-APPLICABLE`.
+These per-profile counts should match what Coverage shows for that profile.
+Do not add `org-namespace-owner` to these commands. Coverage shows that profile on its own tab.
+
+. Stay on *Compliance > OpenShift Coverage* and open the *Tailored Profiles* tab.
+. Select `Application namespace owner`.
+. Record the check `org-namespace-owner-namespace-owner-label`.
+Its status is `FAIL` because `backend`, `payments`, and `operations` do not have the label `org.example/owner`.
+Leave those namespaces unchanged. This is the internal control from Exercise 1. Draft the ticket note in the next task from this check.
+
+== Task 2.4: Find and triage a finding
+
+Work through a targeted triage workflow. Prefer Fail checks; use Inconsistent when a profile has no Fail.
+
+. On the Coverage page, ensure the *Checks* view is selected.
+. Use the *Status* filter to show *Fail* checks first.
+. Pick any check with a Fail count greater than zero.
+If a profile has no Fail results, clear the Fail filter and select an *Inconsistent* check for that profile instead.
++
+NOTE: *Inconsistent* means nodes disagreed on the result. *Manual* means a human must evaluate the control. Both still matter for audit prep.
+
+. Click the check name to open the detail view.
+
+== Task 2.5: Work with remediation guidance and draft a ticket note
+
+This is where RHACS goes beyond a simple pass/fail report.
+Each finding includes remediation guidance that tells an administrator what to change.
+
+. In the detail panel, review:
+** *Description*: What the control evaluates and why it matters.
+** *Rationale*: The security reasoning behind the control.
+** *Failing entities* (or inconsistent entities): Which cluster nodes or platform resources are in scope.
+** *Remediation*: Specific instructions for bringing the resource into compliance.
+
+. Draft a short ticket note (write it in a scratch file or notepad) for `org-namespace-owner-namespace-owner-label`. Include:
+** Control / check name
+** Profile (`Application namespace owner`)
+** Status (`FAIL`)
+** Affected namespaces (`backend`, `payments`, and `operations`)
+** Proposed fix: add the label `org.example/owner`. Do not add the label in this lab.
++
+In a real audit preparation workflow you would file that ticket with Platform Operations, re-scan after the fix, then generate evidence (Exercise 3).
+
+. Navigate back to the CIS profiles and open one finding from `ocp4-cis` and one from `ocp4-cis-node`.
+Use Fail if available; otherwise use Inconsistent (or Manual).
+. Compare the remediation guidance: platform checks typically reference API server or etcd configuration, while node checks reference file permissions or kubelet flags.
+
+== Task 2.6: Platform compliance vs workload runtime security
+
+The Coverage page shows *infrastructure and platform compliance* evaluated by the Compliance Operator:
+
+* Node-level controls use the `ocp4-cis-node` profile.
+* Platform controls use the `ocp4-cis` profile.
+
+RHACS also evaluates *workload runtime security* through its policy engine (for example, non-root container execution, privilege escalation prevention, resource limits).
+Those workload checks are not part of the Compliance Operator profiles and do not appear on the Coverage page.
+They are visible under *Violations* and *Policy Management* in the RHACS console.
+
+. Open *Violations* (or *Policy Management*) in the same RHACS console.
+. Write down one policy or violation name you see.
+If the list is empty, write `none (empty list)` and continue. An empty list is valid in this Showroom.
+. Navigate back to *Compliance > OpenShift Coverage*.
+
+Platform Operations, Information Security, and auditors align on the same system: Platform Operations enables Operator and CLI scanning (Exercise 1), Information Security owns the RHACS schedule, triage, and runtime policies (this exercise), and auditors receive evidence from those same scan results (Exercise 3).
+
+NOTE: The Coverage page filters by scan schedule, profile, cluster, and compliance status. Namespace-level workload compliance filtering is not available here because the Compliance Operator evaluates cluster-wide infrastructure, not per-namespace workload posture.
+
+== Key takeaways
+
+* RHACS provides both UI and CLI workflows for managing compliance scans. Day-2 teams typically create and edit schedules in the UI.
+* A Compliance Operator profile can only be bound once per cluster. Delete the CLI binding before recreating the same profiles in RHACS. Leave `org-namespace-owner` unbound in Exercise 1 so this schedule can select it.
+* Creating a scan schedule in the RHACS UI generates the same `ScanSettingBinding` CRDs as `oc apply`.
+* Coverage plus `compliancecheckresults` status counts give you both a visual and a machine-readable picture of posture.
+* Triage means Fail first, then Inconsistent or Manual when needed, then turn remediation text into an actionable ticket note.
+* Infrastructure compliance (Compliance Operator) and workload runtime security (RHACS policy engine) are complementary and visible in one console.
+
+[.verification]
+****
+Did you delete `cis-weekly-scan`, create `cis-audit-schedule` in the RHACS UI with `ocp4-cis`, `ocp4-cis-node`, and `Application namespace owner`, record coverage or CLI status counts for both CIS profiles, see the tailored check fail, and draft a ticket note for that owner-label check?
+
+[.success]
+You can hand off CIS scanning from CLI to the RHACS UI, include an internal tailored profile, and triage findings with remediation guidance. Continue to Exercise 3.
+
+[.fail]
+Confirm `oc delete scansettingbinding cis-weekly-scan -n openshift-compliance` succeeded, then create the schedule under *Compliance > OpenShift Schedules* (Parameters, then Clusters, then Profiles). If Create fails with a profile conflict, ask the instructor to re-run `scripts/s3-instructor-prep.sh`. If `Application namespace owner` is missing from the profile list, return to Exercise 1 and confirm `org-namespace-owner` is `READY`. If Coverage is empty for CIS, wait for the new schedule scan to finish and refresh.
+****

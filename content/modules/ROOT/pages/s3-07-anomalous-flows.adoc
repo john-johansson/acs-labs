@@ -1,0 +1,63 @@
+= Exercise 6: Unapproved cross-namespace flow
+:navtitle: Exercise 6: Unapproved cross-namespace flow
+
+include::partial$session3-ui.adoc[]
+
+Estimated time: 10 minutes.
+
+When an unapproved connection appears on the network, the RHACS Network Graph shows the flow between deployments.
+If the flow is outside a baseline, it can appear as a red dotted line. This exercise does not require that styling.
+
+Baselines for `api-server` and `postgres` were locked in Exercise 5.
+A cross-namespace flow from an operations host into the payment tier is already present.
+As *SRE*, you confirm that flow on the graph.
+
+By the end of this exercise you will:
+
+* Verify the cross-namespace traffic source on the bastion.
+* Observe the flow from `operations/jump-host` to `payments/visa-processor` in the Network Graph.
+
+== Task 6.1: Verify the cross-namespace traffic source
+
+The `jump-host` deployment in `operations` is already configured to connect to services in other namespaces. Verify this on the bastion:
+
+[source,bash]
+----
+oc get deploy jump-host -n operations -o jsonpath='{.spec.template.spec.containers[0].args}' | tr ',' '\n'
+----
+
+The output shows `-connect` targets that include services in the `payments` and `medical` namespaces.
+This is the lateral movement pattern: an operations host bypasses the legitimate API gateway tier and connects directly to backend services.
+
+== Task 6.2: Observe the flow in the Network Graph
+
+. In the RHACS Console, navigate to *Network > Network Graph*.
+. Select the `production` cluster and add the following namespaces to the filter: `backend`, `payments`, `operations`.
++
+If the graph does not refresh automatically, look for an *Updates available* notification and click it.
+. Observe the connection from `operations/jump-host` to `payments/visa-processor`:
++
+....
+[ operations/jump-host ] ---> [ payments/visa-processor ]
+....
++
+This connection crosses namespace boundaries without going through the legitimate `payments/gateway` entry point.
+A red dotted line means the flow is outside the baseline. A solid line is still the same connection. Either is a successful result for this task.
+
+== Key takeaways
+
+* Cross-namespace connections that bypass the expected API tier are visible in the Network Graph.
+* *Alert on baseline violations* was enabled for `api-server` and `postgres` in Exercise 5. Anomalous flows on those deployments can also generate violation events. This exercise does not enable that toggle for `payments/visa-processor`.
+* The Network Graph updates in near-real time when Collector reports new flows to Central.
+* The `operations/jump-host` pattern (lateral movement from an operations tool to payment services) is a common real-world attack vector.
+
+[.verification]
+****
+Did you see a flow from `operations/jump-host` to `payments/visa-processor` in the Network Graph?
+
+[.success]
+The cross-namespace payment path is visible. Continue to Exercise 7.
+
+[.fail]
+Navigate to *Network > Network Graph*, select `production` plus the `operations`, `payments`, and `backend` namespaces, click *Updates available* if shown, and look for flow lines from `jump-host` to services in other namespaces.
+****

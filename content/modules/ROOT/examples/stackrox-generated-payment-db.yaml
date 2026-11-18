@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: stackrox-generated-payment-db
+  namespace: qual-payments-ns
+  labels:
+    network-policy-generator.stackrox.io/generated: "true"
+spec:
+  podSelector:
+    matchLabels:
+      app: payment-db
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: payment-api
+    ports:
+    - protocol: TCP
+      port: 5432

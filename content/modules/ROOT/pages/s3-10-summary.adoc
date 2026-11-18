@@ -1,0 +1,44 @@
+= Lab summary
+:navtitle: Lab summary
+
+include::partial$session3-ui.adoc[]
+
+In this session you worked through the full compliance and network security lifecycle in RHACS, following a scenario where a regulatory audit requires both compliance evidence and proof that network segmentation is enforced.
+
+== Compliance and Audit Evidence (Exercises 1-3)
+
+* *Compliance scanning*: Deployed a declarative `ScanSettingBinding` from the lab repository, applied the unbound `org-namespace-owner` tailored profile, and continued while the CIS scans were running or finished (Exercise 1).
+* *Working with compliance in RHACS*: Deleted the CLI CIS binding, created `cis-audit-schedule` in the RHACS UI with the CIS profiles and `Application namespace owner`, compared Coverage with CLI status counts, triaged Fail or Inconsistent findings into a ticket note, and confirmed runtime guardrails under *Violations* or *Policy Management* (Exercise 2).
+* *Audit evidence and operations*: Generated an on-demand compliance report in the UI, fetched the ZIP from Central with the bastion API, and cross-referenced Fail or Inconsistent CSV rows with Exercise 2 findings (Exercise 3).
+
+== Network Graph and Traffic Observability (Exercises 4-8)
+
+* *Listening endpoints*: Audited container processes at the binary path and PID level using RHACS Collector kernel-level data, then correlated the results with deployment manifests on the bastion to verify no unexpected processes are listening (Exercise 4).
+* *Network topology and baselines*: Visualized the multi-tier application flow in *Network > Network Graph*, enabled baseline violation alerting, and proved *Unauthorized Network Flow* with negative (`backend-atlas`) and positive (`api-server`, `postgres`) probes (Exercise 5).
+* *Unapproved cross-namespace flow*: Observed the connection from `operations/jump-host` to `payments/visa-processor` in the Network Graph (Exercise 6).
+* *Network policy generation*: Marked unexpected `jump-host` peers as anomalous on the `postgres` baseline, generated NetworkPolicy YAML, applied an api-server-only policy for `postgres`, and confirmed anomalous ingress was not allowed (Exercise 7).
+* *CLI verification*: Confirmed kernel-level enforcement with dual TCP probes: the unauthorized probe from `operations/jump-host` timed out (packet dropped by CNI), while the authorized probe from `backend/api-server` connected (TCP handshake completed, connection reset by postgres) (Exercise 8).
+
+== How these capabilities connect
+
+These exercises form a continuous security loop:
+
+. *Compliance scanning* produces evidence that the cluster meets CIS benchmarks.
+. *Listening endpoints* verify that only authorized processes are on the network.
+. *Network baselines* detect when traffic deviates from the expected pattern.
+. *Auto-generated policies* enforce default-deny ingress for the workloads they select. In this lab that is `postgres`.
+. *CLI verification* proves enforcement at the data plane, not just the management plane.
+
+In this lab you walked that loop by hand: scan, collect evidence, observe flows, generate a policy, and prove enforcement.
+
+== Reset the environment
+
+To remove lab-created resources and return the environment to its starting state, run the cleanup script from the cloned repository on the bastion:
+
+[source,bash]
+----
+cd ~/acs-labs
+bash scripts/s3-cleanup.sh
+----
+
+The script removes the demo `acs-catch-all` schedule, lab-created RHACS scan schedules, cluster `ScanSettingBinding` objects, the lab tailored profile and custom rule, generated `NetworkPolicy` objects, and local compliance report files on the bastion. It does not remove the pre-deployed demo application namespaces. It is idempotent and safe to run multiple times.

@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="640" viewBox="0 0 980 640" role="img" aria-labelledby="title desc">
+  <title id="title">Demo application architecture</title>
+  <desc id="desc">Multi-tier medical application across frontend, backend, payments, operations, and medical namespaces, with anomalous jump-host flows highlighted.</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#4a5568"/>
+    </marker>
+    <marker id="arrow-anomalous" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#c9190b"/>
+    </marker>
+    <style>
+      .ns { fill: #f5f5f5; stroke: #d2d2d2; stroke-width: 1.5; }
+      .ns-title { font-family: RedHatText, Overpass, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 700; fill: #151515; }
+      .box { fill: #ffffff; stroke: #6a6e73; stroke-width: 1.5; }
+      .box-text { font-family: RedHatText, Overpass, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 600; fill: #151515; text-anchor: middle; }
+      .port { font-family: RedHatText, Overpass, Helvetica, Arial, sans-serif; font-size: 11px; fill: #6a6e73; text-anchor: middle; }
+      .edge { fill: none; stroke: #4a5568; stroke-width: 1.75; marker-end: url(#arrow); }
+      .edge-anomalous { fill: none; stroke: #c9190b; stroke-width: 2; stroke-dasharray: 6 4; marker-end: url(#arrow-anomalous); }
+      .label-anomalous { font-family: RedHatText, Overpass, Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 700; fill: #c9190b; }
+      .legend-text { font-family: RedHatText, Overpass, Helvetica, Arial, sans-serif; font-size: 11px; fill: #151515; }
+    </style>
+  </defs>
+
+  <rect width="980" height="640" fill="#ffffff"/>
+
+  <!-- frontend -->
+  <rect class="ns" x="360" y="24" width="260" height="88" rx="8"/>
+  <text class="ns-title" x="374" y="46">frontend</text>
+  <rect class="box" x="400" y="56" width="180" height="40" rx="4"/>
+  <text class="box-text" x="490" y="81">tls-proxy</text>
+
+  <!-- backend -->
+  <rect class="ns" x="40" y="140" width="500" height="280" rx="8"/>
+  <text class="ns-title" x="54" y="162">backend</text>
+
+  <rect class="box" x="200" y="178" width="180" height="40" rx="4"/>
+  <text class="box-text" x="290" y="203">varnish</text>
+
+  <rect class="box" x="200" y="262" width="180" height="40" rx="4"/>
+  <text class="box-text" x="290" y="287">api-server</text>
+
+  <rect class="box" x="70" y="346" width="170" height="48" rx="4"/>
+  <text class="box-text" x="155" y="366">postgres</text>
+  <text class="port" x="155" y="384">Port 5432</text>
+
+  <rect class="box" x="320" y="346" width="180" height="48" rx="4"/>
+  <text class="box-text" x="410" y="366">backend-atlas</text>
+  <text class="port" x="410" y="384">Port 8080</text>
+
+  <!-- payments -->
+  <rect class="ns" x="580" y="140" width="360" height="280" rx="8"/>
+  <text class="ns-title" x="594" y="162">payments</text>
+
+  <rect class="box" x="670" y="256" width="180" height="48" rx="4"/>
+  <text class="box-text" x="760" y="276">gateway</text>
+  <text class="port" x="760" y="294">Port 7777</text>
+
+  <rect class="box" x="600" y="346" width="150" height="48" rx="4"/>
+  <text class="box-text" x="675" y="366">visa-processor</text>
+  <text class="port" x="675" y="384">Port 8080</text>
+
+  <rect class="box" x="770" y="346" width="150" height="48" rx="4"/>
+  <text class="box-text" x="845" y="366">mastercard-proc</text>
+  <text class="port" x="845" y="384">Port 8080</text>
+
+  <!-- operations -->
+  <rect class="ns" x="40" y="460" width="280" height="90" rx="8"/>
+  <text class="ns-title" x="54" y="482">operations</text>
+  <rect class="box" x="90" y="494" width="180" height="40" rx="4"/>
+  <text class="box-text" x="180" y="519">jump-host</text>
+
+  <!-- medical -->
+  <rect class="ns" x="580" y="460" width="360" height="90" rx="8"/>
+  <text class="ns-title" x="594" y="482">medical</text>
+  <rect class="box" x="670" y="494" width="180" height="40" rx="4"/>
+  <text class="box-text" x="760" y="519">patient-db</text>
+
+  <!-- Approved traffic -->
+  <path class="edge" d="M 490 96 L 490 140 L 290 140 L 290 178"/>
+  <path class="edge" d="M 290 218 L 290 262"/>
+  <text class="port" x="328" y="248">Port 9001</text>
+  <path class="edge" d="M 240 302 L 155 302 L 155 346"/>
+  <path class="edge" d="M 340 302 L 410 302 L 410 346"/>
+  <path class="edge" d="M 380 282 L 670 282"/>
+  <path class="edge" d="M 720 304 L 675 304 L 675 346"/>
+  <path class="edge" d="M 800 304 L 845 304 L 845 346"/>
+
+  <!-- Anomalous traffic from operations/jump-host -->
+  <path class="edge-anomalous" d="M 200 494 C 200 420, 480 380, 600 370"/>
+  <text class="label-anomalous" x="300" y="410">ANOMALOUS</text>
+  <path class="edge-anomalous" d="M 270 514 L 670 514"/>
+  <text class="label-anomalous" x="420" y="506">ANOMALOUS</text>
+
+  <!-- Legend -->
+  <rect x="40" y="574" width="300" height="40" fill="#f5f5f5" stroke="#d2d2d2" rx="4"/>
+  <line x1="56" y1="594" x2="96" y2="594" stroke="#4a5568" stroke-width="1.75"/>
+  <polygon points="96,590 104,594 96,598" fill="#4a5568"/>
+  <text class="legend-text" x="112" y="598">Approved traffic</text>
+  <line x1="220" y1="594" x2="255" y2="594" stroke="#c9190b" stroke-width="2" stroke-dasharray="6 4"/>
+  <polygon points="255,590 263,594 255,598" fill="#c9190b"/>
+  <text class="legend-text" x="271" y="598">Anomalous</text>
+</svg>

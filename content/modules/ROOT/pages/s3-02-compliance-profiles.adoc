@@ -1,0 +1,182 @@
+= Exercise 1: Deploying compliance profiles
+:navtitle: Exercise 1: Deploying compliance profiles
+
+include::partial$session3-ui.adoc[]
+
+Estimated time: 10 minutes.
+
+Most organizations treat compliance as a periodic event: a scramble before an audit to collect evidence, run manual checks, and compile spreadsheets.
+The Red Hat Compliance Operator shifts that model to continuous, automated scanning.
+It runs natively on OpenShift to evaluate core OS node configurations and platform control plane settings against industry benchmarks, without external agents.
+
+A regulatory audit is scheduled for next quarter.
+As the *Platform Operations* team, your first task is to enable continuous CIS benchmark scanning on the cluster so that compliance evidence is generated automatically from this point forward.
+
+You will do that the platform way: apply a YAML `ScanSettingBinding` from the repository with `oc apply`.
+That same file-based workflow is what GitOps and CI pipelines use (commit the manifest, let automation apply it).
+Exercise 2 shows the RHACS UI alternative for the same profiles.
+
+By the end of this exercise you will:
+
+* List the compliance profiles available on the cluster.
+* Deploy a declarative `ScanSettingBinding` that binds the `ocp4-cis` and `ocp4-cis-node` profiles to the default scan settings.
+* Apply a `CustomRule` and `TailoredProfile` for an internal ownership control, and leave that profile unbound.
+* Watch the CIS scans start. A running scan is enough to continue, because Exercise 2 scans these profiles again.
+
+== Task 1.1: List available compliance profiles
+
+The Compliance Operator ships with several built-in profiles.
+Confirm that the CIS profiles are present:
+
+. List installed profiles:
++
+[source,bash]
+----
+oc get profiles.compliance -n openshift-compliance
+----
++
+Look for `ocp4-cis` (platform controls) and `ocp4-cis-node` (node-level controls) in the output.
+
+== Task 1.2: Deploy the CIS scan binding
+
+A `ScanSettingBinding` connects one or more compliance profiles to a `ScanSetting` (which defines schedule, storage, and tolerations).
+The `default` ScanSetting runs scans immediately and then on a daily schedule.
+
+. Review the manifest (`content/modules/ROOT/examples/cis-weekly-scan.yaml` in the cloned repository):
++
+[source,yaml]
+----
+include::example$cis-weekly-scan.yaml[]
+----
++
+NOTE: Each profile entry and the `settingsRef` include `apiGroup: compliance.openshift.io/v1alpha1` as required by the Compliance Operator CRD schema.
+
+. Apply it from the repository root:
++
+[source,bash]
+----
+cd ~/acs-labs
+oc apply -f content/modules/ROOT/examples/cis-weekly-scan.yaml
+----
++
+NOTE: In production, this file would typically live in Git and be applied by a pipeline or GitOps controller. Here you apply it once by hand so you can see the Operator react immediately.
+
+. Confirm the binding exists:
++
+[source,bash]
+----
+oc get scansettingbinding -n openshift-compliance
+----
++
+You should see `cis-weekly-scan`. You should not see `acs-catch-all`. Instructor prep removes that demo schedule before class.
+
+== Task 1.3: Apply the internal control
+
+CIS does not contain every control an organization needs. On this cluster the application namespaces `backend`, `payments`, and `operations` must declare an owner. That check is a `CustomRule`, and it runs only when a `TailoredProfile` enables it. A tailored profile cannot also contain the CIS rules, so this control stays in its own profile.
+
+. Review the manifest (`content/modules/ROOT/examples/org-namespace-owner.yaml` in the cloned repository):
++
+[source,yaml]
+----
+include::example$org-namespace-owner.yaml[]
+----
+
+. Apply it from the repository root:
++
+[source,bash]
+----
+cd ~/acs-labs
+oc apply -f content/modules/ROOT/examples/org-namespace-owner.yaml
+----
+
+. Wait until the tailored profile is ready:
++
+[source,bash]
+----
+oc get tailoredprofile org-namespace-owner -n openshift-compliance
+----
++
+Continue when `STATE` is `READY`.
+
+NOTE: Do not create a `ScanSettingBinding` for `org-namespace-owner`. A profile can be bound only once on the cluster. Information Security selects this profile in Exercise 2, and RHACS creates the binding. The check does not run during this exercise.
+
+== Task 1.4: Monitor scan progress
+
+The Compliance Operator creates a `ComplianceSuite` and individual `ComplianceScan` resources.
+Scans commonly take several minutes on a multi-node cluster. Use the commands below to see progress. Task 1.3 is the work you do while this scan runs. You do not have to wait for `DONE` before Exercise 2.
+
+. Check per-scan progress:
++
+[source,bash]
+----
+oc get compliancescan -n openshift-compliance
+----
++
+Re-run the command to watch progress. `PHASE` `DONE` means that scan has finished. `RUNNING` is enough to continue. Exercise 2 deletes this binding and scans the CIS profiles again.
++
+TIP: Optional console view (same data, visual status):
++
+--
+. Open the OpenShift Console URL from the prerequisites.
+. Go to *Operators > Installed Operators* and open the *Compliance Operator* (project `openshift-compliance`).
+. From the operator pages, open the compliance resources (*ComplianceScan*, *ComplianceSuite*, and related tabs) and refresh to see the current phase. You do not need to wait for `DONE`.
+--
+
+. Check suite-level status:
++
+[source,bash]
+----
+oc get compliancesuite -n openshift-compliance
+----
++
+Example (names and RESULT values vary by cluster):
++
+[source,text]
+----
+NAME              PHASE     RESULT
+cis-weekly-scan   RUNNING
+----
++
+What to check:
++
+* Your lab suite is `cis-weekly-scan`.
+* `PHASE` may be `RUNNING` or `DONE`. Either is enough to continue. `DONE` means the suite finished. You do not need that before Exercise 2.
+* If `RESULT` is already set, it is a high-level summary only. On this lab cluster it is commonly `INCONSISTENT`, `NON-COMPLIANT`, or `ERROR`. That is expected. Do not try to make it `COMPLIANT`.
+* Individual check results appear as the scan writes them. A count of zero while `PHASE` is `RUNNING` is fine.
+
+. Verify that individual check results were created:
++
+[source,bash]
+----
+oc get compliancecheckresults -n openshift-compliance --no-headers | wc -l
+----
++
+A non-zero count means the scan has started writing results. Zero is fine while `PHASE` is still `RUNNING`.
+
+. Summarize check statuses (optional, useful before Exercise 2):
++
+[source,bash]
+----
+oc get compliancecheckresults -n openshift-compliance --no-headers | awk '{print $2}' | sort | uniq -c | sort -rn
+----
+
+TIP: Open Exercise 2 once `org-namespace-owner` is `READY`. Coverage for CIS stays empty until the Exercise 2 schedule finishes, because that schedule replaces the CLI binding you applied here. The internal ownership check does not run until Exercise 2 schedules `org-namespace-owner`.
+
+== Key takeaways
+
+* A `ScanSettingBinding` is the declarative link between compliance profiles and scan settings. Applying it triggers scans immediately.
+* Applying YAML from a repository is the GitOps and pipeline-friendly path. The RHACS UI (Exercise 2) creates the same kind of binding without writing manifests by hand.
+* A `CustomRule` is an organization-specific platform check. A `TailoredProfile` enables it. This lab applies both and leaves them unbound so RHACS can schedule the profile in Exercise 2.
+* The Compliance Operator produces `ComplianceScan`, `ComplianceSuite`, and `ComplianceCheckResult` CRDs that capture audit evidence as native Kubernetes resources.
+* Suite `RESULT` is a coarse summary (`INCONSISTENT`, `NON-COMPLIANT`, or `ERROR` are all normal here). Treat check-result counts and statuses as the detailed evidence.
+
+[.verification]
+****
+Is `org-namespace-owner` `READY`, and did `oc get compliancescan` show the CIS scans running or `DONE`?
+
+[.success]
+The internal profile is ready for Exercise 2. CIS Coverage appears after the Exercise 2 schedule finishes. Continue to Exercise 2.
+
+[.fail]
+If `org-namespace-owner` is not `READY`, re-apply `content/modules/ROOT/examples/org-namespace-owner.yaml`. If no CIS scan exists, re-apply `content/modules/ROOT/examples/cis-weekly-scan.yaml`. You do not need `PHASE` `DONE` before Exercise 2.
+****
