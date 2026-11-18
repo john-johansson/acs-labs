@@ -37,7 +37,7 @@ Look for `ocp4-cis` (platform controls) and `ocp4-cis-node` (node-level controls
 A `ScanSettingBinding` connects one or more compliance profiles to a `ScanSetting` (which defines schedule, storage, and tolerations).
 The `default` ScanSetting runs scans immediately and then on a daily schedule.
 
-. Review the manifest in the cloned repository:
+. Review the manifest (`content/modules/ROOT/examples/cis-weekly-scan.yaml` in the cloned repository):
 +
 [source,yaml]
 ----
@@ -46,7 +46,7 @@ include::example$cis-weekly-scan.yaml[]
 +
 NOTE: Each profile entry and the `settingsRef` include `apiGroup: compliance.openshift.io/v1alpha1` as required by the Compliance Operator CRD schema.
 
-. Apply the binding from the repository file (from the repo root you cloned in the prerequisites):
+. Apply it from the repository root:
 +
 [source,bash]
 ----
@@ -68,17 +68,22 @@ You should see `cis-weekly-scan`. The pre-deployed `acs-catch-all` binding may a
 The Compliance Operator creates a `ComplianceSuite` and individual `ComplianceScan` resources.
 Scans commonly take several minutes on a multi-node cluster. Stay on this task until the suite reaches `DONE`, or use the tip at the end if you need to move on while scans finish.
 
-. Watch per-scan progress:
+. Check per-scan progress:
 +
 [source,bash]
 ----
-oc get compliancescan -w -n openshift-compliance
+oc get compliancescan -n openshift-compliance
 ----
 +
-Wait until all scans reach `DONE`. Press `Ctrl+C` to stop watching.
-
-. Optional: monitor the same resources in the OpenShift Console.
-Open the console URL from the prerequisites, switch to the `openshift-compliance` project, and inspect `ComplianceScan` / `ComplianceSuite` objects while the CLI watch runs.
+Re-run the command until all scans reach `DONE`.
++
+TIP: Optional console view (same data, visual status):
++
+--
+. Open the OpenShift Console URL from the prerequisites.
+. Go to *Operators > Installed Operators* and open the *Compliance Operator* (project `openshift-compliance`).
+. From the operator pages, open the compliance resources (*ComplianceScan*, *ComplianceSuite*, and related tabs) and refresh until scans show phase `DONE`.
+--
 
 . Check suite-level status:
 +
@@ -135,5 +140,5 @@ Did `oc get compliancesuite` show `cis-weekly-scan` in `DONE` phase, and does `o
 The Compliance Operator scanned the cluster against CIS benchmarks and produced check results. Continue to Exercise 2.
 
 [.fail]
-Verify the Compliance Operator is installed (`oc get csv -n openshift-compliance`), re-apply the `ScanSettingBinding` from the example file, and watch `oc get compliancescan -w -n openshift-compliance` until all scans reach `DONE`.
+Verify the Compliance Operator is installed (`oc get csv -n openshift-compliance`), re-apply the `ScanSettingBinding` from the example file, and re-run `oc get compliancescan -n openshift-compliance` until all scans reach `DONE`.
 ****
