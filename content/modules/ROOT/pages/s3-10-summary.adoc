@@ -7,7 +7,7 @@ In this session you worked through the full compliance and network security life
 
 == Compliance and Audit Evidence (Exercises 1-3)
 
-* *Compliance scanning*: Deployed a declarative `ScanSettingBinding` from the lab repository, applied the unbound `org-namespace-owner` tailored profile, listed bindings, and confirmed `ComplianceCheckResult` CRDs as continuous audit evidence (Exercise 1).
+* *Compliance scanning*: Deployed a declarative `ScanSettingBinding` from the lab repository, applied the unbound `org-namespace-owner` tailored profile, and continued while the CIS scans were running or finished (Exercise 1).
 * *Working with compliance in RHACS*: Deleted the CLI CIS binding, created `cis-audit-schedule` in the RHACS UI with the CIS profiles and `Application namespace owner`, compared Coverage with CLI status counts, triaged Fail or Inconsistent findings into a ticket note, and confirmed runtime guardrails under *Violations* or *Policy Management* (Exercise 2).
 * *Audit evidence and operations*: Generated an on-demand compliance report in the UI, fetched the ZIP from Central with the bastion API, and cross-referenced Fail or Inconsistent CSV rows with Exercise 2 findings (Exercise 3).
 
@@ -15,7 +15,7 @@ In this session you worked through the full compliance and network security life
 
 * *Listening endpoints*: Audited container processes at the binary path and PID level using RHACS Collector kernel-level data, then correlated the results with deployment manifests on the bastion to verify no unexpected processes are listening (Exercise 4).
 * *Network topology and baselines*: Visualized the multi-tier application flow in *Network > Network Graph*, enabled baseline violation alerting, and proved *Unauthorized Network Flow* with negative (`backend-atlas`) and positive (`api-server`, `postgres`) probes (Exercise 5).
-* *Anomalous flow detection*: Observed unapproved cross-namespace traffic from `operations/jump-host` to `payments/visa-processor` in the Network Graph (Exercise 6).
+* *Unapproved cross-namespace flow*: Observed the connection from `operations/jump-host` to `payments/visa-processor` in the Network Graph (Exercise 6).
 * *Network policy generation*: Marked unexpected `jump-host` peers as anomalous on the `postgres` baseline, generated NetworkPolicy YAML, applied an api-server-only policy for `postgres`, and confirmed anomalous ingress was not allowed (Exercise 7).
 * *CLI verification*: Confirmed kernel-level enforcement with dual TCP probes: the unauthorized probe from `operations/jump-host` timed out (packet dropped by CNI), while the authorized probe from `backend/api-server` connected (TCP handshake completed, connection reset by postgres) (Exercise 8).
 
@@ -26,10 +26,10 @@ These exercises form a continuous security loop:
 . *Compliance scanning* produces evidence that the cluster meets CIS benchmarks.
 . *Listening endpoints* verify that only authorized processes are on the network.
 . *Network baselines* detect when traffic deviates from the expected pattern.
-. *Auto-generated policies* enforce zero-trust microsegmentation at the kernel level.
+. *Auto-generated policies* enforce default-deny ingress for the workloads they select. In this lab that is `postgres`.
 . *CLI verification* proves enforcement at the data plane, not just the management plane.
 
-In production, this loop runs continuously: scans catch configuration drift, baselines flag new connections, and policies prevent lateral movement, all without manual intervention.
+In this lab you walked that loop by hand: scan, collect evidence, observe flows, generate a policy, and prove enforcement.
 
 == Reset the environment
 

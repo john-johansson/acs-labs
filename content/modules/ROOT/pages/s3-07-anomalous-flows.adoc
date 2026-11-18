@@ -1,22 +1,21 @@
-= Exercise 6: Anomalous flow detection
-:navtitle: Exercise 6: Anomalous flow detection
+= Exercise 6: Unapproved cross-namespace flow
+:navtitle: Exercise 6: Unapproved cross-namespace flow
 
 include::partial$session3-ui.adoc[]
 
 Estimated time: 10 minutes.
 
-When an unapproved connection appears on the network, RHACS draws a red anomalous flow indicator across the Network Graph in real time.
-This visual alert bridges directly to the Violations view, where SRE teams can investigate the source, destination, protocol, and timing of the probe.
+When an unapproved connection appears on the network, the RHACS Network Graph shows the flow between deployments.
+If the flow is outside a baseline, it can appear as a red dotted line. This exercise does not require that styling.
 
-Baselines are locked and Exercise 5 already proved *Unauthorized Network Flow* for controlled probes.
-A cross-namespace flow has also appeared outside the baseline, representing potential lateral movement from an operations host into the payment tier.
-As *SRE*, you investigate that pre-existing flow and confirm it is unauthorized.
+Baselines for `api-server` and `postgres` were locked in Exercise 5.
+A cross-namespace flow from an operations host into the payment tier is already present.
+As *SRE*, you confirm that flow on the graph.
 
 By the end of this exercise you will:
 
 * Verify the cross-namespace traffic source on the bastion.
-* Observe the anomalous flow from `operations/jump-host` to `payments/visa-processor` in the Network Graph.
-* Optionally verify the baseline violation in the Violations view.
+* Observe the flow from `operations/jump-host` to `payments/visa-processor` in the Network Graph.
 
 == Task 6.1: Verify the cross-namespace traffic source
 
@@ -30,44 +29,34 @@ oc get deploy jump-host -n operations -o jsonpath='{.spec.template.spec.containe
 The output shows `-connect` targets that include services in the `payments` and `medical` namespaces.
 This is the lateral movement pattern: an operations host bypasses the legitimate API gateway tier and connects directly to backend services.
 
-== Task 6.2: Observe the anomalous flow in the Network Graph
+== Task 6.2: Observe the flow in the Network Graph
 
 . In the RHACS Console, navigate to *Network > Network Graph*.
 . Select the `production` cluster and add the following namespaces to the filter: `backend`, `payments`, `operations`.
 +
 If the graph does not refresh automatically, look for an *Updates available* notification and click it.
-. Observe the connection from `operations/jump-host` to `payments/visa-processor`. If baselines flagged it as unknown, it appears as a red dotted line indicating an anomalous flow:
+. Observe the connection from `operations/jump-host` to `payments/visa-processor`:
 +
 ....
-[ operations/jump-host ] --- (CROSS-NS FLOW) ---> [ payments/visa-processor ]
+[ operations/jump-host ] ---> [ payments/visa-processor ]
 ....
 +
 This connection crosses namespace boundaries without going through the legitimate `payments/gateway` entry point.
-
-== Task 6.3: Check for a baseline violation (optional)
-
-Exercise 5 already raised *Unauthorized Network Flow* for your `api-server` and `postgres` probes.
-If alerting is also relevant for the payments path:
-
-. Navigate to *Violations* in the RHACS Console.
-. Look for a violation related to *Unauthorized Network Flow* or *Network Baseline* involving `payments/visa-processor` or `operations/jump-host`.
-. Open the violation to see the source deployment, destination, port, and protocol.
-
-NOTE: If the violation does not appear immediately, wait 30 seconds and refresh. RHACS processes network flow data in short intervals.
+A red dotted line means the flow is outside the baseline. A solid line is still the same connection. Either is a successful result for this task.
 
 == Key takeaways
 
-* Cross-namespace connections that bypass the expected API tier produce visible anomalous flow indicators in the Network Graph.
-* With *Alert on baseline violations* enabled (Exercise 5), anomalous flows also generate violation events that feed into alerting workflows.
+* Cross-namespace connections that bypass the expected API tier are visible in the Network Graph.
+* *Alert on baseline violations* was enabled for `api-server` and `postgres` in Exercise 5. Anomalous flows on those deployments can also generate violation events. This exercise does not enable that toggle for `payments/visa-processor`.
 * The Network Graph updates in near-real time when Collector reports new flows to Central.
 * The `operations/jump-host` pattern (lateral movement from an operations tool to payment services) is a common real-world attack vector.
 
 [.verification]
 ****
-Did you see a cross-namespace flow from `operations/jump-host` to `payments/visa-processor` in the Network Graph?
+Did you see a flow from `operations/jump-host` to `payments/visa-processor` in the Network Graph?
 
 [.success]
-Anomalous east-west traffic is visible in real time. Continue to Exercise 7.
+The cross-namespace payment path is visible. Continue to Exercise 7.
 
 [.fail]
 Navigate to *Network > Network Graph*, select `production` plus the `operations`, `payments`, and `backend` namespaces, click *Updates available* if shown, and look for flow lines from `jump-host` to services in other namespaces.

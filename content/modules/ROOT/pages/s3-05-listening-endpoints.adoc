@@ -6,8 +6,8 @@ include::partial$session3-ui.adoc[]
 Estimated time: 10 minutes.
 
 Traditional firewall tools see IP addresses and port numbers.
-RHACS Collector operates at the Linux kernel layer (via eBPF or kernel modules) and goes deeper: it maps every open network socket to the exact container binary path and process ID that owns it.
-If a malicious process opens a port that matches a legitimate service, RHACS flags it because the binary path does not match the baseline.
+RHACS Collector operates at the Linux kernel layer (via eBPF or kernel modules) and maps every open network socket to the container binary path and process ID that owns it.
+This page shows that observed port and binary. Compare them with the deployment args. A mismatch is what you would investigate. In this lab, `api-server` and `postgres` match.
 
 Compliance posture is established, but the audit also requires proof that only authorized processes are listening on the network.
 As the *SRE* team, you now audit the process-level network footprint and verify it matches what the deployment manifests declare.

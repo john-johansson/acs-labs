@@ -10,10 +10,10 @@ There are no proprietary sidecars, no custom CRDs, and no vendor lock-in.
 If RHACS were uninstalled tomorrow, OpenShift's OVN-Kubernetes CNI would continue enforcing these policies at the kernel level.
 The generated YAML can be committed to a Git repository and applied through a GitOps pipeline.
 
-In this exercise you use the RHACS Network Policy Generator to simulate, review, and apply a zero-trust `NetworkPolicy` for the `postgres` deployment in the `backend` namespace.
+In this exercise you use the RHACS Network Policy Generator to simulate, review, and apply a default-deny ingress `NetworkPolicy` for the `postgres` deployment in the `backend` namespace.
 
 The anomalous cross-namespace flow is confirmed.
-As *Platform Operations*, you generate and apply zero-trust network policies to block unauthorized paths while preserving the legitimate application flows.
+As *Platform Operations*, you generate and apply that policy so unauthorized paths are blocked while the legitimate application flow remains.
 
 By the end of this exercise you will:
 
@@ -56,7 +56,7 @@ IMPORTANT: Anomalous flows are excluded from generation. If `jump-host` still ap
 == Task 7.4: Review the generated YAML
 
 . In the generated policies panel, scroll to the policy for `postgres`. The policy name is typically `stackrox-generated-postgres`.
-. Review the YAML. The intended zero-trust policy for this lab looks like:
+. Review the YAML. The intended default-deny ingress policy for this lab looks like:
 +
 [source,yaml]
 ----
@@ -92,15 +92,14 @@ TIP: To compare the generated policies with existing ones, click *Compare* in th
 == Task 7.5: Apply the policy via CLI
 
 Apply the YAML you downloaded from the generator.
-If the download is missing or still includes unexpected ingress, use the example from Task 7.4 (same content as the lab repository file below):
+If the browser saved it on your workstation, copy it to the bastion first.
 
 [source,bash]
 ----
-oc apply -f content/modules/ROOT/examples/stackrox-generated-postgres.yaml
+oc apply -f ~/stackrox-generated-postgres.yaml
 ----
 
-If you downloaded the generator output to the bastion, apply that file instead (for example `oc apply -f ~/stackrox-generated-postgres.yaml`).
-If neither path is available, paste or create the YAML from Task 7.4 and apply it with `oc apply -f -`.
+Use the path where you saved the download if it is not `~/stackrox-generated-postgres.yaml`.
 
 . Verify the policy exists:
 +
@@ -139,7 +138,7 @@ The OVN-Kubernetes CNI now enforces this policy at the kernel level. Only `api-s
 Did you mark `jump-host` as anomalous on the `postgres` Baseline if needed, generate network policies from the Network Graph, apply an api-server-only `stackrox-generated-postgres` policy, and confirm it exists in `backend` via `oc get networkpolicy`?
 
 [.success]
-A zero-trust NetworkPolicy is now enforced by the CNI. Continue to Exercise 8 to verify it at the packet level.
+A default-deny ingress policy for `postgres` is now enforced by the CNI. Continue to Exercise 8 to verify it at the packet level.
 
 [.fail]
 On `postgres` Baseline, *Mark as anomalous* any `jump-host` peer, regenerate, then apply the downloaded YAML (or `content/modules/ROOT/examples/stackrox-generated-postgres.yaml`) and run `oc get networkpolicy -n backend`.

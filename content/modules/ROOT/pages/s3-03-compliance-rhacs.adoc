@@ -61,7 +61,9 @@ This is the UI equivalent of the `oc apply` step in Exercise 1.
 == Task 2.3: Explore profile coverage
 
 Before reviewing individual checks, compare what each CIS profile covers.
-Wait for the new schedule's scan to finish if Coverage is still empty for CIS.
+Wait for the new schedule's scan to finish if Coverage is still empty for CIS. That wait is the scan this schedule starts. Exercise 1 already explained it.
+
+NOTE: The left-nav *Dashboard* is the RHACS home page. OpenShift CIS results are not there. The older Compliance dashboard, including its PDF and CSV export, is deprecated and may still be available in the console. For this lab use *Compliance > OpenShift Coverage* and *Compliance > OpenShift Schedules*.
 
 . Navigate to *Compliance > OpenShift Coverage*.
 . Use the profile toggle to switch between `ocp4-cis` and `ocp4-cis-node`:
@@ -93,7 +95,7 @@ Do not add `org-namespace-owner` to these commands. Coverage shows that profile 
 . Select `Application namespace owner`.
 . Record the check `org-namespace-owner-namespace-owner-label`.
 Its status is `FAIL` because `backend`, `payments`, and `operations` do not have the label `org.example/owner`.
-Leave those namespaces unchanged. This is the internal control from Exercise 1. The ticket note in the next task stays on a CIS finding.
+Leave those namespaces unchanged. This is the internal control from Exercise 1. Draft the ticket note in the next task from this check.
 
 == Task 2.4: Find and triage a finding
 
@@ -119,20 +121,18 @@ Each finding includes remediation guidance that tells an administrator what to c
 ** *Failing entities* (or inconsistent entities): Which cluster nodes or platform resources are in scope.
 ** *Remediation*: Specific instructions for bringing the resource into compliance.
 
-. Draft a short ticket note (write it in a scratch file or notepad). Include:
+. Draft a short ticket note (write it in a scratch file or notepad) for `org-namespace-owner-namespace-owner-label`. Include:
 ** Control / check name
-** Profile (`ocp4-cis` or `ocp4-cis-node`)
-** Status (Fail or Inconsistent)
-** Affected entity (node or platform resource)
-** Proposed fix (one or two sentences from the remediation text)
+** Profile (`Application namespace owner`)
+** Status (`FAIL`)
+** Affected namespaces (`backend`, `payments`, and `operations`)
+** Proposed fix: add the label `org.example/owner`. Do not add the label in this lab.
 +
 In a real audit preparation workflow you would file that ticket with Platform Operations, re-scan after the fix, then generate evidence (Exercise 3).
 
-. Navigate back and open a second finding from the *other* profile.
-Use Fail if available; otherwise use Inconsistent (or Manual) so you always have two findings to compare.
+. Navigate back to the CIS profiles and open one finding from `ocp4-cis` and one from `ocp4-cis-node`.
+Use Fail if available; otherwise use Inconsistent (or Manual).
 . Compare the remediation guidance: platform checks typically reference API server or etcd configuration, while node checks reference file permissions or kubelet flags.
-
-NOTE: Some checks show a *Manual* status. These require human judgment (for example, reviewing organizational policies). They cannot be evaluated automatically and are flagged for manual review during audits.
 
 == Task 2.6: Platform compliance vs workload runtime security
 
@@ -140,8 +140,6 @@ The Coverage page shows *infrastructure and platform compliance* evaluated by th
 
 * Node-level controls use the `ocp4-cis-node` profile.
 * Platform controls use the `ocp4-cis` profile.
-
-NOTE: The left-nav *Dashboard* is the RHACS home page. OpenShift CIS results are not there. The older Compliance dashboard, including its PDF and CSV export, is deprecated and may still be available in the console. For this lab use *Compliance > OpenShift Coverage* and *Compliance > OpenShift Schedules*.
 
 RHACS also evaluates *workload runtime security* through its policy engine (for example, non-root container execution, privilege escalation prevention, resource limits).
 Those workload checks are not part of the Compliance Operator profiles and do not appear on the Coverage page.
@@ -167,7 +165,7 @@ NOTE: The Coverage page filters by scan schedule, profile, cluster, and complian
 
 [.verification]
 ****
-Did you delete `cis-weekly-scan`, create `cis-audit-schedule` in the RHACS UI with `ocp4-cis`, `ocp4-cis-node`, and `Application namespace owner`, record coverage or CLI status counts for both CIS profiles, see the tailored check fail, and draft a ticket note for at least one CIS finding?
+Did you delete `cis-weekly-scan`, create `cis-audit-schedule` in the RHACS UI with `ocp4-cis`, `ocp4-cis-node`, and `Application namespace owner`, record coverage or CLI status counts for both CIS profiles, see the tailored check fail, and draft a ticket note for that owner-label check?
 
 [.success]
 You can hand off CIS scanning from CLI to the RHACS UI, include an internal tailored profile, and triage findings with remediation guidance. Continue to Exercise 3.

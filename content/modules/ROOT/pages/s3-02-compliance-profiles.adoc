@@ -21,7 +21,7 @@ By the end of this exercise you will:
 * List the compliance profiles available on the cluster.
 * Deploy a declarative `ScanSettingBinding` that binds the `ocp4-cis` and `ocp4-cis-node` profiles to the default scan settings.
 * Apply a `CustomRule` and `TailoredProfile` for an internal ownership control, and leave that profile unbound.
-* Monitor scan progress and confirm that `ComplianceCheckResult` CRDs are created.
+* Watch the CIS scans start. A running scan is enough to continue, because Exercise 2 scans these profiles again.
 
 == Task 1.1: List available compliance profiles
 
@@ -103,7 +103,7 @@ NOTE: Do not create a `ScanSettingBinding` for `org-namespace-owner`. A profile 
 == Task 1.4: Monitor scan progress
 
 The Compliance Operator creates a `ComplianceSuite` and individual `ComplianceScan` resources.
-Scans commonly take several minutes on a multi-node cluster. Stay on this task until the suite reaches `DONE`, or use the tip at the end if you need to move on while scans finish.
+Scans commonly take several minutes on a multi-node cluster. Use the commands below to see progress. Task 1.3 is the work you do while this scan runs. You do not have to wait for `DONE` before Exercise 2.
 
 . Check per-scan progress:
 +
@@ -112,14 +112,14 @@ Scans commonly take several minutes on a multi-node cluster. Stay on this task u
 oc get compliancescan -n openshift-compliance
 ----
 +
-Re-run the command until all scans reach `DONE`.
+Re-run the command to watch progress. `PHASE` `DONE` means that scan has finished. `RUNNING` is enough to continue. Exercise 2 deletes this binding and scans the CIS profiles again.
 +
 TIP: Optional console view (same data, visual status):
 +
 --
 . Open the OpenShift Console URL from the prerequisites.
 . Go to *Operators > Installed Operators* and open the *Compliance Operator* (project `openshift-compliance`).
-. From the operator pages, open the compliance resources (*ComplianceScan*, *ComplianceSuite*, and related tabs) and refresh until scans show phase `DONE`.
+. From the operator pages, open the compliance resources (*ComplianceScan*, *ComplianceSuite*, and related tabs) and refresh to see the current phase. You do not need to wait for `DONE`.
 --
 
 . Check suite-level status:
@@ -133,16 +133,16 @@ Example (names and RESULT values vary by cluster):
 +
 [source,text]
 ----
-NAME              PHASE   RESULT
-cis-weekly-scan   DONE    INCONSISTENT
+NAME              PHASE     RESULT
+cis-weekly-scan   RUNNING
 ----
 +
 What to check:
 +
 * Your lab suite is `cis-weekly-scan`.
-* `PHASE` must be `DONE` for `cis-weekly-scan`.
-* `RESULT` is a high-level summary only. On this lab cluster it is commonly `INCONSISTENT`, `NON-COMPLIANT`, or `ERROR`. That is expected. Do not try to make it `COMPLIANT`.
-* The next step confirms the real evidence: individual check results.
+* `PHASE` may be `RUNNING` or `DONE`. Either is enough to continue. `DONE` means the suite finished. You do not need that before Exercise 2.
+* If `RESULT` is already set, it is a high-level summary only. On this lab cluster it is commonly `INCONSISTENT`, `NON-COMPLIANT`, or `ERROR`. That is expected. Do not try to make it `COMPLIANT`.
+* Individual check results appear as the scan writes them. A count of zero while `PHASE` is `RUNNING` is fine.
 
 . Verify that individual check results were created:
 +
@@ -151,7 +151,7 @@ What to check:
 oc get compliancecheckresults -n openshift-compliance --no-headers | wc -l
 ----
 +
-A non-zero count confirms that the Compliance Operator evaluated applicable controls.
+A non-zero count means the scan has started writing results. Zero is fine while `PHASE` is still `RUNNING`.
 
 . Summarize check statuses (optional, useful before Exercise 2):
 +
@@ -160,8 +160,7 @@ A non-zero count confirms that the Compliance Operator evaluated applicable cont
 oc get compliancecheckresults -n openshift-compliance --no-headers | awk '{print $2}' | sort | uniq -c | sort -rn
 ----
 
-TIP: If the CIS scans are still running, you can proceed to Exercise 2 while they complete. `org-namespace-owner` must already be `READY` before you open the schedule wizard.
-CIS results for this lab come from the `cis-weekly-scan` binding you just applied (and from the UI schedule you create in Exercise 2). The internal ownership check does not run until Exercise 2 schedules `org-namespace-owner`.
+TIP: Open Exercise 2 once `org-namespace-owner` is `READY`. Coverage for CIS stays empty until the Exercise 2 schedule finishes, because that schedule replaces the CLI binding you applied here. The internal ownership check does not run until Exercise 2 schedules `org-namespace-owner`.
 
 == Key takeaways
 
@@ -173,11 +172,11 @@ CIS results for this lab come from the `cis-weekly-scan` binding you just applie
 
 [.verification]
 ****
-Did `oc get compliancesuite` show `cis-weekly-scan` in `DONE` phase, does `oc get compliancecheckresults` return a non-zero count, and is `org-namespace-owner` `READY`?
+Is `org-namespace-owner` `READY`, and did `oc get compliancescan` show the CIS scans running or `DONE`?
 
 [.success]
-The Compliance Operator scanned the cluster against CIS benchmarks and produced check results. The internal profile is ready for Exercise 2. Continue to Exercise 2.
+The internal profile is ready for Exercise 2. CIS Coverage appears after the Exercise 2 schedule finishes. Continue to Exercise 2.
 
 [.fail]
-Verify the Compliance Operator is installed (`oc get csv -n openshift-compliance`), re-apply the `ScanSettingBinding` from the example file, and re-run `oc get compliancescan -n openshift-compliance` until all scans reach `DONE`. If `org-namespace-owner` is not `READY`, re-apply `content/modules/ROOT/examples/org-namespace-owner.yaml`.
+If `org-namespace-owner` is not `READY`, re-apply `content/modules/ROOT/examples/org-namespace-owner.yaml`. If no CIS scan exists, re-apply `content/modules/ROOT/examples/cis-weekly-scan.yaml`. You do not need `PHASE` `DONE` before Exercise 2.
 ****

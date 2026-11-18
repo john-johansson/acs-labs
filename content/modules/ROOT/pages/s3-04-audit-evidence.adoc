@@ -85,8 +85,9 @@ The review prints status counts, a short sample of `FAIL` and `INCONSISTENT` che
 Confirm columns such as `Control Reference`, `Check(CCR)`, `Profile(version)`, `Profile type`, `Cluster`, `Status`, `Remediation`, and `Rationale`.
 The internal check `org-namespace-owner-namespace-owner-label` is in this CSV. Its `Profile type` is `Tailored Profile` and its `Control Reference` is `N/A`, because the check is not a CIS control.
 
-. Cross-check one finding from Exercise 2: confirm the same check name and status appear in the sample.
-Compare the `FAIL` count with the Fail findings you saw on Coverage (or the CLI status counts from Exercise 2).
+. Cross-check one CIS finding from Exercise 2: confirm that same check name and status appear in the review output.
+Do not compare the report's total `FAIL` count with one Coverage profile or with the per-profile CLI counts. The CSV includes every profile on `cis-audit-schedule`.
+Confirm the tailored row for `org-namespace-owner-namespace-owner-label` shows status `FAIL`, `Profile type` `Tailored Profile`, and `Control Reference` `N/A`.
 
 NOTE: Email delivery destinations automate recurring evidence distribution in production (SMTP notifier under *Platform Configuration > Integrations*).
 This Showroom does not have SMTP configured, so you used on-demand DOWNLOAD.
@@ -102,14 +103,12 @@ With scan schedules, delivery destinations, and on-demand reporting in place, co
 * *Multi-cluster scale*: The same scan schedule can target multiple clusters, producing consolidated evidence packages.
 * *Separation of duties*: Platform Operations remediates infrastructure gaps. Information Security owns schedules and evidence review. Auditors consume the reports. All of that uses RHACS and Compliance Operator results in one system, with role separation rather than separate toolchains.
 
-NOTE: Compliance reporting requires Compliance Operator version 1.6.0 or later. This environment runs version 1.10.0 or newer.
-
 == Key takeaways
 
 * Scan schedules in RHACS manage the full compliance lifecycle: when to scan, what to scan, and who receives the results.
 * After create, the schedule *name* is fixed. Description, frequency, profiles, and clusters remain editable.
 * The UI *Generate download* path teaches the product workflow. The Central API download path is what automation and bastion CLI workflows use.
-* The CSV contains check-level detail suitable for regulatory evidence packages. Cross-referencing it with Coverage or `compliancecheckresults` confirms the downloadable evidence matches the interactive view.
+* The CSV contains check-level detail suitable for regulatory evidence packages. Confirm one CIS check from Exercise 2 and the tailored owner row. The report covers every profile on the schedule, so its total `FAIL` count is not one Coverage profile.
 * Operationalizing compliance means continuous scanning, automated delivery, and trend tracking, not periodic fire drills.
 
 [.verification]

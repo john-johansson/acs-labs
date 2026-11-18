@@ -20,7 +20,7 @@ This site uses the same Antora + Red Hat Demo Platform Showroom theme as other R
 |{rhacs-version}
 
 |xref:s3-compliance-network.adoc[Compliance & Network Observability]
-|90 min
+|110 min
 |{rhacs-version}
 |===
 

@@ -5,7 +5,7 @@ include::partial$session3-ui.adoc[]
 
 Estimated time: 20 minutes.
 
-The RHACS Network Graph is three tools in one: a live traffic flow map, a firewall visualizer showing active `NetworkPolicy` rules, and an automated firewall rule builder that generates zero-trust policies from observed baselines.
+The RHACS Network Graph is three tools in one: a live traffic flow map, a firewall visualizer showing active `NetworkPolicy` rules, and a builder that generates default-deny `NetworkPolicy` manifests from observed baselines.
 
 In this exercise you visualize the backend and payments application topology, enable baseline violation alerting, and prove that the toggle creates *Unauthorized Network Flow* violations for unexpected probes.
 
@@ -70,8 +70,6 @@ Toggling *Alert on baseline violations* promotes them to policy violations.
 Leave *Alert on baseline violations* **off** for `backend-atlas`. That deployment is the negative control in the next task.
 
 After enabling alerts, any traffic from a source not in the baseline (such as a direct probe from another namespace) will generate a violation.
-
-TIP: You can configure the baseline observation period by setting `ROX_NETWORK_BASELINE_OBSERVATION_PERIOD` on Central. The default is sufficient for this lab.
 
 == Task 5.4: Prove baseline alerting
 

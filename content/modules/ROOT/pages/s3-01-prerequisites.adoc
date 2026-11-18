@@ -65,7 +65,7 @@ cd acs-labs
 
 This repository contains the Session 3 cleanup script, the instructor prep script, and the example manifests used later in the exercises.
 
-NOTE: *Instructors only:* Before students start Session 3, clone this repository on the bastion (or reuse an existing clone) and run `bash scripts/s3-instructor-prep.sh`. That script deletes the demo `acs-catch-all` schedule so Exercises 1 and 2 can own the CIS profiles. Students do not run the instructor prep script.
+NOTE: *Instructors only:* Before students start Session 3, clone this repository on the bastion (or reuse an existing clone) and run `bash scripts/s3-instructor-prep.sh`. That script deletes the demo `acs-catch-all` schedule so Exercises 1 and 2 can own the CIS profiles. Students: do not run this script.
 
 == Verify the Compliance Operator
 
@@ -85,10 +85,9 @@ oc get profiles.compliance -n openshift-compliance | grep -E 'ocp4-cis |ocp4-cis
 
 You should see both `ocp4-cis` and `ocp4-cis-node` profiles listed.
 
-== Demo application namespaces (needed for network exercises)
+== Demo application namespaces
 
-This session also uses a pre-deployed multi-tier medical application for Exercises 4 through 8.
-If you are only completing the compliance exercises (1 through 3) today, you can skip this section and continue.
+The namespaces `backend`, `payments`, and `operations` are required before Exercise 1. The internal ownership check looks for the label `org.example/owner` on them, and Exercises 4 through 8 use the same application.
 
 Confirm the application namespaces exist:
 
