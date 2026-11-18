@@ -21,10 +21,10 @@ By the end of this exercise you will:
 . In the RHACS Console, navigate to *Compliance > OpenShift Schedules*.
 . Confirm `cis-audit-schedule` is listed (created in Exercise 2).
 +
-You may also still see `acs-catch-all` for non-CIS profiles. Use `cis-audit-schedule` for this exercise.
+Use `cis-audit-schedule` for this exercise. `acs-catch-all` should not be listed.
 If `cis-audit-schedule` is missing, return to Exercise 2 and create it before continuing.
 
-image::s3/s3-03-compliance-schedules.png[Compliance Schedules list showing cis-audit-schedule and acs-catch-all]
+image::s3/s3-03-compliance-schedules.png[Compliance Schedules list showing cis-audit-schedule]
 
 . Click `cis-audit-schedule` to open the detail view.
 . On the detail page, note which fields remain editable after create (description, frequency, profiles, clusters).

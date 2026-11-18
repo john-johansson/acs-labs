@@ -65,7 +65,7 @@ cd acs-labs
 
 This repository contains the Session 3 cleanup script, the instructor prep script, and the example manifests used later in the exercises.
 
-NOTE: *Instructors only:* Before students start Session 3, clone this repository on the bastion (or reuse an existing clone) and run `bash scripts/s3-instructor-prep.sh`. That script frees the CIS profiles from the demo `acs-catch-all` schedule so Exercises 1 and 2 can own them. Students do not run the instructor prep script.
+NOTE: *Instructors only:* Before students start Session 3, clone this repository on the bastion (or reuse an existing clone) and run `bash scripts/s3-instructor-prep.sh`. That script deletes the demo `acs-catch-all` schedule so Exercises 1 and 2 can own the CIS profiles. Students do not run the instructor prep script.
 
 == Verify the Compliance Operator
 
@@ -119,5 +119,5 @@ cd ~/acs-labs
 bash scripts/s3-cleanup.sh
 ----
 
-The script removes lab-created RHACS scan schedules (`cis-audit-schedule`), cluster `ScanSettingBinding` objects, the lab `TailoredProfile` and `CustomRule`, generated `NetworkPolicy` objects, and local compliance report files on the bastion. It does not change `acs-catch-all` (instructor prep owns CIS profile ownership). It is idempotent and safe to run multiple times.
+The script removes the demo `acs-catch-all` schedule, lab-created RHACS scan schedules (`cis-audit-schedule`), cluster `ScanSettingBinding` objects, the lab `TailoredProfile` and `CustomRule`, generated `NetworkPolicy` objects, and local compliance report files on the bastion. It does not recreate `acs-catch-all`. It is idempotent and safe to run multiple times.
 On a fresh Showroom you can skip this step.

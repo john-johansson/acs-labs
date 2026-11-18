@@ -34,10 +34,9 @@ oc delete scansettingbinding cis-weekly-scan -n openshift-compliance
 
 . In the RHACS Console, navigate to *Compliance > OpenShift Schedules*.
 +
-You should still see `acs-catch-all` (non-CIS profiles). `cis-weekly-scan` should no longer appear after RHACS refreshes.
+`cis-weekly-scan` should no longer appear after RHACS refreshes. `acs-catch-all` should not be listed. Instructor prep deletes that demo schedule before class.
 
-NOTE: The instructor prep for this session removed `ocp4-cis` and `ocp4-cis-node` from `acs-catch-all` so the lab can own those profiles.
-If Create fails with a profile conflict, ask the instructor to re-run `scripts/s3-instructor-prep.sh`.
+NOTE: If Create fails with a profile conflict, ask the instructor to re-run `scripts/s3-instructor-prep.sh`.
 
 == Task 2.2: Create a scan schedule via the RHACS UI
 

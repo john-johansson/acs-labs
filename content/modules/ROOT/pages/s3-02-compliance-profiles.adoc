@@ -68,7 +68,7 @@ NOTE: In production, this file would typically live in Git and be applied by a p
 oc get scansettingbinding -n openshift-compliance
 ----
 +
-You should see `cis-weekly-scan`. The pre-deployed `acs-catch-all` binding may also appear (non-CIS profiles).
+You should see `cis-weekly-scan`. You should not see `acs-catch-all`. Instructor prep removes that demo schedule before class.
 
 == Task 1.3: Apply the internal control
 
@@ -134,13 +134,12 @@ Example (names and RESULT values vary by cluster):
 [source,text]
 ----
 NAME              PHASE   RESULT
-acs-catch-all     DONE    ERROR
 cis-weekly-scan   DONE    INCONSISTENT
 ----
 +
 What to check:
 +
-* Your lab suite is `cis-weekly-scan`. `acs-catch-all` is the pre-deployed demo schedule; ignore its RESULT for this exercise.
+* Your lab suite is `cis-weekly-scan`.
 * `PHASE` must be `DONE` for `cis-weekly-scan`.
 * `RESULT` is a high-level summary only. On this lab cluster it is commonly `INCONSISTENT`, `NON-COMPLIANT`, or `ERROR`. That is expected. Do not try to make it `COMPLIANT`.
 * The next step confirms the real evidence: individual check results.
@@ -162,7 +161,6 @@ oc get compliancecheckresults -n openshift-compliance --no-headers | awk '{print
 ----
 
 TIP: If the CIS scans are still running, you can proceed to Exercise 2 while they complete. `org-namespace-owner` must already be `READY` before you open the schedule wizard.
-The pre-deployed `acs-catch-all` schedule still produces Coverage results for non-CIS profiles.
 CIS results for this lab come from the `cis-weekly-scan` binding you just applied (and from the UI schedule you create in Exercise 2). The internal ownership check does not run until Exercise 2 schedules `org-namespace-owner`.
 
 == Key takeaways

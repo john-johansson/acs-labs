@@ -41,4 +41,4 @@ cd ~/acs-labs
 bash scripts/s3-cleanup.sh
 ----
 
-The script removes lab-created RHACS scan schedules, cluster `ScanSettingBinding` objects, the lab tailored profile and custom rule, generated `NetworkPolicy` objects, and local compliance report files on the bastion. It does not remove the pre-deployed demo application namespaces or change `acs-catch-all`. It is idempotent and safe to run multiple times.
+The script removes the demo `acs-catch-all` schedule, lab-created RHACS scan schedules, cluster `ScanSettingBinding` objects, the lab tailored profile and custom rule, generated `NetworkPolicy` objects, and local compliance report files on the bastion. It does not remove the pre-deployed demo application namespaces. It is idempotent and safe to run multiple times.

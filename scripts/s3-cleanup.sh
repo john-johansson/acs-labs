@@ -4,12 +4,12 @@
 # generated NetworkPolicies so the environment matches a post-instructor-prep
 # starting state. Idempotent: safe to run multiple times.
 #
-# Does not restore CIS profiles into acs-catch-all (instructor prep owns that).
+# Does not recreate the demo acs-catch-all schedule. Instructor prep deletes it.
 
 set -euo pipefail
 
-LAB_RHACS_SCHEDULES=(cis-weekly-scan cis-audit-schedule)
-LAB_BINDINGS=(cis-weekly-scan cis-audit-schedule)
+LAB_RHACS_SCHEDULES=(acs-catch-all cis-weekly-scan cis-audit-schedule)
+LAB_BINDINGS=(acs-catch-all cis-weekly-scan cis-audit-schedule)
 
 echo "=== Session 3 cleanup ==="
 
