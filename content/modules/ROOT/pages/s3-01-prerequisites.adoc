@@ -119,5 +119,5 @@ cd ~/acs-labs
 bash scripts/s3-cleanup.sh
 ----
 
-The script removes lab-created RHACS scan schedules (`cis-audit-schedule`), cluster `ScanSettingBinding` objects, generated `NetworkPolicy` objects, and local compliance report files on the bastion. It does not change `acs-catch-all` (instructor prep owns CIS profile ownership). It is idempotent and safe to run multiple times.
+The script removes lab-created RHACS scan schedules (`cis-audit-schedule`), cluster `ScanSettingBinding` objects, the lab `TailoredProfile` and `CustomRule`, generated `NetworkPolicy` objects, and local compliance report files on the bastion. It does not change `acs-catch-all` (instructor prep owns CIS profile ownership). It is idempotent and safe to run multiple times.
 On a fresh Showroom you can skip this step.

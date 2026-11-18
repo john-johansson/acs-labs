@@ -1,0 +1,40 @@
+apiVersion: compliance.openshift.io/v1alpha1
+kind: CustomRule
+metadata:
+  name: namespace-owner-label
+  namespace: openshift-compliance
+spec:
+  id: namespace-owner-label
+  title: Application namespaces have an owner label
+  description: Application namespaces must declare an owner so the internal audit trail can name who is accountable for the namespace.
+  rationale: CIS does not require an owner label on application namespaces. This organization does.
+  instructions: Add the label org.example/owner to the backend, payments, and operations namespaces. Do not change this label during the lab.
+  severity: medium
+  checkType: Platform
+  scannerType: CEL
+  failureReason: An application namespace is missing the org.example/owner label.
+  inputs:
+    - name: namespaces
+      kubernetesInputSpec:
+        apiVersion: v1
+        group: ""
+        resource: namespaces
+  expression: |
+    ["backend", "payments", "operations"].all(wanted,
+      namespaces.items.exists(ns,
+        ns.metadata.name == wanted &&
+        has(ns.metadata.labels) &&
+        "org.example/owner" in ns.metadata.labels))
+---
+apiVersion: compliance.openshift.io/v1alpha1
+kind: TailoredProfile
+metadata:
+  name: org-namespace-owner
+  namespace: openshift-compliance
+spec:
+  title: Application namespace owner
+  description: Internal control. Application namespaces declare an owner.
+  enableRules:
+    - kind: CustomRule
+      name: namespace-owner-label
+      rationale: Ownership is required for the internal audit trail and is not part of CIS.

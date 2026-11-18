@@ -16,8 +16,8 @@ A hands-on lab for platform, infrastructure, security, and SRE teams.
 
 By completing this lab, participants will:
 
-. Deploy declarative CIS compliance profiles via the Compliance Operator (apply from the lab repository) and observe scan results as native Kubernetes CRDs.
-. Create a CIS scan schedule in the RHACS UI, compare Coverage with CLI status counts, triage Fail or Inconsistent findings with remediation guidance, and distinguish platform compliance from runtime policies in the same console.
+. Deploy declarative CIS compliance profiles via the Compliance Operator (apply from the lab repository), apply an unbound internal tailored profile, and observe scan results as native Kubernetes CRDs.
+. Create a CIS scan schedule in the RHACS UI that also includes the internal profile, compare Coverage with CLI status counts, triage Fail or Inconsistent findings with remediation guidance, and distinguish platform compliance from runtime policies in the same console.
 . Generate on-demand compliance audit evidence in the UI and fetch the CSV evidence package from Central on the bastion.
 . Audit container listening endpoints at the process and PID level, then correlate them with deployment manifests.
 . Visualize multi-tier network topology in the RHACS Network Graph, enable baseline violation alerts, and prove *Unauthorized Network Flow* with controlled probes.
@@ -50,14 +50,14 @@ Bastion access, console URLs, Compliance Operator checks, and architecture overv
 ****
 xref:s3-02-compliance-profiles.adoc[Exercise 1: Deploying compliance profiles]
 
-Apply a CIS `ScanSettingBinding` from the repo, list bindings, and monitor suite results (~10 min).
+Apply a CIS `ScanSettingBinding` and an unbound internal tailored profile from the repo, then monitor suite results (~10 min).
 ****
 
 [.tile]
 ****
 xref:s3-03-compliance-rhacs.adoc[Exercise 2: Working with compliance in RHACS]
 
-Hand off CIS to an RHACS schedule, compare coverage with CLI status counts, and triage Fail or Inconsistent findings (~15 min).
+Hand off CIS to an RHACS schedule, include the internal tailored profile, compare coverage with CLI status counts, and triage Fail or Inconsistent findings (~15 min).
 ****
 
 [.tile]
@@ -110,7 +110,7 @@ Confirm packet drops with dual TCP probes from authorized and unauthorized sourc
 
 In production, these exercises chain together:
 
-. The Compliance Operator evaluates CIS benchmarks from a declarative binding (Exercise 1). Students then recreate that CIS schedule in the RHACS UI, triage failing controls with remediation guidance, and distinguish platform compliance from runtime policies in the same console (Exercise 2).
+. The Compliance Operator evaluates CIS benchmarks from a declarative binding, and an unbound tailored profile carries one internal ownership check (Exercise 1). Students then schedule both in the RHACS UI, triage failing controls with remediation guidance, and distinguish platform compliance from runtime policies in the same console (Exercise 2).
 . Scan schedules with delivery destinations automate evidence distribution. On-demand downloads handle ad-hoc audit requests (Exercise 3).
 . RHACS Collector maps every open port to an exact process binary (Exercise 4). The Network Graph visualizes active traffic, locks baselines, and proves *Unauthorized Network Flow* alerts (Exercise 5).
 . Anomalous cross-namespace traffic is visible in the graph (Exercise 6). Baseline-aware generated `NetworkPolicy` manifests enforce zero-trust microsegmentation at the kernel level (Exercises 7 and 8).

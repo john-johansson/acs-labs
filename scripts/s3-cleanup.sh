@@ -54,6 +54,10 @@ for name in "${LAB_BINDINGS[@]}"; do
   oc delete scansettingbinding "${name}" -n openshift-compliance --ignore-not-found
 done
 
+echo "Removing the lab tailored profile and custom rule..."
+oc delete tailoredprofile org-namespace-owner -n openshift-compliance --ignore-not-found
+oc delete customrule namespace-owner-label -n openshift-compliance --ignore-not-found
+
 echo "Removing generated NetworkPolicies in backend..."
 oc delete networkpolicy -l network-policy-generator.stackrox.io/generated=true \
   -n backend --ignore-not-found
@@ -74,6 +78,12 @@ curl -sk "${AUTH_HEADER[@]}" \
 echo "Cluster ScanSettingBindings:"
 oc get scansettingbinding -n openshift-compliance 2>/dev/null \
   || echo "  (none)"
+
+echo "Lab tailored profile and custom rule:"
+oc get tailoredprofile org-namespace-owner -n openshift-compliance 2>/dev/null \
+  || echo "  org-namespace-owner: not found (ok)"
+oc get customrule namespace-owner-label -n openshift-compliance 2>/dev/null \
+  || echo "  namespace-owner-label: not found (ok)"
 
 echo "backend NetworkPolicies:"
 oc get networkpolicy -n backend 2>/dev/null || echo "  (none)"

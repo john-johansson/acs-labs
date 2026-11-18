@@ -70,4 +70,15 @@ for status in ("FAIL", "INCONSISTENT"):
     for row in hits:
         print(f"  {status_label(status)} {row.get('Check(CCR)')}")
         print(f"  {'':<16} {row.get('Profile(version)')}")
+
+tailored = [row for row in rows if (row.get("Profile type") or "") == "Tailored Profile"]
+print()
+print(paint("1", "Tailored profile checks"))
+if not tailored:
+    print("  none")
+else:
+    for row in tailored:
+        status = row.get("Status") or ""
+        print(f"  {status_label(status)} {row.get('Check(CCR)')}")
+        print(f"  {'':<16} {row.get('Profile type')}  Control Reference {row.get('Control Reference')}")
 PY

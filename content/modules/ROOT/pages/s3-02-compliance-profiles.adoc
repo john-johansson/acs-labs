@@ -20,6 +20,7 @@ By the end of this exercise you will:
 
 * List the compliance profiles available on the cluster.
 * Deploy a declarative `ScanSettingBinding` that binds the `ocp4-cis` and `ocp4-cis-node` profiles to the default scan settings.
+* Apply a `CustomRule` and `TailoredProfile` for an internal ownership control, and leave that profile unbound.
 * Monitor scan progress and confirm that `ComplianceCheckResult` CRDs are created.
 
 == Task 1.1: List available compliance profiles
@@ -69,7 +70,37 @@ oc get scansettingbinding -n openshift-compliance
 +
 You should see `cis-weekly-scan`. The pre-deployed `acs-catch-all` binding may also appear (non-CIS profiles).
 
-== Task 1.3: Monitor scan progress
+== Task 1.3: Apply the internal control
+
+CIS does not contain every control an organization needs. On this cluster the application namespaces `backend`, `payments`, and `operations` must declare an owner. That check is a `CustomRule`, and it runs only when a `TailoredProfile` enables it. A tailored profile cannot also contain the CIS rules, so this control stays in its own profile.
+
+. Review the manifest (`content/modules/ROOT/examples/org-namespace-owner.yaml` in the cloned repository):
++
+[source,yaml]
+----
+include::example$org-namespace-owner.yaml[]
+----
+
+. Apply it from the repository root:
++
+[source,bash]
+----
+cd ~/acs-labs
+oc apply -f content/modules/ROOT/examples/org-namespace-owner.yaml
+----
+
+. Wait until the tailored profile is ready:
++
+[source,bash]
+----
+oc get tailoredprofile org-namespace-owner -n openshift-compliance
+----
++
+Continue when `STATE` is `READY`.
+
+NOTE: Do not create a `ScanSettingBinding` for `org-namespace-owner`. A profile can be bound only once on the cluster. Information Security selects this profile in Exercise 2, and RHACS creates the binding. The check does not run during this exercise.
+
+== Task 1.4: Monitor scan progress
 
 The Compliance Operator creates a `ComplianceSuite` and individual `ComplianceScan` resources.
 Scans commonly take several minutes on a multi-node cluster. Stay on this task until the suite reaches `DONE`, or use the tip at the end if you need to move on while scans finish.
@@ -130,24 +161,25 @@ A non-zero count confirms that the Compliance Operator evaluated applicable cont
 oc get compliancecheckresults -n openshift-compliance --no-headers | awk '{print $2}' | sort | uniq -c | sort -rn
 ----
 
-TIP: If scans are still running, you can proceed to Exercise 2 while they complete.
+TIP: If the CIS scans are still running, you can proceed to Exercise 2 while they complete. `org-namespace-owner` must already be `READY` before you open the schedule wizard.
 The pre-deployed `acs-catch-all` schedule still produces Coverage results for non-CIS profiles.
-CIS results for this lab come from the `cis-weekly-scan` binding you just applied (and from the UI schedule you create in Exercise 2).
+CIS results for this lab come from the `cis-weekly-scan` binding you just applied (and from the UI schedule you create in Exercise 2). The internal ownership check does not run until Exercise 2 schedules `org-namespace-owner`.
 
 == Key takeaways
 
 * A `ScanSettingBinding` is the declarative link between compliance profiles and scan settings. Applying it triggers scans immediately.
 * Applying YAML from a repository is the GitOps and pipeline-friendly path. The RHACS UI (Exercise 2) creates the same kind of binding without writing manifests by hand.
+* A `CustomRule` is an organization-specific platform check. A `TailoredProfile` enables it. This lab applies both and leaves them unbound so RHACS can schedule the profile in Exercise 2.
 * The Compliance Operator produces `ComplianceScan`, `ComplianceSuite`, and `ComplianceCheckResult` CRDs that capture audit evidence as native Kubernetes resources.
 * Suite `RESULT` is a coarse summary (`INCONSISTENT`, `NON-COMPLIANT`, or `ERROR` are all normal here). Treat check-result counts and statuses as the detailed evidence.
 
 [.verification]
 ****
-Did `oc get compliancesuite` show `cis-weekly-scan` in `DONE` phase, and does `oc get compliancecheckresults` return a non-zero count?
+Did `oc get compliancesuite` show `cis-weekly-scan` in `DONE` phase, does `oc get compliancecheckresults` return a non-zero count, and is `org-namespace-owner` `READY`?
 
 [.success]
-The Compliance Operator scanned the cluster against CIS benchmarks and produced check results. Continue to Exercise 2.
+The Compliance Operator scanned the cluster against CIS benchmarks and produced check results. The internal profile is ready for Exercise 2. Continue to Exercise 2.
 
 [.fail]
-Verify the Compliance Operator is installed (`oc get csv -n openshift-compliance`), re-apply the `ScanSettingBinding` from the example file, and re-run `oc get compliancescan -n openshift-compliance` until all scans reach `DONE`.
+Verify the Compliance Operator is installed (`oc get csv -n openshift-compliance`), re-apply the `ScanSettingBinding` from the example file, and re-run `oc get compliancescan -n openshift-compliance` until all scans reach `DONE`. If `org-namespace-owner` is not `READY`, re-apply `content/modules/ROOT/examples/org-namespace-owner.yaml`.
 ****

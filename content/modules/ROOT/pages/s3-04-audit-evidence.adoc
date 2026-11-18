@@ -80,9 +80,10 @@ Stop here and confirm the script printed a `CSV=` path before you review the con
 bash scripts/s3-review-compliance-report.sh
 ----
 +
-The review prints status counts and a short sample of `FAIL` and `INCONSISTENT` checks.
+The review prints status counts, a short sample of `FAIL` and `INCONSISTENT` checks, and any tailored-profile rows.
 `FAIL` is red, `INCONSISTENT` is yellow, `MANUAL` is cyan, and `PASS` is green.
-Confirm columns such as `Control Reference`, `Check(CCR)`, `Profile(version)`, `Cluster`, `Status`, `Remediation`, and `Rationale`.
+Confirm columns such as `Control Reference`, `Check(CCR)`, `Profile(version)`, `Profile type`, `Cluster`, `Status`, `Remediation`, and `Rationale`.
+The internal check `org-namespace-owner-namespace-owner-label` is in this CSV. Its `Profile type` is `Tailored Profile` and its `Control Reference` is `N/A`, because the check is not a CIS control.
 
 . Cross-check one finding from Exercise 2: confirm the same check name and status appear in the sample.
 Compare the `FAIL` count with the Fail findings you saw on Coverage (or the CLI status counts from Exercise 2).
@@ -113,7 +114,7 @@ NOTE: Compliance reporting requires Compliance Operator version 1.6.0 or later. 
 
 [.verification]
 ****
-Did you open `cis-audit-schedule`, start an on-demand report, and fetch a CSV from Central on the bastion that shows Fail or Inconsistent rows matching Exercise 2?
+Did you open `cis-audit-schedule`, start an on-demand report, and fetch a CSV from Central on the bastion that shows Fail or Inconsistent rows matching Exercise 2, including the tailored owner check with `Control Reference` `N/A`?
 
 [.success]
 You can manage the compliance operations lifecycle in RHACS. Continue to Exercise 4.
