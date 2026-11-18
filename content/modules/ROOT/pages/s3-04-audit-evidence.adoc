@@ -48,7 +48,7 @@ The toast alone is easy to miss. Stay on the detail page and use the jobs tab be
 ** *Preparing*: The system is collecting and formatting compliance data.
 ** *Report ready for download*: The report is complete.
 . Optional: click *Ready for download* in the UI to save the file in your browser.
-The next task fetches the same kind of ZIP from the bastion with the API, which is the automation-friendly path.
+The next task runs a script that requests and downloads a report with the bastion API token.
 +
 NOTE: The Schedules *list* page may also show a *Report ready for download* action after generation completes. Prefer the detail *All report jobs* tab so you can watch status transitions. If you leave the detail page, go back to the Schedules list or reopen `cis-audit-schedule` to find the ready job.
 
@@ -57,77 +57,26 @@ NOTE: Report generation typically completes in under a minute. If the job stays 
 == Task 3.3: Fetch and review the report from the bastion
 
 There is no `roxctl` subcommand for Compliance v2 report ZIP download.
-Use the Central HTTP API with the bastion's existing `ROX_API_TOKEN` and `ROX_CENTRAL_ADDRESS`.
-Generate the downloadable job with the *same* API token identity (do not rely on a browser-generated job here, because downloads are scoped to the requesting user).
+The lab script uses the Central API with the bastion's existing `ROX_API_TOKEN` and `ROX_CENTRAL_ADDRESS`.
+It requests its own download job (a browser download is tied to the logged-in UI user and cannot be fetched with the bastion token).
 
-. On the bastion, resolve the `cis-audit-schedule` configuration id, request a DOWNLOAD report, wait until it is ready, then save the ZIP:
+. From the cloned repository, run:
 +
 [source,bash]
 ----
-AUTH_H="Authorization: Bearer ${ROX_API_TOKEN}"
-BASE="${ROX_CENTRAL_ADDRESS}"
-
-CFG_ID=$(curl -sk -H "${AUTH_H}" "${BASE}/v2/compliance/scan/configurations" \
-  | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(c["id"] for c in d["configurations"] if c.get("scanName")=="cis-audit-schedule"))')
-echo "CFG_ID=${CFG_ID}"
-
-curl -sk -H "${AUTH_H}" -H "Content-Type: application/json" -X POST \
-  --data "{\"scanConfigId\":\"${CFG_ID}\",\"reportNotificationMethod\":\"DOWNLOAD\"}" \
-  "${BASE}/v2/compliance/scan/configurations/reports/run"
-echo
-
-JOB_ID=""
-for i in $(seq 1 24); do
-  HIST=$(curl -sk -H "${AUTH_H}" \
-    "${BASE}/v2/compliance/scan/configurations/${CFG_ID}/reports/my-history?reportParamQuery.pagination.limit=5")
-  JOB_ID=$(python3 -c 'import json,sys; d=json.load(sys.stdin); s=(d.get("complianceReportSnapshots") or [None])[0];
-print("" if not s else s.get("reportJobId",""))' <<<"${HIST}")
-  STATE=$(python3 -c 'import json,sys; d=json.load(sys.stdin); s=(d.get("complianceReportSnapshots") or [None])[0];
-print("" if not s else (s.get("reportStatus") or {}).get("runState",""))' <<<"${HIST}")
-  echo "poll ${i}: job=${JOB_ID} state=${STATE}"
-  [[ "${STATE}" == "GENERATED" || "${STATE}" == "DELIVERED" ]] && break
-  sleep 5
-done
-
-curl -sk -H "${AUTH_H}" -o ~/compliance-report.zip \
-  "${BASE}/v2/compliance/scan/configurations/reports/download?id=${JOB_ID}"
-unzip -l ~/compliance-report.zip
-rm -rf ~/compliance-report && mkdir -p ~/compliance-report
-unzip -o ~/compliance-report.zip -d ~/compliance-report
-CSV=$(find ~/compliance-report -name '*.csv' | head -1)
-echo "CSV=${CSV}"
+cd ~/acs-labs
+bash scripts/s3-fetch-compliance-report.sh
 ----
 +
+The script writes `~/compliance-report.zip`, extracts the CSV under `~/compliance-report/`, and prints column names, status counts, and a few `FAIL` or `INCONSISTENT` checks.
 On a single-cluster lab you typically get one CSV (for example `cluster_production_YYYY-MM-DD.csv`).
-HTML compliance reports are not part of this lab workflow. The downloadable evidence is ZIP containing CSV.
+HTML compliance reports are not part of this lab. The downloadable evidence is a ZIP that contains CSV.
 
-. Inspect the CSV columns and status counts:
-+
-[source,bash]
-----
-python3 - <<'PY'
-import csv, glob
-from collections import Counter
-path = glob.glob(__import__("os").path.expanduser("~/compliance-report/*.csv"))[0]
-with open(path, newline="", encoding="utf-8", errors="replace") as f:
-    rows = list(csv.DictReader(f))
-print("columns:", list(rows[0].keys()))
-print("rows:", len(rows))
-print("Status counts:", Counter(r["Status"] for r in rows))
-print("Fail rows:", sum(1 for r in rows if r["Status"] == "FAIL"))
-# Show a few FAIL or INCONSISTENT checks for triage cross-check
-for status in ("FAIL", "INCONSISTENT"):
-    hits = [r for r in rows if r["Status"] == status][:3]
-    for r in hits:
-        print(f"{status}: {r['Check(CCR)']} | {r['Profile(version)']}")
-PY
-----
-+
-Expect columns such as `Control Reference`, `Check(CCR)`, `Profile(version)`, `Cluster`, `Status`, `Remediation`, and `Rationale`.
+. In the script output, confirm columns such as `Control Reference`, `Check(CCR)`, `Profile(version)`, `Cluster`, `Status`, `Remediation`, and `Rationale`.
 `Status` values include `PASS`, `FAIL`, `INCONSISTENT`, `MANUAL`, and related states.
 
-. Cross-check one finding from Exercise 2: confirm the same check name and status appear in the CSV.
-Count `FAIL` rows and compare with the Fail findings you saw on Coverage (or the CLI status counts from Exercise 2).
+. Cross-check one finding from Exercise 2: confirm the same check name and status appear in the printed rows.
+Compare the `FAIL` count with the Fail findings you saw on Coverage (or the CLI status counts from Exercise 2).
 
 NOTE: Email delivery destinations automate recurring evidence distribution in production (SMTP notifier under *Platform Configuration > Integrations*).
 This Showroom does not have SMTP configured, so you used on-demand DOWNLOAD.
@@ -161,5 +110,5 @@ Did you open `cis-audit-schedule`, start an on-demand report, and fetch a CSV fr
 You can manage the compliance operations lifecycle in RHACS. Continue to Exercise 4.
 
 [.fail]
-Return to *Compliance > OpenShift Schedules*, open `cis-audit-schedule`, and use *Actions > Generate download* to learn the UI path. Then re-run the bastion API commands in Task 3.3 (token identity must match the job that requested DOWNLOAD).
+Return to *Compliance > OpenShift Schedules*, open `cis-audit-schedule`, and use *Actions > Generate download* to learn the UI path. Then re-run `bash scripts/s3-fetch-compliance-report.sh` from `~/acs-labs`.
 ****
