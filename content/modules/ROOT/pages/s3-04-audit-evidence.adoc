@@ -60,7 +60,7 @@ There is no `roxctl` subcommand for Compliance v2 report ZIP download.
 The lab script uses the Central API with the bastion's existing `ROX_API_TOKEN` and `ROX_CENTRAL_ADDRESS`.
 It requests its own download job (a browser download is tied to the logged-in UI user and cannot be fetched with the bastion token).
 
-. From the cloned repository, run:
+. From the cloned repository, download the report:
 +
 [source,bash]
 ----
@@ -68,14 +68,23 @@ cd ~/acs-labs
 bash scripts/s3-fetch-compliance-report.sh
 ----
 +
-The script writes `~/compliance-report.zip`, extracts the CSV under `~/compliance-report/`, and prints column names, status counts, and a few `FAIL` or `INCONSISTENT` checks.
+The script writes `~/compliance-report.zip` and extracts the CSV under `~/compliance-report/`.
 On a single-cluster lab you typically get one CSV (for example `cluster_production_YYYY-MM-DD.csv`).
 HTML compliance reports are not part of this lab. The downloadable evidence is a ZIP that contains CSV.
+Stop here and confirm the script printed a `CSV=` path before you review the contents.
 
-. In the script output, confirm columns such as `Control Reference`, `Check(CCR)`, `Profile(version)`, `Cluster`, `Status`, `Remediation`, and `Rationale`.
-`Status` values include `PASS`, `FAIL`, `INCONSISTENT`, `MANUAL`, and related states.
+. Review that CSV:
++
+[source,bash]
+----
+bash scripts/s3-review-compliance-report.sh
+----
++
+The review prints status counts and a short sample of `FAIL` and `INCONSISTENT` checks.
+`FAIL` is red, `INCONSISTENT` is yellow, `MANUAL` is cyan, and `PASS` is green.
+Confirm columns such as `Control Reference`, `Check(CCR)`, `Profile(version)`, `Cluster`, `Status`, `Remediation`, and `Rationale`.
 
-. Cross-check one finding from Exercise 2: confirm the same check name and status appear in the printed rows.
+. Cross-check one finding from Exercise 2: confirm the same check name and status appear in the sample.
 Compare the `FAIL` count with the Fail findings you saw on Coverage (or the CLI status counts from Exercise 2).
 
 NOTE: Email delivery destinations automate recurring evidence distribution in production (SMTP notifier under *Platform Configuration > Integrations*).
@@ -110,5 +119,5 @@ Did you open `cis-audit-schedule`, start an on-demand report, and fetch a CSV fr
 You can manage the compliance operations lifecycle in RHACS. Continue to Exercise 4.
 
 [.fail]
-Return to *Compliance > OpenShift Schedules*, open `cis-audit-schedule`, and use *Actions > Generate download* to learn the UI path. Then re-run `bash scripts/s3-fetch-compliance-report.sh` from `~/acs-labs`.
+Return to *Compliance > OpenShift Schedules*, open `cis-audit-schedule`, and use *Actions > Generate download* to learn the UI path. Then re-run `bash scripts/s3-fetch-compliance-report.sh` and `bash scripts/s3-review-compliance-report.sh` from `~/acs-labs`.
 ****

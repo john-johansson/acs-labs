@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Fetch the cis-audit-schedule compliance report from Central and summarize the CSV.
+# Fetch the cis-audit-schedule compliance report from Central.
 # Uses ROX_CENTRAL_ADDRESS and ROX_API_TOKEN already set on the bastion.
+# Writes ~/compliance-report.zip and extracts the CSV under ~/compliance-report/.
+# Review the CSV separately with scripts/s3-review-compliance-report.sh.
 # Idempotent: safe to run again (requests a new download job each time).
 
 set -euo pipefail
@@ -97,24 +99,4 @@ if [[ -z "${CSV}" ]]; then
   exit 1
 fi
 echo "CSV=${CSV}"
-echo
-
-python3 - "${CSV}" <<'PY'
-import csv
-import sys
-from collections import Counter
-
-path = sys.argv[1]
-with open(path, newline="", encoding="utf-8", errors="replace") as f:
-    rows = list(csv.DictReader(f))
-if not rows:
-    sys.exit("CSV has no data rows")
-print("columns:", list(rows[0].keys()))
-print("rows:", len(rows))
-print("Status counts:", dict(Counter(r.get("Status") for r in rows)))
-print("Fail rows:", sum(1 for r in rows if r.get("Status") == "FAIL"))
-for status in ("FAIL", "INCONSISTENT"):
-    hits = [r for r in rows if r.get("Status") == status][:3]
-    for r in hits:
-        print(f"{status}: {r.get('Check(CCR)')} | {r.get('Profile(version)')}")
-PY
+echo "Report saved. Review it with: bash scripts/s3-review-compliance-report.sh"
