@@ -139,7 +139,7 @@ Expect `OPEN`.
 . After the same short wait, select `postgres` in the Network Graph.
 . Confirm an anomalous flow from `operations/jump-host` on `5432/TCP`, and a new *Unauthorized Network Flow* violation whose deployment is `postgres`.
 
-IMPORTANT: This probe is intentional for the toggle demo. Exercise 7 marks it anomalous on the `postgres` baseline. *Generate and simulate network policies* can still allow it, because the connection was observed. Apply only an api-server-only policy, or Exercise 8 cannot prove the block.
+IMPORTANT: This probe is intentional for the toggle demo. Exercise 7 marks it anomalous on the `postgres` baseline, then applies *Download baseline as network policy*. *Generate and simulate network policies* can still allow the probe, because the connection was observed. Do not apply that file, or Exercise 8 cannot prove the block.
 
 == Key takeaways
 
