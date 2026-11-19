@@ -5,7 +5,7 @@ include::partial$session3-ui.adoc[]
 
 Estimated time: 15 minutes.
 
-RHACS generates 100% standard Kubernetes `NetworkPolicy` manifests from observed baselines.
+RHACS generates 100% standard Kubernetes `NetworkPolicy` manifests. Two downloads use different peer lists, and this exercise compares them.
 There are no proprietary sidecars, no custom CRDs, and no vendor lock-in.
 If RHACS were uninstalled tomorrow, OpenShift's OVN-Kubernetes CNI would continue enforcing these policies at the kernel level.
 The generated YAML can be committed to a Git repository and applied through a GitOps pipeline.
@@ -17,17 +17,15 @@ As *Platform Operations*, you generate and apply that policy so unauthorized pat
 
 By the end of this exercise you will:
 
-* Mark any Exercise 5 `jump-host` → `postgres` probe as anomalous so it stays out of generated policy.
-* Open the Network Policy Generator from the Network Graph.
-* Generate and simulate network policies for the `backend` namespace.
-* Review the auto-generated YAML for `postgres` and confirm it allows only the intended ingress.
-* Apply the generated (or fallback example) policy via CLI and confirm it exists on the cluster.
+* Mark any Exercise 5 `jump-host` to `postgres` probe as anomalous on the `postgres` baseline.
+* Generate a policy from observed flows and see that this probe can still be allowed.
+* Apply a `postgres` policy that allows ingress only from `api-server`.
 
 == Task 7.1: Mark the postgres probe as anomalous
 
 Exercise 5 probed `postgres` from `jump-host` to prove baseline alerting.
-The Network Policy Generator builds from **baselines**, not from every anomalous flow.
-If that probe was added to the baseline, mark it anomalous before you generate.
+Marking that probe anomalous updates the baseline and the alerts. It does not change *Generate and simulate network policies*. That button allows every connection observed in the graph time window, including anomalous ones.
+The Baseline tab has a separate download, *Download baseline as network policy*. That file omits peers you marked anomalous.
 
 . In the RHACS Console, navigate to *Network > Network Graph*.
 . Select the `production` cluster and the `backend` namespace.
@@ -44,14 +42,11 @@ If that probe was added to the baseline, mark it anomalous before you generate.
 
 . In the panel that opens, click *Generate and simulate network policies*.
 +
-RHACS generates policies for all deployments in the selected scope based on their baselines.
-. Review the simulation preview:
-** Allowed baseline flows are shown in green.
-** Flows that would be blocked by the generated policies are shown in red.
+RHACS builds one allow list from the connections it observed in the current time window. A flow marked anomalous is still a connection that happened, so `jump-host` can appear in the `postgres` policy because of the Exercise 5 probe. That is expected. Do not mark it anomalous again and generate a second time.
+. In the `postgres` YAML, notice whether `jump-host` or the `operations` namespace is allowed.
+Peers named in this YAML are the ones the simulated policy would allow.
 
 NOTE: Deployments that already have a `NetworkPolicy` will not get a new one. RHACS does not overwrite existing policies.
-
-IMPORTANT: Anomalous flows are excluded from generation. If `jump-host` still appears in the `postgres` YAML, return to Task 7.1, mark it anomalous, and generate again.
 
 == Task 7.4: Review the generated YAML
 
@@ -84,22 +79,32 @@ spec:
 This policy allows ingress only from pods with label `app: api-server` on port `5432/TCP`.
 All other ingress is denied by default once a `NetworkPolicy` exists for a pod selector.
 
-. Confirm the YAML does **not** allow `operations` / `jump-host`.
-. Click the download icon to save the YAML for apply in the next task.
+. The policy you apply must allow only `app: api-server` on port `5432`, as in the example above.
++
+If the generated `postgres` YAML already matches that example, download it and apply that file in the next task.
++
+If it also allows `jump-host` or `operations`, do not apply it. That file is the observed-flow policy. The next task applies the example file instead, which is the api-server-only policy.
 
 TIP: To compare the generated policies with existing ones, click *Compare* in the panel. A side-by-side view shows the YAML for current and generated policies.
 
 == Task 7.5: Apply the policy via CLI
 
-Apply the YAML you downloaded from the generator.
-If the browser saved it on your workstation, copy it to the bastion first.
+Apply the file that allows only `api-server`.
+If the generator download matches the example in Task 7.4, apply that file. Copy it to the bastion first if the browser saved it on your workstation.
 
 [source,bash]
 ----
 oc apply -f ~/stackrox-generated-postgres.yaml
 ----
 
-Use the path where you saved the download if it is not `~/stackrox-generated-postgres.yaml`.
+If that download allows `jump-host` or `operations`, apply the example file instead:
+
+[source,bash]
+----
+oc apply -f content/modules/ROOT/examples/stackrox-generated-postgres.yaml
+----
+
+Run the example command from the repository root (`~/acs-labs`). Use the saved path if your generator download is not `~/stackrox-generated-postgres.yaml`.
 
 . Verify the policy exists:
 +
@@ -128,18 +133,18 @@ The OVN-Kubernetes CNI now enforces this policy at the kernel level. Only `api-s
 == Key takeaways
 
 * The Network Policy Generator produces standard `networking.k8s.io/v1` `NetworkPolicy` manifests, not proprietary resources. OpenShift enforces them natively.
-* Generation uses baselines. Mark unexpected peers as anomalous before generate so they are not allowed in the YAML.
+* *Generate and simulate network policies* allows every observed connection in the graph time window, including anomalous flows. *Download baseline as network policy* allows only peers that remain on the baseline.
 * Generated policies are prefixed with `stackrox-generated-` and labeled with `network-policy-generator.stackrox.io/generated=true` for easy identification and cleanup.
 * Policies cannot be applied directly from the RHACS UI. Download the YAML and apply via `oc apply` or commit to Git for GitOps deployment.
 * Once a `NetworkPolicy` selects a pod, all ingress not explicitly allowed is denied. This is the Kubernetes default-deny model.
 
 [.verification]
 ****
-Did you mark `jump-host` as anomalous on the `postgres` Baseline if needed, generate network policies from the Network Graph, apply an api-server-only `stackrox-generated-postgres` policy, and confirm it exists in `backend` via `oc get networkpolicy`?
+Did you see whether the generator still allows the `jump-host` probe, then apply an api-server-only `stackrox-generated-postgres` policy and confirm it exists in `backend`?
 
 [.success]
 A default-deny ingress policy for `postgres` is now enforced by the CNI. Continue to Exercise 8 to verify it at the packet level.
 
 [.fail]
-On `postgres` Baseline, *Mark as anomalous* any `jump-host` peer, regenerate, then apply the downloaded YAML (or `content/modules/ROOT/examples/stackrox-generated-postgres.yaml`) and run `oc get networkpolicy -n backend`.
+If the applied policy allows `jump-host` or `operations`, delete it and apply `content/modules/ROOT/examples/stackrox-generated-postgres.yaml` from `~/acs-labs`. Then run `oc get networkpolicy -n backend`.
 ****
