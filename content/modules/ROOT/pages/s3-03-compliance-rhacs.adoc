@@ -115,11 +115,11 @@ NOTE: *Inconsistent* means nodes disagreed on the result. *Manual* means a human
 This is where RHACS goes beyond a simple pass/fail report.
 Each finding includes remediation guidance that tells an administrator what to change.
 
-. In the detail panel, review:
+. Open the *Details* tab. Review:
 ** *Description*: What the control evaluates and why it matters.
 ** *Rationale*: The security reasoning behind the control.
-** *Failing entities* (or inconsistent entities): Which cluster nodes or platform resources are in scope.
-** *Remediation*: Specific instructions for bringing the resource into compliance.
+** *Instructions*: What to change. For `org-namespace-owner-namespace-owner-label`, this names `backend`, `payments`, and `operations`.
+** *Warning(s)*: Why the check failed.
 
 . Draft a short ticket note (write it in a scratch file or notepad) for `org-namespace-owner-namespace-owner-label`. Include:
 ** Control / check name
@@ -132,7 +132,7 @@ In a real audit preparation workflow you would file that ticket with Platform Op
 
 . Navigate back to the CIS profiles and open one finding from `ocp4-cis` and one from `ocp4-cis-node`.
 Use Fail if available; otherwise use Inconsistent (or Manual).
-. Compare the remediation guidance: platform checks typically reference API server or etcd configuration, while node checks reference file permissions or kubelet flags.
+. Compare the *Instructions* on those two checks: platform checks typically reference API server or etcd configuration, while node checks reference file permissions or kubelet flags.
 
 == Task 2.6: Platform compliance vs workload runtime security
 
