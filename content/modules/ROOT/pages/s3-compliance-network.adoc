@@ -22,7 +22,7 @@ By completing this lab, participants will:
 . Audit container listening endpoints at the process and PID level, then correlate them with deployment manifests.
 . Visualize multi-tier network topology in the RHACS Network Graph, enable baseline violation alerts, and prove *Unauthorized Network Flow* with controlled probes.
 . Confirm the unapproved jump-host connection into the payment tier.
-. Auto-generate standard Kubernetes `NetworkPolicy` manifests from baselines (after marking unexpected peers anomalous) using the RHACS Network Policy Generator.
+. Compare a network policy generated from observed flows with the baseline, then apply an api-server-only policy for `postgres`.
 . Verify network policy enforcement at the kernel level using TCP probes.
 
 == Demo application architecture
@@ -96,7 +96,7 @@ Investigate unapproved cross-namespace traffic from jump-host to the payment tie
 ****
 xref:s3-08-network-policy-gen.adoc[Exercise 7: Network policy generation]
 
-Mark unexpected peers anomalous, generate NetworkPolicy YAML, and apply it (~15 min).
+Compare observed-flow and baseline policies, then apply an api-server-only policy (~15 min).
 ****
 
 [.tile]

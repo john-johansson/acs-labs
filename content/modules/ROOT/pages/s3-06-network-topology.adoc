@@ -5,7 +5,7 @@ include::partial$session3-ui.adoc[]
 
 Estimated time: 20 minutes.
 
-The RHACS Network Graph is three tools in one: a live traffic flow map, a firewall visualizer showing active `NetworkPolicy` rules, and a builder that generates default-deny `NetworkPolicy` manifests from observed baselines.
+The RHACS Network Graph is three tools in one: a live traffic flow map, a firewall visualizer showing active `NetworkPolicy` rules, and a builder that can turn observed flows or a baseline into default-deny `NetworkPolicy` manifests.
 
 In this exercise you visualize the backend and payments application topology, enable baseline violation alerting, and prove that the toggle creates *Unauthorized Network Flow* violations for unexpected probes.
 
@@ -139,7 +139,7 @@ Expect `OPEN`.
 . After the same short wait, select `postgres` in the Network Graph.
 . Confirm an anomalous flow from `operations/jump-host` on `5432/TCP`, and a new *Unauthorized Network Flow* violation whose deployment is `postgres`.
 
-IMPORTANT: This probe is intentional for the toggle demo. Exercise 7 must *Mark as anomalous* any `jump-host` entry on the `postgres` Baseline (or fall back to the curated example YAML) before you apply a NetworkPolicy, so Exercise 8 can prove the block.
+IMPORTANT: This probe is intentional for the toggle demo. Exercise 7 marks it anomalous on the `postgres` baseline. *Generate and simulate network policies* can still allow it, because the connection was observed. Apply only an api-server-only policy, or Exercise 8 cannot prove the block.
 
 == Key takeaways
 
