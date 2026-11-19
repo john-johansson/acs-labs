@@ -61,7 +61,9 @@ oc delete customrule namespace-owner-label -n openshift-compliance --ignore-not-
 echo "Removing generated NetworkPolicies in backend..."
 oc delete networkpolicy -l network-policy-generator.stackrox.io/generated=true \
   -n backend --ignore-not-found
-oc delete networkpolicy stackrox-generated-postgres \
+oc delete networkpolicy -l network-policy-generator.stackrox.io/from-baseline=true \
+  -n backend --ignore-not-found
+oc delete networkpolicy stackrox-generated-postgres stackrox-baseline-generated-postgres \
   -n backend --ignore-not-found 2>/dev/null || true
 
 echo "Removing local compliance report artifacts from the bastion home (if present)..."

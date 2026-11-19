@@ -40,7 +40,7 @@ TIMED OUT / BLOCKED
 
 == Task 8.2: Test the authorized path
 
-The `api-server` deployment carries the `app: api-server` label, which is explicitly allowed by the `stackrox-generated-postgres` policy.
+The `api-server` deployment carries the `app: api-server` label, which is explicitly allowed by the `postgres` policy you applied in Exercise 7.
 
 The `api-server` container uses BusyBox `ash` and does not have `bash /dev/tcp`. Use `wget` instead:
 
