@@ -68,7 +68,7 @@ NOTE: In production, this file would typically live in Git and be applied by a p
 oc get scansettingbinding -n openshift-compliance
 ----
 +
-You should see `cis-weekly-scan`. You should not see `acs-catch-all`. Instructor prep removes that demo schedule before class.
+You should see `cis-weekly-scan`.
 
 == Task 1.3: Apply the internal control
 
